@@ -6,7 +6,7 @@
 import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_URL || 'https://api-production-ed76.up.railway.app';
 const PROACTIVE_REFRESH_BEFORE_MS = 5 * 60 * 1000; // 5 минут
 
 /** Декодирует JWT payload без верификации (только для чтения exp) */
