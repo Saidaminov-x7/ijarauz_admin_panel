@@ -2,6 +2,7 @@
 // Универсальный конструктор страниц — работает для любого pageKey с поддержкой всех типов секций
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getPageSectionsApi,
@@ -106,17 +107,25 @@ const SectionEditModal: React.FC<SectionEditModalProps> = ({ isOpen, onClose, se
     onClose();
   };
 
-  const currentLangContent = (content[activeLang] && typeof content[activeLang] === 'object' ? content[activeLang] : content) || {};
+  // Если в content есть данные верхнего уровня или данные для активного языка
+  const langObj = (content[activeLang] && typeof content[activeLang] === 'object') ? content[activeLang] : {};
+  const currentLangContent = {
+    ...content,
+    ...langObj,
+  };
 
   const updateField = (field: string, value: any) => {
-    setContent((prev) => ({
-      ...prev,
-      [field]: value,
-      [activeLang]: {
-        ...(prev[activeLang] || {}),
+    setContent((prev) => {
+      const prevLangObj = (prev[activeLang] && typeof prev[activeLang] === 'object') ? prev[activeLang] : {};
+      return {
+        ...prev,
         [field]: value,
-      },
-    }));
+        [activeLang]: {
+          ...prevLangObj,
+          [field]: value,
+        },
+      };
+    });
   };
 
   return (
@@ -677,6 +686,7 @@ interface PageBuilderProps {
 }
 
 const PageBuilder: React.FC<PageBuilderProps> = ({ pageKey }) => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [editingSection, setEditingSection] = useState<PageSectionItem | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -868,11 +878,22 @@ const PageBuilder: React.FC<PageBuilderProps> = ({ pageKey }) => {
     <div className="space-y-6">
       {/* Шапка */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-app">Управление секциями страницы: /{pageKey}</h1>
-          <p className="text-sm text-muted">
-            Настраивайте блоки, переставляйте их местами, редактируйте тексты и видимость
-          </p>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate('/pages')}
+            className="flex items-center justify-center w-10 h-10 rounded-xl border border-app bg-surface hover:bg-gray-100 dark:hover:bg-white/5 text-muted hover:text-app transition-colors shadow-sm"
+            title="Назад ко всем страницам"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <div>
+            <h1 className="text-xl font-bold text-app">Управление секциями страницы: /{pageKey}</h1>
+            <p className="text-sm text-muted">
+              Настраивайте блоки, переставляйте их местами, редактируйте тексты и видимость
+            </p>
+          </div>
         </div>
         <button
           onClick={() => setIsAddModalOpen(true)}
