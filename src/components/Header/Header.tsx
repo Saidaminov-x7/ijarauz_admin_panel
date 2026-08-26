@@ -5,12 +5,28 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import ThemeToggle from '../ThemeToggle/ThemeToggle';
+import { CountBadge } from '../ui/CountBadge';
 import {
   getNotificationsApi,
   markNotificationReadApi,
   markAllNotificationsReadApi,
 } from '../../lib/notificationsApi';
 import type { AdminNotificationItem } from '../../lib/notificationsApi';
+
+function useBackendHealth() {
+  const [isHealthy, setIsHealthy] = useState<boolean | null>(null);
+  useEffect(() => {
+    const apiUrl = import.meta.env.VITE_API_URL || 'https://api-production-ed76.up.railway.app';
+    const check = () =>
+      fetch(`${apiUrl}/health`)
+        .then((r) => setIsHealthy(r.ok))
+        .catch(() => setIsHealthy(false));
+    check();
+    const id = setInterval(check, 30000);
+    return () => clearInterval(id);
+  }, []);
+  return isHealthy;
+}
 
 const SearchIcon = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -118,6 +134,8 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
     }
   };
 
+  const isBackendHealthy = useBackendHealth();
+
   return (
     <header
       className="
@@ -127,7 +145,32 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
       "
     >
       {/* Заголовок страницы */}
-      {title && <h1 className="text-xl font-bold text-app">{title}</h1>}
+      <div className="flex items-center gap-3">
+        {title && <h1 className="text-xl font-bold text-app">{title}</h1>}
+        <div
+          className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 dark:bg-white/5 border border-app"
+          title={
+            isBackendHealthy === null
+              ? 'Проверка API...'
+              : isBackendHealthy
+              ? 'API в сети'
+              : 'API недоступен'
+          }
+        >
+          <span
+            className={`w-2 h-2 rounded-full ${
+              isBackendHealthy === null
+                ? 'bg-amber-400 animate-pulse'
+                : isBackendHealthy
+                ? 'bg-emerald-500'
+                : 'bg-red-500'
+            }`}
+          />
+          <span className="text-muted hidden sm:inline">
+            {isBackendHealthy ? 'API OK' : 'API'}
+          </span>
+        </div>
+      </div>
 
       {/* Правая часть */}
       <div className="flex items-center gap-2 ml-auto">
@@ -172,8 +215,8 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
           >
             <BellIcon />
             {unreadCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white shadow-sm">
-                {unreadCount > 99 ? '99+' : unreadCount}
+              <span className="absolute -top-1 -right-1">
+                <CountBadge count={unreadCount} />
               </span>
             )}
           </button>

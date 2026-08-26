@@ -4,6 +4,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { ArrowLeft, ArrowUp, ArrowDown, Eye, EyeOff, Edit, Trash2, Plus, Globe } from 'lucide-react';
 import {
   getPageSectionsApi,
   updatePageSectionApi,
@@ -12,70 +14,15 @@ import {
   deletePageSectionApi,
   type PageSectionItem,
 } from '../../lib/pageSectionsApi';
+import {
+  SECTION_META,
+  SECTION_DEFAULTS,
+  type SectionType,
+} from '../../lib/sectionTypes';
+import { Button } from '../ui/Button';
+import { Modal } from '../ui/Modal';
 
-// Все поддерживаемые типы секций
-export const SECTION_TYPES: Record<string, { label: string; icon: string; desc: string; defaultTitle: string }> = {
-  HERO_SEARCH: {
-    label: 'Поисковая строка / Главный баннер',
-    icon: '🔍',
-    desc: 'Главный заголовок, подзаголовок, поле поиска и быстрые фильтры',
-    defaultTitle: 'Главный баннер с поиском',
-  },
-  BENEFITS: {
-    label: 'Преимущества / Особенности',
-    icon: '✨',
-    desc: 'Карточки с иконками, заголовками и описанием преимуществ',
-    defaultTitle: 'Преимущества',
-  },
-  POPULAR_LISTINGS: {
-    label: 'Популярные / Рекомендуемые объявления',
-    icon: '🔥',
-    desc: 'Сетка популярных или рекомендованных объявлений из базы данных',
-    defaultTitle: 'Популярные объявления',
-  },
-  CTA_BANNER: {
-    label: 'Призыв к действию (CTA Баннер)',
-    icon: '📢',
-    desc: 'Баннер с заголовком, текстом и кнопкой перехода',
-    defaultTitle: 'Баннер размещения',
-  },
-  CATEGORIES: {
-    label: 'Категории жилья',
-    icon: '🏷️',
-    desc: 'Список категорий (посуточно, новостройки, студентам, комнаты)',
-    defaultTitle: 'Категории жилья',
-  },
-  TEXT_BLOCK: {
-    label: 'Текстовый блок / Описание',
-    icon: '📝',
-    desc: 'Свободный текстовый контент с заголовком, подзаголовком и форматированным текстом',
-    defaultTitle: 'Информация',
-  },
-  TEAM_MEMBERS: {
-    label: 'Наша команда / Эксперты',
-    icon: '👥',
-    desc: 'Список членов команды с именами, ролями и описанием',
-    defaultTitle: 'Наша команда',
-  },
-  FAQ_ACCORDION: {
-    label: 'Часто задаваемые вопросы (FAQ)',
-    icon: '❓',
-    desc: 'Список вопросов и раскрывающихся ответов',
-    defaultTitle: 'Вопросы и ответы',
-  },
-  CONTACT_INFO: {
-    label: 'Контакты и обратная связь',
-    icon: '📞',
-    desc: 'Email, телефон, адрес, время работы и ссылки',
-    defaultTitle: 'Контакты',
-  },
-  CUSTOM_HTML: {
-    label: 'Произвольный контент / Markdown',
-    icon: '📄',
-    desc: 'Универсальный блок с форматированным текстом или Markdown',
-    defaultTitle: 'Дополнительный блок',
-  },
-};
+export const SECTION_TYPES = SECTION_META;
 
 interface SectionEditModalProps {
   isOpen: boolean;
@@ -128,37 +75,47 @@ const SectionEditModal: React.FC<SectionEditModalProps> = ({ isOpen, onClose, se
     });
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-3xl rounded-2xl bg-surface p-6 shadow-2xl border border-app z-10 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between pb-3 mb-4 border-b border-app">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">{SECTION_TYPES[section.sectionType]?.icon || '📄'}</span>
-            <div>
-              <h3 className="text-base font-bold text-app">
-                Редактирование: {title || SECTION_TYPES[section.sectionType]?.label || section.sectionType}
-              </h3>
-              <p className="text-xs text-muted">Тип: {section.sectionType}</p>
-            </div>
-          </div>
-          <button onClick={onClose} className="text-muted hover:text-app p-1 rounded-lg">
-            ✕
-          </button>
-        </div>
+  const meta = SECTION_META[section.sectionType as SectionType] || {
+    label: section.sectionType,
+    icon: 'FileText',
+    desc: 'Секция',
+    defaultTitle: section.sectionType,
+  };
 
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={`Редактирование: ${title || meta.label || section.sectionType}`}
+      subtitle={`Тип: ${section.sectionType}`}
+      size="xl"
+      footer={
+        <div className="flex items-center justify-end gap-3 w-full">
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            Отмена
+          </Button>
+          <Button variant="primary" size="sm" onClick={handleSave}>
+            Сохранить изменения
+          </Button>
+        </div>
+      }
+    >
+      <div className="space-y-4">
         {/* Языковые вкладки */}
-        <div className="flex items-center justify-between gap-4 mb-4 p-2 bg-gray-50 dark:bg-white/5 rounded-xl border border-app">
-          <span className="text-xs font-semibold text-muted">Язык контента:</span>
+        <div className="flex items-center justify-between gap-4 p-2 bg-gray-50 dark:bg-white/5 rounded-xl border border-app">
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-muted">
+            <Globe size={14} />
+            <span>Язык контента:</span>
+          </div>
           <div className="flex gap-1">
             {(['ru', 'uz', 'en'] as const).map((lang) => (
               <button
                 key={lang}
                 type="button"
                 onClick={() => setActiveLang(lang)}
-                className={`px-3 py-1 text-xs font-semibold rounded-lg transition-colors ${
+                className={`px-3 py-1 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
                   activeLang === lang
-                    ? 'bg-teal-600 text-white'
+                    ? 'bg-teal-600 text-white shadow-xs'
                     : 'text-muted hover:text-app hover:bg-gray-200 dark:hover:bg-white/10'
                 }`}
               >
@@ -168,516 +125,648 @@ const SectionEditModal: React.FC<SectionEditModalProps> = ({ isOpen, onClose, se
           </div>
         </div>
 
-        <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-app mb-1.5">Название секции (для админки)</label>
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Введите название секции"
+            className="input w-full"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-app mb-1.5">Название секции (для админки)</label>
+            <label className="block text-sm font-medium text-app mb-1.5">Строка макета (Layout Row)</label>
             <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Введите название секции"
+              type="number"
+              value={layoutRow}
+              onChange={(e) => setLayoutRow(Number(e.target.value))}
+              min={1}
+              max={10}
               className="input w-full"
             />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-app mb-1.5">Ширина (1-12 колонок)</label>
+            <input
+              type="number"
+              value={width}
+              onChange={(e) => setWidth(Number(e.target.value))}
+              min={1}
+              max={12}
+              className="input w-full"
+            />
+          </div>
+        </div>
 
-          <div className="grid grid-cols-2 gap-4">
+        {/* 1. HERO_SEARCH */}
+        {section.sectionType === 'HERO_SEARCH' && (
+          <div className="space-y-3 pt-2">
             <div>
-              <label className="block text-sm font-medium text-app mb-1.5">Строка макета (Layout Row)</label>
+              <label className="block text-sm font-medium text-app mb-1">Главный заголовок</label>
               <input
-                type="number"
-                value={layoutRow}
-                onChange={(e) => setLayoutRow(Number(e.target.value))}
-                min={1}
-                max={10}
+                value={currentLangContent.title || ''}
+                onChange={(e) => updateField('title', e.target.value)}
+                placeholder="Аренда жилья в Узбекистане без посредников"
                 className="input w-full"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-app mb-1.5">Ширина (1-12 колонок)</label>
+              <label className="block text-sm font-medium text-app mb-1">Подзаголовок</label>
+              <textarea
+                value={currentLangContent.subtitle || ''}
+                onChange={(e) => updateField('subtitle', e.target.value)}
+                placeholder="Найдите идеальную квартиру или комнату напрямую от собственников"
+                rows={2}
+                className="input w-full resize-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-app mb-1">Бейдж (опционально)</label>
+              <input
+                value={currentLangContent.badgeText || ''}
+                onChange={(e) => updateField('badgeText', e.target.value)}
+                placeholder="✨ Проверенные собственники"
+                className="input w-full"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-app mb-1">Плейсхолдер поиска</label>
+              <input
+                value={currentLangContent.searchPlaceholder || ''}
+                onChange={(e) => updateField('searchPlaceholder', e.target.value)}
+                placeholder="Район, метро, улица или город..."
+                className="input w-full"
+              />
+            </div>
+            <label className="block text-sm font-medium text-app mb-1">Быстрые фильтры</label>
+            <div className="space-y-2">
+              {(Array.isArray(currentLangContent.quickFilters) ? currentLangContent.quickFilters : []).map((qf: any, i: number) => (
+                <div key={i} className="flex gap-2 p-2 border border-app rounded-xl bg-surface">
+                  <input
+                    value={qf.label || ''}
+                    onChange={(e) => {
+                      const arr = [...(currentLangContent.quickFilters || [])];
+                      arr[i] = { ...arr[i], label: e.target.value };
+                      updateField('quickFilters', arr);
+                    }}
+                    placeholder="Название (Студии)"
+                    className="input flex-1"
+                  />
+                  <input
+                    value={qf.href || ''}
+                    onChange={(e) => {
+                      const arr = [...(currentLangContent.quickFilters || [])];
+                      arr[i] = { ...arr[i], href: e.target.value };
+                      updateField('quickFilters', arr);
+                    }}
+                    placeholder="Ссылка (/catalog?type_apartments=studio)"
+                    className="input flex-1"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const arr = [...(currentLangContent.quickFilters || [])];
+                      arr.splice(i, 1);
+                      updateField('quickFilters', arr);
+                    }}
+                    className="px-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-sm cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => {
+                  const arr = [...(currentLangContent.quickFilters || []), { label: '', href: '/catalog' }];
+                  updateField('quickFilters', arr);
+                }}
+                className="w-full p-2 text-xs font-medium text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-950/40 rounded-xl border border-dashed border-teal-500/30 cursor-pointer"
+              >
+                + Добавить быстрый фильтр
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 2. BENEFITS */}
+        {section.sectionType === 'BENEFITS' && (
+          <div className="space-y-3 pt-2">
+            <div>
+              <label className="block text-sm font-medium text-app mb-1">Заголовок блока</label>
+              <input
+                value={currentLangContent.title || ''}
+                onChange={(e) => updateField('title', e.target.value)}
+                placeholder="Почему выбирают ijarauz"
+                className="input w-full"
+              />
+            </div>
+            <label className="block text-sm font-medium text-app mb-1">Список преимуществ</label>
+            <div className="space-y-2">
+              {(Array.isArray(currentLangContent.items) ? currentLangContent.items : []).map((item: any, i: number) => (
+                <div key={i} className="flex flex-col sm:flex-row gap-2 p-3 border border-app rounded-xl bg-surface">
+                  <input
+                    value={item.icon || ''}
+                    onChange={(e) => {
+                      const newItems = [...(Array.isArray(currentLangContent.items) ? currentLangContent.items : [])];
+                      newItems[i] = { ...newItems[i], icon: e.target.value };
+                      updateField('items', newItems);
+                    }}
+                    placeholder="Иконка (ShieldCheck, Map, MessagesSquare)"
+                    className="input sm:w-44"
+                  />
+                  <input
+                    value={item.title || ''}
+                    onChange={(e) => {
+                      const newItems = [...(Array.isArray(currentLangContent.items) ? currentLangContent.items : [])];
+                      newItems[i] = { ...newItems[i], title: e.target.value };
+                      updateField('items', newItems);
+                    }}
+                    placeholder="Заголовок"
+                    className="input flex-1"
+                  />
+                  <input
+                    value={item.text || ''}
+                    onChange={(e) => {
+                      const newItems = [...(Array.isArray(currentLangContent.items) ? currentLangContent.items : [])];
+                      newItems[i] = { ...newItems[i], text: e.target.value };
+                      updateField('items', newItems);
+                    }}
+                    placeholder="Описание"
+                    className="input flex-2"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newItems = [...(Array.isArray(currentLangContent.items) ? currentLangContent.items : [])];
+                      newItems.splice(i, 1);
+                      updateField('items', newItems);
+                    }}
+                    className="px-3 py-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-sm cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => {
+                  const newItems = [...(Array.isArray(currentLangContent.items) ? currentLangContent.items : []), { title: '', text: '', icon: 'ShieldCheck' }];
+                  updateField('items', newItems);
+                }}
+                className="w-full p-2.5 text-sm font-medium text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-950/40 rounded-xl border border-dashed border-teal-500/30 cursor-pointer"
+              >
+                + Добавить пункт преимущества
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 3. POPULAR_LISTINGS */}
+        {section.sectionType === 'POPULAR_LISTINGS' && (
+          <div className="space-y-3 pt-2">
+            <div>
+              <label className="block text-sm font-medium text-app mb-1">Заголовок</label>
+              <input
+                value={currentLangContent.title || ''}
+                onChange={(e) => updateField('title', e.target.value)}
+                placeholder="Популярные предложения"
+                className="input w-full"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-app mb-1">Подзаголовок (опционально)</label>
+              <input
+                value={currentLangContent.subtitle || ''}
+                onChange={(e) => updateField('subtitle', e.target.value)}
+                placeholder="Свежие проверенные варианты аренды"
+                className="input w-full"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-app mb-1">Текст ссылки "Смотреть все"</label>
+              <input
+                value={currentLangContent.viewAllText || ''}
+                onChange={(e) => updateField('viewAllText', e.target.value)}
+                placeholder="Смотреть все"
+                className="input w-full"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-app mb-1">Лимит отображаемых объявлений</label>
               <input
                 type="number"
-                value={width}
-                onChange={(e) => setWidth(Number(e.target.value))}
+                value={currentLangContent.limit || 6}
+                onChange={(e) => updateField('limit', Number(e.target.value))}
                 min={1}
-                max={12}
+                max={24}
                 className="input w-full"
               />
             </div>
           </div>
+        )}
 
-          {/* 1. HERO_SEARCH */}
-          {section.sectionType === 'HERO_SEARCH' && (
-            <div className="space-y-3 pt-2">
+        {/* 4. CTA_BANNER */}
+        {section.sectionType === 'CTA_BANNER' && (
+          <div className="space-y-3 pt-2">
+            <div>
+              <label className="block text-sm font-medium text-app mb-1">Заголовок баннера</label>
+              <input
+                value={currentLangContent.title || ''}
+                onChange={(e) => updateField('title', e.target.value)}
+                placeholder="Сдайте жильё выгодно и быстро"
+                className="input w-full"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-app mb-1">Текст описания</label>
+              <textarea
+                value={currentLangContent.text || ''}
+                onChange={(e) => updateField('text', e.target.value)}
+                placeholder="Разместите объявление бесплатно за 2 минуты и найдите надежных арендаторов уже сегодня"
+                rows={3}
+                className="input w-full resize-none"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-app mb-1">Главный заголовок</label>
+                <label className="block text-sm font-medium text-app mb-1">Текст кнопки</label>
                 <input
-                  value={currentLangContent.title || ''}
-                  onChange={(e) => updateField('title', e.target.value)}
-                  placeholder="Аренда жилья в Узбекистане без посредников"
+                  value={currentLangContent.buttonText || ''}
+                  onChange={(e) => updateField('buttonText', e.target.value)}
+                  placeholder="Разместить объявление"
                   className="input w-full"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-app mb-1">Подзаголовок</label>
-                <textarea
-                  value={currentLangContent.subtitle || ''}
-                  onChange={(e) => updateField('subtitle', e.target.value)}
-                  placeholder="Найдите идеальную квартиру или комнату напрямую от собственников"
-                  rows={2}
-                  className="input w-full resize-none"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-app mb-1">Плейсхолдер поиска</label>
+                <label className="block text-sm font-medium text-app mb-1">Ссылка кнопки</label>
                 <input
-                  value={currentLangContent.searchPlaceholder || ''}
-                  onChange={(e) => updateField('searchPlaceholder', e.target.value)}
-                  placeholder="Район, метро, улица или город..."
+                  value={currentLangContent.buttonLink || ''}
+                  onChange={(e) => updateField('buttonLink', e.target.value)}
+                  placeholder="/add-listing"
                   className="input w-full"
                 />
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* 2. BENEFITS */}
-          {section.sectionType === 'BENEFITS' && (
-            <div className="space-y-3 pt-2">
-              <div>
-                <label className="block text-sm font-medium text-app mb-1">Заголовок блока</label>
-                <input
-                  value={currentLangContent.title || ''}
-                  onChange={(e) => updateField('title', e.target.value)}
-                  placeholder="Почему выбирают ijarauz"
-                  className="input w-full"
-                />
-              </div>
-              <label className="block text-sm font-medium text-app mb-1">Список преимуществ</label>
-              <div className="space-y-2">
-                {(Array.isArray(currentLangContent.items) ? currentLangContent.items : []).map((item: any, i: number) => (
-                  <div key={i} className="flex flex-col sm:flex-row gap-2 p-3 border border-app rounded-xl bg-surface">
-                    <input
-                      value={item.title || ''}
-                      onChange={(e) => {
-                        const newItems = [...(Array.isArray(currentLangContent.items) ? currentLangContent.items : [])];
-                        newItems[i] = { ...newItems[i], title: e.target.value };
-                        updateField('items', newItems);
-                      }}
-                      placeholder="Заголовок"
-                      className="input flex-1"
-                    />
-                    <input
-                      value={item.text || ''}
-                      onChange={(e) => {
-                        const newItems = [...(Array.isArray(currentLangContent.items) ? currentLangContent.items : [])];
-                        newItems[i] = { ...newItems[i], text: e.target.value };
-                        updateField('items', newItems);
-                      }}
-                      placeholder="Описание"
-                      className="input flex-2"
-                    />
-                    <button
-                      onClick={() => {
-                        const newItems = [...(Array.isArray(currentLangContent.items) ? currentLangContent.items : [])];
-                        newItems.splice(i, 1);
-                        updateField('items', newItems);
-                      }}
-                      className="px-3 py-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-sm"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => {
-                    const newItems = [...(Array.isArray(currentLangContent.items) ? currentLangContent.items : []), { title: '', text: '', icon: 'ShieldCheck' }];
-                    updateField('items', newItems);
-                  }}
-                  className="w-full p-2.5 text-sm font-medium text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-950/40 rounded-xl border border-dashed border-teal-500/30"
-                >
-                  + Добавить пункт преимущества
-                </button>
-              </div>
+        {/* 5. CATEGORIES */}
+        {section.sectionType === 'CATEGORIES' && (
+          <div className="space-y-3 pt-2">
+            <div>
+              <label className="block text-sm font-medium text-app mb-1">Заголовок блока</label>
+              <input
+                value={currentLangContent.title || ''}
+                onChange={(e) => updateField('title', e.target.value)}
+                placeholder="Категории недвижимости"
+                className="input w-full"
+              />
             </div>
-          )}
-
-          {/* 3. POPULAR_LISTINGS */}
-          {section.sectionType === 'POPULAR_LISTINGS' && (
-            <div className="space-y-3 pt-2">
-              <div>
-                <label className="block text-sm font-medium text-app mb-1">Заголовок</label>
-                <input
-                  value={currentLangContent.title || ''}
-                  onChange={(e) => updateField('title', e.target.value)}
-                  placeholder="Популярные предложения"
-                  className="input w-full"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-app mb-1">Текст ссылки "Смотреть все"</label>
-                <input
-                  value={currentLangContent.viewAllText || ''}
-                  onChange={(e) => updateField('viewAllText', e.target.value)}
-                  placeholder="Смотреть все"
-                  className="input w-full"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-app mb-1">Лимит отображаемых объявлений</label>
-                <input
-                  type="number"
-                  value={currentLangContent.limit || 6}
-                  onChange={(e) => updateField('limit', Number(e.target.value))}
-                  min={1}
-                  max={24}
-                  className="input w-full"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* 4. CTA_BANNER */}
-          {section.sectionType === 'CTA_BANNER' && (
-            <div className="space-y-3 pt-2">
-              <div>
-                <label className="block text-sm font-medium text-app mb-1">Заголовок баннера</label>
-                <input
-                  value={currentLangContent.title || ''}
-                  onChange={(e) => updateField('title', e.target.value)}
-                  placeholder="Сдайте жильё выгодно и быстро"
-                  className="input w-full"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-app mb-1">Текст описания</label>
-                <textarea
-                  value={currentLangContent.text || ''}
-                  onChange={(e) => updateField('text', e.target.value)}
-                  placeholder="Разместите объявление бесплатно за 2 минуты и найдите надежных арендаторов уже сегодня"
-                  rows={3}
-                  className="input w-full resize-none"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-app mb-1">Текст кнопки</label>
+            <label className="block text-sm font-medium text-app mb-1">Категории</label>
+            <div className="space-y-2">
+              {(Array.isArray(currentLangContent.categories) ? currentLangContent.categories : []).map((cat: any, i: number) => (
+                <div key={i} className="flex gap-2 p-2 border border-app rounded-xl bg-surface">
                   <input
-                    value={currentLangContent.buttonText || ''}
-                    onChange={(e) => updateField('buttonText', e.target.value)}
-                    placeholder="Разместить объявление"
-                    className="input w-full"
+                    value={cat.name || ''}
+                    onChange={(e) => {
+                      const newCats = [...(Array.isArray(currentLangContent.categories) ? currentLangContent.categories : [])];
+                      newCats[i] = { ...newCats[i], name: e.target.value };
+                      updateField('categories', newCats);
+                    }}
+                    placeholder="Название"
+                    className="input flex-1"
                   />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-app mb-1">Ссылка кнопки</label>
                   <input
-                    value={currentLangContent.buttonLink || ''}
-                    onChange={(e) => updateField('buttonLink', e.target.value)}
-                    placeholder="/add-listing"
-                    className="input w-full"
+                    value={cat.icon || ''}
+                    onChange={(e) => {
+                      const newCats = [...(Array.isArray(currentLangContent.categories) ? currentLangContent.categories : [])];
+                      newCats[i] = { ...newCats[i], icon: e.target.value };
+                      updateField('categories', newCats);
+                    }}
+                    placeholder="Иконка (Key, Home, Building2, Sparkles)"
+                    className="input w-40"
                   />
+                  <input
+                    value={cat.href || ''}
+                    onChange={(e) => {
+                      const newCats = [...(Array.isArray(currentLangContent.categories) ? currentLangContent.categories : [])];
+                      newCats[i] = { ...newCats[i], href: e.target.value };
+                      updateField('categories', newCats);
+                    }}
+                    placeholder="/catalog?rental_type=daily"
+                    className="input flex-1"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newCats = [...(Array.isArray(currentLangContent.categories) ? currentLangContent.categories : [])];
+                      newCats.splice(i, 1);
+                      updateField('categories', newCats);
+                    }}
+                    className="px-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-sm cursor-pointer"
+                  >
+                    ✕
+                  </button>
                 </div>
-              </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => {
+                  const newCats = [...(Array.isArray(currentLangContent.categories) ? currentLangContent.categories : []), { name: '', icon: 'Home', href: '/catalog' }];
+                  updateField('categories', newCats);
+                }}
+                className="w-full p-2.5 text-sm font-medium text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-950/40 rounded-xl border border-dashed border-teal-500/30 cursor-pointer"
+              >
+                + Добавить категорию
+              </button>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* 5. CATEGORIES */}
-          {section.sectionType === 'CATEGORIES' && (
-            <div className="space-y-3 pt-2">
-              <div>
-                <label className="block text-sm font-medium text-app mb-1">Заголовок блока</label>
-                <input
-                  value={currentLangContent.title || ''}
-                  onChange={(e) => updateField('title', e.target.value)}
-                  placeholder="Категории жилья"
-                  className="input w-full"
-                />
-              </div>
-              <label className="block text-sm font-medium text-app mb-1">Категории</label>
-              <div className="space-y-2">
-                {(Array.isArray(currentLangContent.categories) ? currentLangContent.categories : []).map((cat: any, i: number) => (
-                  <div key={i} className="flex gap-2 p-2 border border-app rounded-xl bg-surface">
-                    <input
-                      value={cat.name || ''}
-                      onChange={(e) => {
-                        const newCats = [...(Array.isArray(currentLangContent.categories) ? currentLangContent.categories : [])];
-                        newCats[i] = { ...newCats[i], name: e.target.value };
-                        updateField('categories', newCats);
-                      }}
-                      placeholder="Название"
-                      className="input flex-1"
-                    />
-                    <input
-                      value={cat.icon || ''}
-                      onChange={(e) => {
-                        const newCats = [...(Array.isArray(currentLangContent.categories) ? currentLangContent.categories : [])];
-                        newCats[i] = { ...newCats[i], icon: e.target.value };
-                        updateField('categories', newCats);
-                      }}
-                      placeholder="Иконка (Key, Home, Building)"
-                      className="input w-40"
-                    />
-                    <input
-                      value={cat.href || ''}
-                      onChange={(e) => {
-                        const newCats = [...(Array.isArray(currentLangContent.categories) ? currentLangContent.categories : [])];
-                        newCats[i] = { ...newCats[i], href: e.target.value };
-                        updateField('categories', newCats);
-                      }}
-                      placeholder="/catalog?rental_type=daily"
-                      className="input flex-1"
-                    />
-                    <button
-                      onClick={() => {
-                        const newCats = [...(Array.isArray(currentLangContent.categories) ? currentLangContent.categories : [])];
-                        newCats.splice(i, 1);
-                        updateField('categories', newCats);
-                      }}
-                      className="px-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-sm"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => {
-                    const newCats = [...(Array.isArray(currentLangContent.categories) ? currentLangContent.categories : []), { name: '', icon: 'Home', href: '/catalog' }];
-                    updateField('categories', newCats);
-                  }}
-                  className="w-full p-2.5 text-sm font-medium text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-950/40 rounded-xl border border-dashed border-teal-500/30"
-                >
-                  + Добавить категорию
-                </button>
-              </div>
+        {/* 6. TEXT_BLOCK / CUSTOM_HTML */}
+        {(section.sectionType === 'TEXT_BLOCK' || section.sectionType === 'CUSTOM_HTML') && (
+          <div className="space-y-3 pt-2">
+            <div>
+              <label className="block text-sm font-medium text-app mb-1">Заголовок блока</label>
+              <input
+                value={currentLangContent.title || ''}
+                onChange={(e) => updateField('title', e.target.value)}
+                placeholder="Заголовок раздела"
+                className="input w-full"
+              />
             </div>
-          )}
-
-          {/* 6. TEXT_BLOCK / CUSTOM_HTML */}
-          {(section.sectionType === 'TEXT_BLOCK' || section.sectionType === 'CUSTOM_HTML') && (
-            <div className="space-y-3 pt-2">
-              <div>
-                <label className="block text-sm font-medium text-app mb-1">Заголовок блока</label>
-                <input
-                  value={currentLangContent.title || ''}
-                  onChange={(e) => updateField('title', e.target.value)}
-                  placeholder="Заголовок раздела"
-                  className="input w-full"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-app mb-1">Подзаголовок (опционально)</label>
-                <input
-                  value={currentLangContent.subtitle || ''}
-                  onChange={(e) => updateField('subtitle', e.target.value)}
-                  placeholder="Дополнительный подзаголовок"
-                  className="input w-full"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-app mb-1">Текст контента (Markdown / Текст)</label>
-                <textarea
-                  value={currentLangContent.text || currentLangContent.content || ''}
-                  onChange={(e) => updateField('text', e.target.value)}
-                  placeholder="Введите текст или параграфы страницы..."
-                  rows={6}
-                  className="input w-full font-mono text-xs"
-                />
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-app mb-1">Подзаголовок (опционально)</label>
+              <input
+                value={currentLangContent.subtitle || ''}
+                onChange={(e) => updateField('subtitle', e.target.value)}
+                placeholder="Дополнительный подзаголовок"
+                className="input w-full"
+              />
             </div>
-          )}
-
-          {/* 7. TEAM_MEMBERS */}
-          {section.sectionType === 'TEAM_MEMBERS' && (
-            <div className="space-y-3 pt-2">
-              <div>
-                <label className="block text-sm font-medium text-app mb-1">Заголовок секции команды</label>
-                <input
-                  value={currentLangContent.title || ''}
-                  onChange={(e) => updateField('title', e.target.value)}
-                  placeholder="Наша команда"
-                  className="input w-full"
-                />
-              </div>
-              <label className="block text-sm font-medium text-app mb-1">Члены команды</label>
-              <div className="space-y-2">
-                {(Array.isArray(currentLangContent.members) ? currentLangContent.members : []).map((m: any, i: number) => (
-                  <div key={i} className="flex flex-col sm:flex-row gap-2 p-3 border border-app rounded-xl bg-surface">
-                    <input
-                      value={m.name || ''}
-                      onChange={(e) => {
-                        const newM = [...(Array.isArray(currentLangContent.members) ? currentLangContent.members : [])];
-                        newM[i] = { ...newM[i], name: e.target.value };
-                        updateField('members', newM);
-                      }}
-                      placeholder="Имя"
-                      className="input flex-1"
-                    />
-                    <input
-                      value={m.role || ''}
-                      onChange={(e) => {
-                        const newM = [...(Array.isArray(currentLangContent.members) ? currentLangContent.members : [])];
-                        newM[i] = { ...newM[i], role: e.target.value };
-                        updateField('members', newM);
-                      }}
-                      placeholder="Должность"
-                      className="input flex-1"
-                    />
-                    <input
-                      value={m.avatar || ''}
-                      onChange={(e) => {
-                        const newM = [...(Array.isArray(currentLangContent.members) ? currentLangContent.members : [])];
-                        newM[i] = { ...newM[i], avatar: e.target.value };
-                        updateField('members', newM);
-                      }}
-                      placeholder="URL фото"
-                      className="input flex-1"
-                    />
-                    <button
-                      onClick={() => {
-                        const newM = [...(Array.isArray(currentLangContent.members) ? currentLangContent.members : [])];
-                        newM.splice(i, 1);
-                        updateField('members', newM);
-                      }}
-                      className="px-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-sm"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => {
-                    const newM = [...(Array.isArray(currentLangContent.members) ? currentLangContent.members : []), { name: '', role: '', avatar: '' }];
-                    updateField('members', newM);
-                  }}
-                  className="w-full p-2.5 text-sm font-medium text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-950/40 rounded-xl border border-dashed border-teal-500/30"
-                >
-                  + Добавить сотрудника
-                </button>
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-app mb-1">Выравнивание текста</label>
+              <select
+                value={currentLangContent.align || 'left'}
+                onChange={(e) => updateField('align', e.target.value)}
+                className="select w-full"
+              >
+                <option value="left">По левому краю</option>
+                <option value="center">По центру</option>
+                <option value="right">По правому краю</option>
+              </select>
             </div>
-          )}
+            <div>
+              <label className="block text-sm font-medium text-app mb-1">Текст контента (Markdown / Текст)</label>
+              <textarea
+                value={currentLangContent.text || currentLangContent.content || ''}
+                onChange={(e) => updateField('text', e.target.value)}
+                placeholder="Введите текст или параграфы страницы..."
+                rows={6}
+                className="input w-full font-mono text-xs"
+              />
+            </div>
+          </div>
+        )}
 
-          {/* 8. FAQ_ACCORDION */}
-          {section.sectionType === 'FAQ_ACCORDION' && (
-            <div className="space-y-3 pt-2">
-              <div>
-                <label className="block text-sm font-medium text-app mb-1">Заголовок FAQ</label>
-                <input
-                  value={currentLangContent.title || ''}
-                  onChange={(e) => updateField('title', e.target.value)}
-                  placeholder="Часто задаваемые вопросы"
-                  className="input w-full"
-                />
-              </div>
-              <label className="block text-sm font-medium text-app mb-1">Вопросы и ответы</label>
-              <div className="space-y-2">
-                {(Array.isArray(currentLangContent.items) ? currentLangContent.items : []).map((faq: any, i: number) => (
-                  <div key={i} className="p-3 border border-app rounded-xl space-y-2 bg-surface">
-                    <div className="flex gap-2">
-                      <input
-                        value={faq.question || ''}
-                        onChange={(e) => {
-                          const newF = [...(Array.isArray(currentLangContent.items) ? currentLangContent.items : [])];
-                          newF[i] = { ...newF[i], question: e.target.value };
-                          updateField('items', newF);
-                        }}
-                        placeholder="Вопрос"
-                        className="input flex-1"
-                      />
-                      <button
-                        onClick={() => {
-                          const newF = [...(Array.isArray(currentLangContent.items) ? currentLangContent.items : [])];
-                          newF.splice(i, 1);
-                          updateField('items', newF);
-                        }}
-                        className="px-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-sm"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                    <textarea
-                      value={faq.answer || ''}
+        {/* 7. TEAM_MEMBERS */}
+        {section.sectionType === 'TEAM_MEMBERS' && (
+          <div className="space-y-3 pt-2">
+            <div>
+              <label className="block text-sm font-medium text-app mb-1">Заголовок секции команды</label>
+              <input
+                value={currentLangContent.title || ''}
+                onChange={(e) => updateField('title', e.target.value)}
+                placeholder="Наша команда"
+                className="input w-full"
+              />
+            </div>
+            <label className="block text-sm font-medium text-app mb-1">Участники</label>
+            <div className="space-y-2">
+              {(Array.isArray(currentLangContent.members) ? currentLangContent.members : []).map((m: any, i: number) => (
+                <div key={i} className="flex flex-col sm:flex-row gap-2 p-3 border border-app rounded-xl bg-surface">
+                  <input
+                    value={m.name || ''}
+                    onChange={(e) => {
+                      const arr = [...(currentLangContent.members || [])];
+                      arr[i] = { ...arr[i], name: e.target.value };
+                      updateField('members', arr);
+                    }}
+                    placeholder="Имя"
+                    className="input flex-1"
+                  />
+                  <input
+                    value={m.role || ''}
+                    onChange={(e) => {
+                      const arr = [...(currentLangContent.members || [])];
+                      arr[i] = { ...arr[i], role: e.target.value };
+                      updateField('members', arr);
+                    }}
+                    placeholder="Должность"
+                    className="input flex-1"
+                  />
+                  <input
+                    value={m.photoUrl || ''}
+                    onChange={(e) => {
+                      const arr = [...(currentLangContent.members || [])];
+                      arr[i] = { ...arr[i], photoUrl: e.target.value };
+                      updateField('members', arr);
+                    }}
+                    placeholder="URL фото (опционально)"
+                    className="input flex-1"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const arr = [...(currentLangContent.members || [])];
+                      arr.splice(i, 1);
+                      updateField('members', arr);
+                    }}
+                    className="px-3 py-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-sm cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => {
+                  const arr = [...(currentLangContent.members || []), { name: '', role: '', photoUrl: '' }];
+                  updateField('members', arr);
+                }}
+                className="w-full p-2.5 text-sm font-medium text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-950/40 rounded-xl border border-dashed border-teal-500/30 cursor-pointer"
+              >
+                + Добавить участника
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 8. FAQ_ACCORDION */}
+        {section.sectionType === 'FAQ_ACCORDION' && (
+          <div className="space-y-3 pt-2">
+            <div>
+              <label className="block text-sm font-medium text-app mb-1">Заголовок FAQ</label>
+              <input
+                value={currentLangContent.title || ''}
+                onChange={(e) => updateField('title', e.target.value)}
+                placeholder="Часто задаваемые вопросы"
+                className="input w-full"
+              />
+            </div>
+            <label className="block text-sm font-medium text-app mb-1">Вопросы и ответы</label>
+            <div className="space-y-2">
+              {(Array.isArray(currentLangContent.items) ? currentLangContent.items : []).map((faq: any, i: number) => (
+                <div key={i} className="p-3 border border-app rounded-xl space-y-2 bg-surface">
+                  <div className="flex gap-2">
+                    <input
+                      value={faq.question || ''}
                       onChange={(e) => {
                         const newF = [...(Array.isArray(currentLangContent.items) ? currentLangContent.items : [])];
-                        newF[i] = { ...newF[i], answer: e.target.value };
+                        newF[i] = { ...newF[i], question: e.target.value };
                         updateField('items', newF);
                       }}
-                      placeholder="Ответ..."
-                      rows={2}
-                      className="input w-full resize-none"
+                      placeholder="Вопрос"
+                      className="input flex-1"
                     />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newF = [...(Array.isArray(currentLangContent.items) ? currentLangContent.items : [])];
+                        newF.splice(i, 1);
+                        updateField('items', newF);
+                      }}
+                      className="px-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-sm cursor-pointer"
+                    >
+                      ✕
+                    </button>
                   </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => {
-                    const newF = [...(Array.isArray(currentLangContent.items) ? currentLangContent.items : []), { question: '', answer: '' }];
-                    updateField('items', newF);
-                  }}
-                  className="w-full p-2.5 text-sm font-medium text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-950/40 rounded-xl border border-dashed border-teal-500/30"
-                >
-                  + Добавить вопрос
-                </button>
-              </div>
+                  <textarea
+                    value={faq.answer || ''}
+                    onChange={(e) => {
+                      const newF = [...(Array.isArray(currentLangContent.items) ? currentLangContent.items : [])];
+                      newF[i] = { ...newF[i], answer: e.target.value };
+                      updateField('items', newF);
+                    }}
+                    placeholder="Ответ..."
+                    rows={2}
+                    className="input w-full resize-none"
+                  />
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => {
+                  const newF = [...(Array.isArray(currentLangContent.items) ? currentLangContent.items : []), { question: '', answer: '' }];
+                  updateField('items', newF);
+                }}
+                className="w-full p-2.5 text-sm font-medium text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-950/40 rounded-xl border border-dashed border-teal-500/30 cursor-pointer"
+              >
+                + Добавить вопрос
+              </button>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* 9. CONTACT_INFO */}
-          {section.sectionType === 'CONTACT_INFO' && (
-            <div className="space-y-3 pt-2">
+        {/* 9. CONTACT_INFO */}
+        {section.sectionType === 'CONTACT_INFO' && (
+          <div className="space-y-3 pt-2">
+            <div>
+              <label className="block text-sm font-medium text-app mb-1">Заголовок</label>
+              <input
+                value={currentLangContent.title || ''}
+                onChange={(e) => updateField('title', e.target.value)}
+                placeholder="Контакты"
+                className="input w-full"
+              />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className="block text-sm font-medium text-app mb-1">Заголовок</label>
+                <label className="block text-sm font-medium text-app mb-1">Email</label>
                 <input
-                  value={currentLangContent.title || ''}
-                  onChange={(e) => updateField('title', e.target.value)}
-                  placeholder="Свяжитесь с нами"
+                  value={currentLangContent.email || ''}
+                  onChange={(e) => updateField('email', e.target.value)}
+                  placeholder="support@ijarauz.uz"
                   className="input w-full"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-app mb-1">Email</label>
-                  <input
-                    value={currentLangContent.email || ''}
-                    onChange={(e) => updateField('email', e.target.value)}
-                    placeholder="support@ijarauz.uz"
-                    className="input w-full"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-app mb-1">Телефон</label>
-                  <input
-                    value={currentLangContent.phone || ''}
-                    onChange={(e) => updateField('phone', e.target.value)}
-                    placeholder="+998 71 200-00-00"
-                    className="input w-full"
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-app mb-1">Телефон</label>
+                <input
+                  value={currentLangContent.phone || ''}
+                  onChange={(e) => updateField('phone', e.target.value)}
+                  placeholder="+998 71 200-00-00"
+                  className="input w-full"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-app mb-1">Адрес</label>
                 <input
                   value={currentLangContent.address || ''}
                   onChange={(e) => updateField('address', e.target.value)}
-                  placeholder="г. Ташкент, ул. Амира Темура"
+                  placeholder="г. Ташкент"
                   className="input w-full"
                 />
               </div>
             </div>
-          )}
-
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-app">
-            <button onClick={onClose} className="btn-ghost text-sm">
-              Отмена
-            </button>
-            <button onClick={handleSave} className="btn-primary text-sm">
-              Сохранить изменения
-            </button>
+            <div>
+              <label className="block text-sm font-medium text-app mb-1">Часы работы</label>
+              <input
+                value={currentLangContent.workingHours || ''}
+                onChange={(e) => updateField('workingHours', e.target.value)}
+                placeholder="Пн–Пт, 9:00–18:00"
+                className="input w-full"
+              />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-app mb-1">Telegram (ссылка)</label>
+                <input
+                  value={currentLangContent.socials?.telegram || ''}
+                  onChange={(e) =>
+                    updateField('socials', { ...(currentLangContent.socials || {}), telegram: e.target.value })
+                  }
+                  placeholder="https://t.me/ijarauz"
+                  className="input w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-app mb-1">Instagram (ссылка)</label>
+                <input
+                  value={currentLangContent.socials?.instagram || ''}
+                  onChange={(e) =>
+                    updateField('socials', { ...(currentLangContent.socials || {}), instagram: e.target.value })
+                  }
+                  placeholder="https://instagram.com/ijarauz"
+                  className="input w-full"
+                />
+              </div>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* 11. PLATFORM_STATS */}
+        {section.sectionType === 'PLATFORM_STATS' && (
+          <div className="space-y-3 pt-2">
+            <div>
+              <label className="block text-sm font-medium text-app mb-1">Заголовок секции</label>
+              <input
+                value={currentLangContent.title || ''}
+                onChange={(e) => updateField('title', e.target.value)}
+                placeholder="Ijarauz в цифрах"
+                className="input w-full"
+              />
+            </div>
+            <p className="text-xs text-muted p-3 bg-gray-50 dark:bg-white/5 rounded-xl border border-app">
+              Цифры (объявления, пользователи, города, просмотры) считаются автоматически на сервере — здесь нельзя задать их вручную.
+            </p>
+          </div>
+        )}
       </div>
-    </div>
+    </Modal>
   );
 };
 
@@ -690,7 +779,7 @@ const PageBuilder: React.FC<PageBuilderProps> = ({ pageKey }) => {
   const queryClient = useQueryClient();
   const [editingSection, setEditingSection] = useState<PageSectionItem | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [newSectionType, setNewSectionType] = useState('TEXT_BLOCK');
+  const [newSectionType, setNewSectionType] = useState<SectionType>('TEXT_BLOCK');
 
   const { data: sections = [], isLoading } = useQuery({
     queryKey: ['admin', 'page-sections', pageKey],
@@ -702,6 +791,10 @@ const PageBuilder: React.FC<PageBuilderProps> = ({ pageKey }) => {
       updatePageSectionApi(id, { isVisible }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'page-sections', pageKey] });
+      toast.success('Видимость секции изменена');
+    },
+    onError: () => {
+      toast.error('Не удалось изменить видимость секции');
     },
   });
 
@@ -710,6 +803,10 @@ const PageBuilder: React.FC<PageBuilderProps> = ({ pageKey }) => {
       reorderPageSectionsApi(pageKey, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'page-sections', pageKey] });
+      toast.success('Порядок секций обновлен');
+    },
+    onError: () => {
+      toast.error('Не удалось обновить порядок секций');
     },
   });
 
@@ -719,6 +816,10 @@ const PageBuilder: React.FC<PageBuilderProps> = ({ pageKey }) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'page-sections', pageKey] });
       setEditingSection(null);
+      toast.success('Изменения успешно сохранены');
+    },
+    onError: () => {
+      toast.error('Не удалось сохранить изменения');
     },
   });
 
@@ -728,6 +829,10 @@ const PageBuilder: React.FC<PageBuilderProps> = ({ pageKey }) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'page-sections', pageKey] });
       setIsAddModalOpen(false);
+      toast.success('Секция успешно создана');
+    },
+    onError: () => {
+      toast.error('Не удалось создать секцию');
     },
   });
 
@@ -735,6 +840,10 @@ const PageBuilder: React.FC<PageBuilderProps> = ({ pageKey }) => {
     mutationFn: (id: string) => deletePageSectionApi(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'page-sections', pageKey] });
+      toast.success('Секция успешно удалена');
+    },
+    onError: () => {
+      toast.error('Не удалось удалить секцию');
     },
   });
 
@@ -756,96 +865,12 @@ const PageBuilder: React.FC<PageBuilderProps> = ({ pageKey }) => {
   };
 
   const handleAddSection = () => {
-    let defaultContent: Record<string, unknown> = {};
-
-    switch (newSectionType) {
-      case 'HERO_SEARCH':
-        defaultContent = {
-          title: 'Аренда жилья в Узбекистане без посредников',
-          subtitle: 'Найдите идеальную квартиру, дом или комнату напрямую от собственников',
-          showSearch: true,
-          searchPlaceholder: 'Район, метро, улица или город...',
-          quickFilters: [
-            { label: 'Студии', href: '/catalog?type_apartments=studio' },
-            { label: '1-комнатные', href: '/catalog?rooms=1' },
-          ],
-        };
-        break;
-      case 'BENEFITS':
-        defaultContent = {
-          title: 'Почему выбирают нас',
-          items: [
-            { title: 'Прямой контакт', text: 'Без посредников и скрытых комиссий', icon: 'ShieldCheck' },
-            { title: 'Безопасность', text: 'Все объявления проходят модерацию', icon: 'Lock' },
-          ],
-        };
-        break;
-      case 'POPULAR_LISTINGS':
-        defaultContent = {
-          title: 'Популярные предложения',
-          viewAllText: 'Смотреть все',
-          limit: 6,
-        };
-        break;
-      case 'CTA_BANNER':
-        defaultContent = {
-          title: 'Сдайте жильё выгодно и быстро',
-          text: 'Разместите объявление бесплатно за 2 минуты',
-          buttonText: 'Разместить объявление',
-          buttonLink: '/add-listing',
-        };
-        break;
-      case 'CATEGORIES':
-        defaultContent = {
-          title: 'Категории жилья',
-          categories: [
-            { name: 'Посуточно', icon: 'Key', href: '/catalog?rental_type=daily' },
-            { name: 'Новостройки', icon: 'Building', href: '/catalog?building_type=new' },
-          ],
-        };
-        break;
-      case 'TEXT_BLOCK':
-        defaultContent = {
-          title: 'Наша миссия',
-          text: 'Мы создаем удобный, безопасный и прозрачный сервис аренды жилья по всему Узбекистану.',
-        };
-        break;
-      case 'TEAM_MEMBERS':
-        defaultContent = {
-          title: 'Наша команда',
-          members: [
-            { name: 'Команда разработчиков', role: 'Engineering', avatar: '' },
-            { name: 'Служба заботы о клиентах', role: 'Support', avatar: '' },
-          ],
-        };
-        break;
-      case 'FAQ_ACCORDION':
-        defaultContent = {
-          title: 'Частые вопросы',
-          items: [
-            { question: 'Как разместить объявление?', answer: 'Нажмите кнопку «Разместить объявление» в верхнем меню, заполните информацию и загрузите фотографии.' },
-          ],
-        };
-        break;
-      case 'CONTACT_INFO':
-        defaultContent = {
-          title: 'Контактная информация',
-          email: 'support@ijarauz.uz',
-          phone: '+998 71 200-00-00',
-          address: 'Ташкент, Узбекистан',
-        };
-        break;
-      default:
-        defaultContent = {
-          title: 'Секция',
-          text: 'Текст секции',
-        };
-    }
+    const defaultContent = (SECTION_DEFAULTS[newSectionType] || {}) as unknown as Record<string, unknown>;
 
     createMutation.mutate({
       pageKey,
       sectionType: newSectionType,
-      title: SECTION_TYPES[newSectionType]?.defaultTitle || newSectionType,
+      title: SECTION_META[newSectionType]?.defaultTitle || newSectionType,
       order: sections.length,
       isVisible: true,
       content: defaultContent,
@@ -879,15 +904,14 @@ const PageBuilder: React.FC<PageBuilderProps> = ({ pageKey }) => {
       {/* Шапка */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => navigate('/pages')}
-            className="flex items-center justify-center w-10 h-10 rounded-xl border border-app bg-surface hover:bg-gray-100 dark:hover:bg-white/5 text-muted hover:text-app transition-colors shadow-sm"
             title="Назад ко всем страницам"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 12H5M12 19l-7-7 7-7" />
-            </svg>
-          </button>
+            <ArrowLeft size={18} />
+          </Button>
           <div>
             <h1 className="text-xl font-bold text-app">Управление секциями страницы: /{pageKey}</h1>
             <p className="text-sm text-muted">
@@ -895,18 +919,20 @@ const PageBuilder: React.FC<PageBuilderProps> = ({ pageKey }) => {
             </p>
           </div>
         </div>
-        <button
+        <Button
+          variant="primary"
+          size="sm"
           onClick={() => setIsAddModalOpen(true)}
-          className="btn-primary text-sm flex items-center justify-center gap-1.5 self-start sm:self-auto"
+          className="self-start sm:self-auto"
         >
-          + Добавить секцию
-        </button>
+          <Plus size={16} /> Добавить секцию
+        </Button>
       </div>
 
       {/* Список секций */}
       {sections.length === 0 ? (
         <div className="card text-center py-12 space-y-4">
-          <div className="w-16 h-16 rounded-full bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 flex items-center justify-center mx-auto text-2xl">
+          <div className="w-16 h-16 rounded-full bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 flex items-center justify-center mx-auto text-2xl font-bold">
             📄
           </div>
           <div>
@@ -916,22 +942,33 @@ const PageBuilder: React.FC<PageBuilderProps> = ({ pageKey }) => {
             </p>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-            <button
+            <Button
+              variant="primary"
+              size="md"
               onClick={() => {
-                const defaultsMap: Record<string, Array<{ type: string; title: string; content: any }>> = {
+                const defaultsMap: Record<string, Array<{ type: SectionType; title: string; content: any }>> = {
+                  home: [
+                    { type: 'HERO_SEARCH', title: 'Главный баннер с поиском', content: SECTION_DEFAULTS.HERO_SEARCH },
+                    { type: 'BENEFITS', title: 'Преимущества', content: SECTION_DEFAULTS.BENEFITS },
+                    { type: 'POPULAR_LISTINGS', title: 'Популярные предложения', content: SECTION_DEFAULTS.POPULAR_LISTINGS },
+                    { type: 'CTA_BANNER', title: 'Баннер размещения', content: SECTION_DEFAULTS.CTA_BANNER },
+                    { type: 'CATEGORIES', title: 'Категории недвижимости', content: SECTION_DEFAULTS.CATEGORIES },
+                    { type: 'PLATFORM_STATS', title: 'Ijarauz в цифрах', content: SECTION_DEFAULTS.PLATFORM_STATS },
+                  ],
                   about: [
-                    { type: 'TEXT_BLOCK', title: 'О нашей компании', content: { title: 'О сервисе Ijarauz', text: 'Ijarauz — это современная национальная платформа аренды недвижимости в Узбекистане без комиссий.' } },
-                    { type: 'BENEFITS', title: 'Наши ценности', content: { title: 'Наши преимущества', items: [{ title: 'Прямой контакт', text: 'Связывайтесь напрямую с собственниками' }, { title: 'Безопасность', text: 'Проверка каждого объявления' }] } },
-                    { type: 'CONTACT_INFO', title: 'Контакты', content: { title: 'Свяжитесь с нами', email: 'support@ijarauz.uz', phone: '+998 71 200-00-00', address: 'г. Ташкент' } },
+                    { type: 'TEXT_BLOCK', title: 'О нашей компании', content: SECTION_DEFAULTS.TEXT_BLOCK },
+                    { type: 'BENEFITS', title: 'Наши ценности', content: SECTION_DEFAULTS.BENEFITS },
+                    { type: 'TEAM_MEMBERS', title: 'Наша команда', content: SECTION_DEFAULTS.TEAM_MEMBERS },
+                    { type: 'CONTACT_INFO', title: 'Контакты', content: SECTION_DEFAULTS.CONTACT_INFO },
                   ],
                   catalog: [
-                    { type: 'HERO_SEARCH', title: 'Поиск по каталогу', content: { title: 'Каталог проверенной аренды', subtitle: 'Квартиры, дома и коммерческие помещения по всему Узбекистану', showSearch: true, searchPlaceholder: 'Район, метро, улица или город...' } },
-                    { type: 'CATEGORIES', title: 'Категории', content: { title: 'Категории жилья', categories: [{ name: 'Посуточно', icon: 'Key' }, { name: 'Новостройки', icon: 'Building' }] } },
-                    { type: 'POPULAR_LISTINGS', title: 'Рекомендуемые', content: { title: 'Рекомендуемые предложения', limit: 6, viewAllText: 'Смотреть все' } },
+                    { type: 'HERO_SEARCH', title: 'Поиск по каталогу', content: SECTION_DEFAULTS.HERO_SEARCH },
+                    { type: 'CATEGORIES', title: 'Категории', content: SECTION_DEFAULTS.CATEGORIES },
+                    { type: 'POPULAR_LISTINGS', title: 'Рекомендуемые', content: SECTION_DEFAULTS.POPULAR_LISTINGS },
                   ],
                   maintenance: [
                     { type: 'TEXT_BLOCK', title: 'Статус техработ', content: { title: '🛠️ Плановое техническое обслуживание', text: 'Сайт временно недоступен. Мы обновляем сервисы для вашего удобства.' } },
-                    { type: 'CONTACT_INFO', title: 'Контакты экстренной связи', content: { title: 'Техподдержка', email: 'support@ijarauz.uz', phone: '+998 71 200-00-00', address: 'г. Ташкент' } },
+                    { type: 'CONTACT_INFO', title: 'Контакты экстренной связи', content: SECTION_DEFAULTS.CONTACT_INFO },
                   ],
                   privacy: [
                     { type: 'TEXT_BLOCK', title: 'Политика конфиденциальности', content: { title: 'Политика обработки персональных данных', text: 'Мы гарантируем безопасность и сохранность ваших данных в соответствии с законодательством Республики Узбекистан.' } },
@@ -943,7 +980,7 @@ const PageBuilder: React.FC<PageBuilderProps> = ({ pageKey }) => {
 
                 const templates = defaultsMap[pageKey] || [
                   { type: 'TEXT_BLOCK', title: `Информация о ${pageKey}`, content: { title: `Раздел: ${pageKey}`, text: 'Текст страницы.' } },
-                  { type: 'CONTACT_INFO', title: 'Контакты', content: { title: 'Контакты', email: 'support@ijarauz.uz', phone: '+998 71 200-00-00', address: 'г. Ташкент' } },
+                  { type: 'CONTACT_INFO', title: 'Контакты', content: SECTION_DEFAULTS.CONTACT_INFO },
                 ];
 
                 templates.forEach((t, i) => {
@@ -958,21 +995,20 @@ const PageBuilder: React.FC<PageBuilderProps> = ({ pageKey }) => {
                 });
               }}
               disabled={createMutation.isPending}
-              className="btn-primary text-sm shadow-md"
             >
               🚀 Создать стандартный шаблон для /{pageKey}
-            </button>
-            <button onClick={() => setIsAddModalOpen(true)} className="btn-ghost text-sm border border-app">
+            </Button>
+            <Button variant="outline" size="md" onClick={() => setIsAddModalOpen(true)}>
               + Добавить блок вручную
-            </button>
+            </Button>
           </div>
         </div>
       ) : (
         <div className="space-y-3">
           {sections.map((section, index) => {
-            const meta = SECTION_TYPES[section.sectionType] || {
+            const meta = SECTION_META[section.sectionType as SectionType] || {
               label: section.sectionType,
-              icon: '📄',
+              icon: 'FileText',
               desc: 'Пользовательская секция',
             };
 
@@ -985,8 +1021,8 @@ const PageBuilder: React.FC<PageBuilderProps> = ({ pageKey }) => {
               >
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3.5 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 flex items-center justify-center text-xl shrink-0">
-                      {meta.icon}
+                    <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 flex items-center justify-center text-xs font-bold shrink-0">
+                      {section.sectionType.slice(0, 3)}
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
@@ -1006,52 +1042,50 @@ const PageBuilder: React.FC<PageBuilderProps> = ({ pageKey }) => {
                   </div>
 
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <button
-                      type="button"
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => moveSection(index, 'up')}
                       disabled={index === 0}
-                      className="p-2 text-muted hover:text-app rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 disabled:opacity-20 transition-colors"
                       title="Поднять выше"
                     >
-                      ↑
-                    </button>
-                    <button
-                      type="button"
+                      <ArrowUp size={16} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => moveSection(index, 'down')}
                       disabled={index === sections.length - 1}
-                      className="p-2 text-muted hover:text-app rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 disabled:opacity-20 transition-colors"
                       title="Опустить ниже"
                     >
-                      ↓
-                    </button>
-                    <button
-                      type="button"
+                      <ArrowDown size={16} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => toggleVisibilityMutation.mutate({ id: section.id, isVisible: !section.isVisible })}
-                      className={`p-2 rounded-lg transition-colors ${
-                        section.isVisible
-                          ? 'text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-950/40'
-                          : 'text-muted hover:bg-gray-100 dark:hover:bg-white/5'
-                      }`}
                       title={section.isVisible ? 'Скрыть с сайта' : 'Показать на сайте'}
+                      className={section.isVisible ? 'text-teal-600' : 'text-muted'}
                     >
-                      {section.isVisible ? '👁️' : '🙈'}
-                    </button>
-                    <button
-                      type="button"
+                      {section.isVisible ? <Eye size={16} /> : <EyeOff size={16} />}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => setEditingSection(section)}
-                      className="p-2 text-app hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors"
                       title="Редактировать контент"
                     >
-                      ✏️
-                    </button>
-                    <button
-                      type="button"
+                      <Edit size={16} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => handleDelete(section.id)}
-                      className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                      className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
                       title="Удалить секцию"
                     >
-                      🗑️
-                    </button>
+                      <Trash2 size={16} />
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -1061,45 +1095,47 @@ const PageBuilder: React.FC<PageBuilderProps> = ({ pageKey }) => {
       )}
 
       {/* Модалка добавления секции */}
-      {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsAddModalOpen(false)} />
-          <div className="relative w-full max-w-lg rounded-2xl bg-surface p-6 shadow-2xl border border-app z-10">
-            <h3 className="text-base font-bold text-app mb-4">Добавить секцию на страницу /{pageKey}</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-app mb-1.5">Выберите тип блока</label>
-                <select
-                  value={newSectionType}
-                  onChange={(e) => setNewSectionType(e.target.value)}
-                  className="select w-full"
-                >
-                  {Object.entries(SECTION_TYPES).map(([key, meta]) => (
-                    <option key={key} value={key}>
-                      {meta.icon} {meta.label}
-                    </option>
-                  ))}
-                </select>
-                <p className="mt-1.5 text-xs text-muted">
-                  {SECTION_TYPES[newSectionType]?.desc}
-                </p>
-              </div>
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-app">
-                <button onClick={() => setIsAddModalOpen(false)} className="btn-ghost text-sm">
-                  Отмена
-                </button>
-                <button
-                  onClick={handleAddSection}
-                  disabled={createMutation.isPending}
-                  className="btn-primary text-sm"
-                >
-                  {createMutation.isPending ? 'Добавление...' : 'Добавить секцию'}
-                </button>
-              </div>
-            </div>
+      <Modal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        title={`Добавить секцию на страницу /${pageKey}`}
+        size="md"
+        footer={
+          <div className="flex items-center justify-end gap-3 w-full">
+            <Button variant="ghost" size="sm" onClick={() => setIsAddModalOpen(false)}>
+              Отмена
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleAddSection}
+              disabled={createMutation.isPending}
+            >
+              {createMutation.isPending ? 'Добавление...' : 'Добавить секцию'}
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-app mb-1.5">Выберите тип блока</label>
+            <select
+              value={newSectionType}
+              onChange={(e) => setNewSectionType(e.target.value as SectionType)}
+              className="select w-full"
+            >
+              {(Object.keys(SECTION_META) as SectionType[]).map((key) => (
+                <option key={key} value={key}>
+                  {SECTION_META[key].label}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1.5 text-xs text-muted">
+              {SECTION_META[newSectionType]?.desc}
+            </p>
           </div>
         </div>
-      )}
+      </Modal>
 
       {/* Модалка редактирования секции */}
       <SectionEditModal
