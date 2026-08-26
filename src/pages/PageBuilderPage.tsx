@@ -1,10 +1,7 @@
-// src/pages/PageBuilderPage.tsx
-// Универсальный конструктор страниц — работает для любого pageKey
-
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import Layout from '../components/Layout';
-import PageBuilder from '../components/PageBuilder/PageBuilder';
+import { PuckEditor } from '../components/PageBuilder/PuckEditor';
 
 // Названия страниц для отображения в заголовке
 const PAGE_TITLES: Record<string, string> = {
@@ -33,8 +30,8 @@ const PageBuilderPage: React.FC = () => {
   const title = PAGE_TITLES[pageKey] || `Страница: ${pageKey}`;
 
   return (
-    <Layout title={`Конструктор: ${title}`}>
-      <PageBuilder pageKey={pageKey} />
+    <Layout title={`Конструктор Puck: ${title}`}>
+      <PuckEditor pageKey={pageKey} />
     </Layout>
   );
 };
