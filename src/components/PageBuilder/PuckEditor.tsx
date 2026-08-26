@@ -27,9 +27,111 @@ export const PuckEditor: React.FC<PuckEditorProps> = ({ pageKey }) => {
   // 2. Преобразуем формат БД в Puck Data
   const initialData: Data = React.useMemo(() => {
     if (!dbSections || dbSections.length === 0) {
+      if (pageKey === 'maintenance') {
+        return {
+          content: [
+            {
+              type: 'TextBlock',
+              props: {
+                id: 'maint-1',
+                title: '🛠️ Технические работы',
+                content: 'Сайт временно недоступен в связи с плановым техническим обслуживанием.\nМы скоро вернемся!',
+                align: 'center',
+              },
+            },
+            {
+              type: 'ContactInfo',
+              props: {
+                id: 'maint-2',
+                title: 'Служба экстренной поддержки',
+                email: 'support@ijarauz.uz',
+                phone: '+998 71 200-00-00',
+                address: 'г. Ташкент, Узбекистан',
+              },
+            },
+          ],
+          root: { props: { title: 'Технические работы' } },
+        };
+      }
+
+      if (pageKey === 'about') {
+        return {
+          content: [
+            {
+              type: 'TextBlock',
+              props: {
+                id: 'about-1',
+                title: 'О сервисе Ijarauz',
+                content: 'Ijarauz — это современная национальная платформа для безопасной и удобной аренды недвижимости в Узбекистане без комиссий и посредников.',
+                align: 'left',
+              },
+            },
+            {
+              type: 'Benefits',
+              props: {
+                id: 'about-2',
+                title: 'Наши ценности',
+                item1Title: 'Безопасность',
+                item1Text: 'Проверка каждого собственника и объекта',
+                item2Title: 'Скорость',
+                item2Text: 'Удобный поиск по карте и мгновенные уведомления',
+                item3Title: 'Честность',
+                item3Text: 'Никаких скрытых платежей и фейковых объявлений',
+              },
+            },
+            {
+              type: 'ContactInfo',
+              props: {
+                id: 'about-3',
+                title: 'Наши контакты',
+                email: 'support@ijarauz.uz',
+                phone: '+998 71 200-00-00',
+                address: 'г. Ташкент, Узбекистан',
+              },
+            },
+          ],
+          root: { props: { title: 'О нас' } },
+        };
+      }
+
+      if (pageKey === 'catalog') {
+        return {
+          content: [
+            {
+              type: 'HeroSearch',
+              props: {
+                id: 'cat-hero',
+                title: 'Каталог проверенной аренды',
+                subtitle: 'Все актуальные квартиры, дома и коммерческая недвижимость',
+                showSearch: true,
+                searchPlaceholder: 'Город, район, ориентир или метро...',
+              },
+            },
+            {
+              type: 'Categories',
+              props: {
+                id: 'cat-types',
+                title: 'Категории недвижимости',
+              },
+            },
+            {
+              type: 'PopularListings',
+              props: {
+                id: 'cat-popular',
+                title: 'Рекомендуемые предложения',
+                limit: 6,
+                viewAllText: 'Все объекты',
+              },
+            },
+          ],
+          root: { props: { title: 'Каталог' } },
+        };
+      }
+
+      // Default for home and other pages
       return {
         content: [
-          { type: 'HeroSearch', props: { id: 'hero-1', title: 'Аренда жилья в Узбекистане', subtitle: 'Найдите жилье без посредников', showSearch: true, searchPlaceholder: 'Район, метро, улица или город...' } },
+          { type: 'HeroSearch', props: { id: 'hero-1', title: 'Аренда жилья в Узбекистане без посредников', subtitle: 'Найдите идеальную квартиру, дом или комнату напрямую от собственников', showSearch: true, searchPlaceholder: 'Район, метро, улица или город...' } },
           { type: 'Benefits', props: { id: 'benefits-1', title: 'Почему выбирают ijarauz' } },
           { type: 'PopularListings', props: { id: 'pop-1', title: 'Популярные предложения', limit: 6, viewAllText: 'Смотреть все' } },
           { type: 'CtaBanner', props: { id: 'cta-1', title: 'Сдайте жильё выгодно и быстро', buttonText: 'Разместить объявление', buttonLink: '/add-listing' } },

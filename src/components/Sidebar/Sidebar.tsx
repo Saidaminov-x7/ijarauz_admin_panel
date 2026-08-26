@@ -255,7 +255,7 @@ const Sidebar: React.FC = () => {
                   }
                 `}
               >
-                Управление страницами
+                Все страницы сайта
               </NavLink>
               <NavLink
                 to="/pages/home/builder"
@@ -268,7 +268,46 @@ const Sidebar: React.FC = () => {
                   }
                 `}
               >
-                Конструктор главной
+                Главная (/home)
+              </NavLink>
+              <NavLink
+                to="/pages/catalog/builder"
+                className={({ isActive }) => `
+                  block px-3 py-1.5 rounded-md text-xs font-medium transition-colors
+                  ${
+                    isActive
+                      ? 'text-primary-600 dark:text-primary-400 bg-primary-100/50 dark:bg-primary-900/20 font-semibold'
+                      : 'text-muted hover:text-app hover:bg-gray-100 dark:hover:bg-white/5'
+                  }
+                `}
+              >
+                Каталог (/catalog)
+              </NavLink>
+              <NavLink
+                to="/pages/about/builder"
+                className={({ isActive }) => `
+                  block px-3 py-1.5 rounded-md text-xs font-medium transition-colors
+                  ${
+                    isActive
+                      ? 'text-primary-600 dark:text-primary-400 bg-primary-100/50 dark:bg-primary-900/20 font-semibold'
+                      : 'text-muted hover:text-app hover:bg-gray-100 dark:hover:bg-white/5'
+                  }
+                `}
+              >
+                О нас (/about)
+              </NavLink>
+              <NavLink
+                to="/pages/maintenance/builder"
+                className={({ isActive }) => `
+                  block px-3 py-1.5 rounded-md text-xs font-medium transition-colors
+                  ${
+                    isActive
+                      ? 'text-primary-600 dark:text-primary-400 bg-primary-100/50 dark:bg-primary-900/20 font-semibold'
+                      : 'text-muted hover:text-app hover:bg-gray-100 dark:hover:bg-white/5'
+                  }
+                `}
+              >
+                Техобслуживание (/maintenance)
               </NavLink>
             </div>
           )}
