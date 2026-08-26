@@ -905,11 +905,67 @@ const PageBuilder: React.FC<PageBuilderProps> = ({ pageKey }) => {
 
       {/* Список секций */}
       {sections.length === 0 ? (
-        <div className="card text-center py-12">
-          <p className="text-muted mb-4">На этой странице пока нет секций</p>
-          <button onClick={() => setIsAddModalOpen(true)} className="btn-primary text-sm">
-            Добавить первую секцию
-          </button>
+        <div className="card text-center py-12 space-y-4">
+          <div className="w-16 h-16 rounded-full bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 flex items-center justify-center mx-auto text-2xl">
+            📄
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-app mb-1">Секции для страницы /{pageKey} еще не созданы</h3>
+            <p className="text-sm text-muted max-w-md mx-auto">
+              Вы можете быстро инициализировать стандартный набор блоков для этой страницы или добавить блоки вручную
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            <button
+              onClick={() => {
+                const defaultsMap: Record<string, Array<{ type: string; title: string; content: any }>> = {
+                  about: [
+                    { type: 'TEXT_BLOCK', title: 'О нашей компании', content: { title: 'О сервисе Ijarauz', text: 'Ijarauz — это современная национальная платформа аренды недвижимости в Узбекистане без комиссий.' } },
+                    { type: 'BENEFITS', title: 'Наши ценности', content: { title: 'Наши преимущества', items: [{ title: 'Прямой контакт', text: 'Связывайтесь напрямую с собственниками' }, { title: 'Безопасность', text: 'Проверка каждого объявления' }] } },
+                    { type: 'CONTACT_INFO', title: 'Контакты', content: { title: 'Свяжитесь с нами', email: 'support@ijarauz.uz', phone: '+998 71 200-00-00', address: 'г. Ташкент' } },
+                  ],
+                  catalog: [
+                    { type: 'HERO_SEARCH', title: 'Поиск по каталогу', content: { title: 'Каталог проверенной аренды', subtitle: 'Квартиры, дома и коммерческие помещения по всему Узбекистану', showSearch: true, searchPlaceholder: 'Район, метро, улица или город...' } },
+                    { type: 'CATEGORIES', title: 'Категории', content: { title: 'Категории жилья', categories: [{ name: 'Посуточно', icon: 'Key' }, { name: 'Новостройки', icon: 'Building' }] } },
+                    { type: 'POPULAR_LISTINGS', title: 'Рекомендуемые', content: { title: 'Рекомендуемые предложения', limit: 6, viewAllText: 'Смотреть все' } },
+                  ],
+                  maintenance: [
+                    { type: 'TEXT_BLOCK', title: 'Статус техработ', content: { title: '🛠️ Плановое техническое обслуживание', text: 'Сайт временно недоступен. Мы обновляем сервисы для вашего удобства.' } },
+                    { type: 'CONTACT_INFO', title: 'Контакты экстренной связи', content: { title: 'Техподдержка', email: 'support@ijarauz.uz', phone: '+998 71 200-00-00', address: 'г. Ташкент' } },
+                  ],
+                  privacy: [
+                    { type: 'TEXT_BLOCK', title: 'Политика конфиденциальности', content: { title: 'Политика обработки персональных данных', text: 'Мы гарантируем безопасность и сохранность ваших данных в соответствии с законодательством Республики Узбекистан.' } },
+                  ],
+                  terms: [
+                    { type: 'TEXT_BLOCK', title: 'Условия использования', content: { title: 'Пользовательское соглашение', text: 'Используя платформу Ijarauz, вы соглашаетесь с правилами размещения и поиска объявлений.' } },
+                  ],
+                };
+
+                const templates = defaultsMap[pageKey] || [
+                  { type: 'TEXT_BLOCK', title: `Информация о ${pageKey}`, content: { title: `Раздел: ${pageKey}`, text: 'Текст страницы.' } },
+                  { type: 'CONTACT_INFO', title: 'Контакты', content: { title: 'Контакты', email: 'support@ijarauz.uz', phone: '+998 71 200-00-00', address: 'г. Ташкент' } },
+                ];
+
+                templates.forEach((t, i) => {
+                  createMutation.mutate({
+                    pageKey,
+                    sectionType: t.type,
+                    title: t.title,
+                    order: i,
+                    isVisible: true,
+                    content: t.content,
+                  });
+                });
+              }}
+              disabled={createMutation.isPending}
+              className="btn-primary text-sm shadow-md"
+            >
+              🚀 Создать стандартный шаблон для /{pageKey}
+            </button>
+            <button onClick={() => setIsAddModalOpen(true)} className="btn-ghost text-sm border border-app">
+              + Добавить блок вручную
+            </button>
+          </div>
         </div>
       ) : (
         <div className="space-y-3">
