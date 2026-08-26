@@ -1,0 +1,310 @@
+// src/pages/UserProfilePage.tsx
+// Страница профиля пользователя в админке: контакты, история действий, объявления
+
+import React, { useState } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { useNavigate, useParams } from 'react-router-dom';
+import Layout from '../components/Layout';
+import { getAdminUserByIdApi, blockUserApi, unblockUserApi } from '../lib/usersApi';
+import { getUserAuditLogsApi } from '../lib/auditLogApi';
+import Badge from '../components/Badge/Badge';
+import { ArrowLeft, Shield, Lock, Unlock, Mail, Phone, Calendar, Home, Clock } from 'lucide-react';
+import { format } from 'date-fns';
+import { ru } from 'date-fns/locale';
+
+const UserProfilePage: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<'info' | 'listings' | 'history'>('info');
+
+  const { data: user, isLoading: isUserLoading } = useQuery({
+    queryKey: ['admin', 'user', id],
+    queryFn: () => getAdminUserByIdApi(id!),
+  });
+
+  const { data: auditLogs, isLoading: isAuditLoading } = useQuery({
+    queryKey: ['admin', 'user', id, 'audit-logs'],
+    queryFn: () => getUserAuditLogsApi(id!),
+  });
+
+  const blockMutation = useMutation({
+    mutationFn: (reason: string) => blockUserApi(id!, reason),
+    onSuccess: () => {
+      navigate('/users');
+    },
+  });
+
+  const unblockMutation = useMutation({
+    mutationFn: () => unblockUserApi(id!),
+    onSuccess: () => {
+      navigate('/users');
+    },
+  });
+
+  if (isUserLoading) {
+    return <Layout title="Загрузка...">
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+      </div>
+    </Layout>;
+  }
+
+  if (!user) {
+    return <Layout title="Пользователь не найден">
+      <div className="card p-8 text-center">
+        <h2 className="text-xl font-semibold text-app mb-4">Пользователь не найден</h2>
+        <button className="btn-primary" onClick={() => navigate('/users')}>Вернуться к списку</button>
+      </div>
+    </Layout>;
+  }
+
+  const getRoleBadge = (role: string) => {
+    switch (role) {
+      case 'ADMIN': return { label: 'Администратор', variant: 'teal' as const };
+      case 'LANDLORD': return { label: 'Арендодатель', variant: 'success' as const };
+      default: return { label: 'Пользователь', variant: 'info' as const };
+    }
+  };
+
+  const getStatusBadge = (isBlocked: boolean) => {
+    return isBlocked
+      ? { label: 'Заблокирован', variant: 'danger' as const }
+      : { label: 'Активен', variant: 'success' as const };
+  };
+
+  return (
+    <Layout title={`Профиль пользователя: ${user.name}`}>
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Хлебные крошки и кнопка назад */}
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate('/users')}
+            className="flex items-center gap-2 text-sm text-muted hover:text-app transition-colors"
+          >
+            <ArrowLeft size={16} /> Назад к списку
+          </button>
+        </div>
+
+        {/* Карточка профиля */}
+        <div className="card p-6">
+          <div className="flex flex-col md:flex-row gap-6">
+            <div className="flex-shrink-0">
+              <div className="w-24 h-24 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 flex items-center justify-center text-3xl font-semibold">
+                {user.name.slice(0, 1).toUpperCase()}
+              </div>
+            </div>
+            <div className="flex-1">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4">
+                <h1 className="text-2xl font-bold text-app">{user.name}</h1>
+                <Badge variant={getRoleBadge(user.role).variant} className="text-sm">
+                  {getRoleBadge(user.role).label}
+                </Badge>
+                <Badge variant={getStatusBadge(user.isBlocked).variant} className="text-sm">
+                  {getStatusBadge(user.isBlocked).label}
+                </Badge>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                <div className="flex items-center gap-2 text-muted">
+                  <Mail size={16} />
+                  <a href={`mailto:${user.email}`} className="hover:text-primary-500 transition-colors">{user.email}</a>
+                </div>
+                {user.phone && (
+                  <div className="flex items-center gap-2 text-muted">
+                    <Phone size={16} />
+                    <a href={`tel:${user.phone}`} className="hover:text-primary-500 transition-colors">{user.phone}</a>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 text-muted">
+                  <Calendar size={16} />
+                  <span>Зарегистрирован: {format(new Date(user.createdAt), 'd MMMM yyyy', { locale: ru })}</span>
+                </div>
+                {user.lastLoginAt && (
+                  <div className="flex items-center gap-2 text-muted">
+                    <Clock size={16} />
+                    <span>Последний вход: {format(new Date(user.lastLoginAt), 'd MMMM yyyy, HH:mm', { locale: ru })}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-2 mt-6">
+                {user.isBlocked ? (
+                  <button
+                    className="btn-ghost gap-1"
+                    onClick={() => unblockMutation.mutate()}
+                    disabled={unblockMutation.isPending}
+                  >
+                    <Unlock size={16} /> Разблокировать
+                  </button>
+                ) : (
+                  <button
+                    className="btn-danger gap-1"
+                    onClick={() => blockMutation.mutate('')}
+                    disabled={blockMutation.isPending}
+                  >
+                    <Lock size={16} /> Заблокировать
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Вкладки */}
+        <div className="border-b border-app">
+          <nav className="flex gap-6">
+            <button
+              onClick={() => setActiveTab('info')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'info' ? 'border-primary-500 text-primary-500' : 'border-transparent text-muted hover:text-app'
+              }`}
+            >
+              Информация
+            </button>
+            <button
+              onClick={() => setActiveTab('listings')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'listings' ? 'border-primary-500 text-primary-500' : 'border-transparent text-muted hover:text-app'
+              }`}
+            >
+              Объявления ({user.listings?.length || 0})
+            </button>
+            <button
+              onClick={() => setActiveTab('history')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'history' ? 'border-primary-500 text-primary-500' : 'border-transparent text-muted hover:text-app'
+              }`}
+            >
+              История действий ({auditLogs?.length || 0})
+            </button>
+          </nav>
+        </div>
+
+        {/* Контент вкладок */}
+        {activeTab === 'info' && (
+          <div className="card p-6">
+            <h2 className="text-lg font-semibold text-app mb-4">Дополнительная информация</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="p-4 border border-app rounded-lg">
+                <div className="text-sm text-muted mb-1">Роль в системе</div>
+                <div className="font-medium">{getRoleBadge(user.role).label}</div>
+              </div>
+              <div className="p-4 border border-app rounded-lg">
+                <div className="text-sm text-muted mb-1">Статус</div>
+                <div className="font-medium">{getStatusBadge(user.isBlocked).label}</div>
+              </div>
+              <div className="p-4 border border-app rounded-lg">
+                <div className="text-sm text-muted mb-1">Дата регистрации</div>
+                <div className="font-medium">{format(new Date(user.createdAt), 'd MMMM yyyy, HH:mm', { locale: ru })}</div>
+              </div>
+              {user.lastLoginAt && (
+                <div className="p-4 border border-app rounded-lg">
+                  <div className="text-sm text-muted mb-1">Последний вход</div>
+                  <div className="font-medium">{format(new Date(user.lastLoginAt), 'd MMMM yyyy, HH:mm', { locale: ru })}</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'listings' && (
+          <div className="card p-0 overflow-hidden">
+            {user.listings?.length === 0 ? (
+              <div className="p-6 text-center text-muted">У пользователя нет объявлений</div>
+            ) : (
+              <div className="divide-y divide-app">
+                {user.listings?.map((listing) => (
+                  <div key={listing.id} className="p-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                    <div className="flex gap-4">
+                      <div className="w-20 h-16 bg-gray-100 dark:bg-white/10 rounded-lg flex-shrink-0 overflow-hidden">
+                        {listing.images?.[0]?.url ? (
+                          <img
+                            src={listing.images[0].url}
+                            alt={listing.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400">
+                            <Home size={24} />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-medium text-app truncate">{listing.title}</h3>
+                          <Badge variant={listing.moderationStatus === 'APPROVED' ? 'success' : listing.moderationStatus === 'REJECTED' ? 'danger' : 'warning'} className="text-xs">
+                            {listing.moderationStatus === 'APPROVED' ? 'Одобрено' : listing.moderationStatus === 'REJECTED' ? 'Отклонено' : 'На модерации'}
+                          </Badge>
+                        </div>
+                        <div className="text-sm text-muted mb-1">
+                          {listing.city}{listing.district ? `, ${listing.district}` : ''}
+                        </div>
+                        <div className="text-sm text-muted">
+                          {listing.rooms} комн., {listing.area} м², {listing.price.toLocaleString()} сум/мес
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'history' && (
+          <div className="card p-0 overflow-hidden">
+            {isAuditLoading ? (
+              <div className="p-6 text-center text-muted">Загрузка...</div>
+            ) : auditLogs?.length === 0 ? (
+              <div className="p-6 text-center text-muted">Нет действий</div>
+            ) : (
+              <div className="divide-y divide-app">
+                {auditLogs?.map((log) => (
+                  <div key={log.id} className="p-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0">
+                        {log.action === 'USER_BLOCKED' ? (
+                          <Lock size={18} className="text-red-500" />
+                        ) : log.action === 'USER_UNBLOCKED' ? (
+                          <Unlock size={18} className="text-emerald-500" />
+                        ) : log.action === 'USER_ROLE_CHANGED' ? (
+                          <Shield size={18} className="text-blue-500" />
+                        ) : (
+                          <Clock size={18} className="text-muted" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-medium text-app">
+                            {log.action === 'USER_BLOCKED' ? 'Заблокирован'
+                              : log.action === 'USER_UNBLOCKED' ? 'Разблокирован'
+                              : log.action === 'USER_ROLE_CHANGED' ? 'Изменена роль'
+                              : log.action === 'USER_CREATED' ? 'Зарегистрирован'
+                              : log.action}
+                          </span>
+                          <span className="text-xs text-muted">
+                            {format(new Date(log.timestamp), 'd MMM yyyy, HH:mm', { locale: ru })}
+                          </span>
+                        </div>
+                        <div className="text-sm text-muted">
+                          {typeof log.meta?.reason === 'string' && <div className="mb-1">Причина: {log.meta.reason}</div>}
+                          {typeof log.meta?.oldRole === 'string' && typeof log.meta?.newRole === 'string' && (
+                            <div>
+                              Роль изменена с <strong>{log.meta.oldRole}</strong> на <strong>{log.meta.newRole}</strong>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </Layout>
+  );
+};
+
+export default UserProfilePage;

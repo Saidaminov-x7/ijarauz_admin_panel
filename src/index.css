@@ -1,0 +1,171 @@
+/* src/index.css — Дизайн-система admin panel ijarauz */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── CSS Custom Properties (Light Mode) ─────────────────────────────────── */
+:root {
+  --color-bg:          #f4f6f9;
+  --color-surface:     #ffffff;
+  --color-border:      #e5e7eb;
+  --color-text:        #111827;
+  --color-text-muted:  #6b7280;
+  --color-sidebar-bg:  #ffffff;
+  --color-sidebar-border: #f0f0f0;
+  --color-primary:     #14b8a6;
+  --color-primary-hover: #0d9488;
+}
+
+/* ─── Dark Mode CSS Variables ─────────────────────────────────────────────── */
+.dark {
+  --color-bg:          #0f0f0f;
+  --color-surface:     #1a1a1a;
+  --color-border:      #2a2a2a;
+  --color-text:        #f9fafb;
+  --color-text-muted:  #9ca3af;
+  --color-sidebar-bg:  #111111;
+  --color-sidebar-border: #222222;
+  --color-primary:     #14b8a6;
+  --color-primary-hover: #0d9488;
+}
+
+/* ─── Base Styles ─────────────────────────────────────────────────────────── */
+* {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  transition: background-color 0.2s ease, color 0.2s ease;
+  margin: 0;
+  padding: 0;
+}
+
+/* ─── Утилиты с CSS-переменными ────────────────────────────────────────────── */
+@layer utilities {
+  .bg-app       { background-color: var(--color-bg); }
+  .bg-surface   { background-color: var(--color-surface); }
+  .border-app   { border-color: var(--color-border); }
+  .text-app     { color: var(--color-text); }
+  .text-muted   { color: var(--color-text-muted); }
+  .sidebar-bg   { background-color: var(--color-sidebar-bg); }
+  .sidebar-border { border-color: var(--color-sidebar-border); }
+}
+
+/* ─── Компонент: карточка ─────────────────────────────────────────────────── */
+@layer components {
+  .card {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .card-sm {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+  }
+
+  /* Кнопка primary */
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm text-white
+           bg-primary-500 hover:bg-primary-600 active:bg-primary-700
+           transition-all duration-150 cursor-pointer border-0;
+  }
+
+  /* Кнопка ghost */
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm
+           hover:bg-gray-100 dark:hover:bg-white/5
+           transition-all duration-150 cursor-pointer border-0 bg-transparent;
+    color: var(--color-text);
+  }
+
+  /* Бейдж статуса */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-success {
+    @apply badge bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400;
+  }
+
+  .badge-warning {
+    @apply badge bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400;
+  }
+
+  .badge-danger {
+    @apply badge bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400;
+  }
+
+  .badge-info {
+    @apply badge bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400;
+  }
+
+  .badge-neutral {
+    @apply badge bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400;
+  }
+
+  /* Инпут */
+  .input {
+    @apply w-full px-3 py-2 rounded-lg text-sm outline-none transition-all duration-150;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+  }
+  .input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.15);
+  }
+
+  /* Select */
+  .select {
+    @apply input cursor-pointer;
+  }
+}
+
+/* ─── Скролл ────────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-text-muted); }
+
+/* ─── Анимации ────────────────────────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-teal {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-fade-in   { animation: fadeIn 0.2s ease-out; }
+.animate-pulse-teal { animation: pulse-teal 2s ease-in-out infinite; }
+
+/* ─── Recharts тёмная тема ──────────────────────────────────────────────────── */
+.dark .recharts-cartesian-grid-horizontal line,
+.dark .recharts-cartesian-grid-vertical line {
+  stroke: #2a2a2a;
+}
+
+.dark .recharts-text {
+  fill: #9ca3af;
+}
+
+.dark .recharts-tooltip-wrapper .recharts-default-tooltip {
+  background-color: #1a1a1a !important;
+  border-color: #2a2a2a !important;
+  color: #f9fafb !important;
+}
