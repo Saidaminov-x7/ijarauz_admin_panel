@@ -1,10 +1,13 @@
 // src/lib/listingsApi.ts
-// API функции для управления объявлениями (admin)
+// API функции для управления объявлениями и жалобами (admin)
 
 import { api } from './axios';
 
 export type ModerationStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CHANGES_REQUESTED';
 export type ListingStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED' | 'DELETED';
+export type PromotionTier = 'BASIC' | 'TOP' | 'URGENT';
+export type ReportReason = 'SCAM' | 'ALREADY_RENTED' | 'WRONG_PRICE' | 'WRONG_PHOTOS' | 'DUPLICATE' | 'OTHER';
+export type ReportStatus = 'OPEN' | 'RESOLVED' | 'DISMISSED';
 
 export interface AdminListing {
   id:               string;
@@ -21,6 +24,12 @@ export interface AdminListing {
   moderationStatus: ModerationStatus;
   moderationNote:   string | null;
   viewsCount:       number;
+  isPromoted?:      boolean;
+  promotionTier?:   PromotionTier | null;
+  promotedUntil?:   string | null;
+  isVerified?:      boolean;
+  verifiedAt?:      string | null;
+  verifiedBy?:      string | null;
   createdAt:        string;
   updatedAt:        string;
   owner: {
@@ -57,6 +66,29 @@ export interface PaginatedResponse<T> {
   };
 }
 
+export interface ReportItem {
+  id:         string;
+  listingId:  string;
+  reason:     ReportReason;
+  comment:    string | null;
+  status:     ReportStatus;
+  createdAt:  string;
+  listing?: {
+    id:     string;
+    title:  string;
+    city:   string;
+    price:  string;
+    status: ListingStatus;
+    images: { url: string }[];
+    owner:  { id: string; name: string; email: string };
+  };
+  reporter?: {
+    id:    string;
+    name:  string;
+    email: string;
+  } | null;
+}
+
 // Список объявлений с фильтрами
 export const getAdminListingsApi = async (
   filter: ListingsFilter,
@@ -83,7 +115,32 @@ export const requestChangesApi = async (id: string, comment: string): Promise<Ad
   return data;
 };
 
+// Верификация "Проверено Ijarauz"
+export const verifyListingApi = async (id: string, isVerified = true): Promise<AdminListing> => {
+  const { data } = await api.patch<AdminListing>(`/admin/listings/${id}/verify`, { isVerified });
+  return data;
+};
+
 // Удалить объявление (soft delete)
 export const deleteListingApi = async (id: string): Promise<void> => {
   await api.delete(`/admin/listings/${id}`);
+};
+
+// Получить список жалоб
+export const getReportsApi = async (params: {
+  status?: ReportStatus;
+  page?: number;
+  limit?: number;
+} = {}): Promise<PaginatedResponse<ReportItem>> => {
+  const { data } = await api.get<PaginatedResponse<ReportItem>>('/admin/reports', { params });
+  return data;
+};
+
+// Обновить статус жалобы
+export const updateReportStatusApi = async (
+  id: string,
+  status: ReportStatus,
+): Promise<ReportItem> => {
+  const { data } = await api.patch<ReportItem>(`/admin/reports/${id}/status`, { status });
+  return data;
 };

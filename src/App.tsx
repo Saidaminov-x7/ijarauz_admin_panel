@@ -10,6 +10,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import ListingsPage from './pages/ListingsPage';
+import ReportsPage from './pages/ReportsPage';
 import UsersPage from './pages/UsersPage';
 import UserProfilePage from './pages/UserProfilePage';
 import MediaLibraryPage from './pages/MediaLibraryPage';
@@ -57,6 +58,16 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <ListingsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Жалобы на объявления */}
+        <Route
+          path="/reports"
+          element={
+            <ProtectedRoute>
+              <ReportsPage />
             </ProtectedRoute>
           }
         />

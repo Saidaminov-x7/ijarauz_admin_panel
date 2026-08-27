@@ -15,6 +15,7 @@ import {
   Building,
   Home,
   MapPin,
+  ShieldCheck,
 } from 'lucide-react';
 import Layout from '../components/Layout';
 import {
@@ -22,6 +23,7 @@ import {
   approveListingApi,
   rejectListingApi,
   requestChangesApi,
+  verifyListingApi,
   deleteListingApi,
   type ModerationStatus,
 } from '../lib/listingsApi';
@@ -140,6 +142,15 @@ export const ListingsPage: React.FC = () => {
       invalidateListings();
       setDeleteConfirmId(null);
       toast.success('Объявление удалено');
+    },
+  });
+
+  const verifyMutation = useMutation({
+    mutationFn: ({ id, isVerified }: { id: string; isVerified: boolean }) =>
+      verifyListingApi(id, isVerified),
+    onSuccess: (_, variables) => {
+      invalidateListings();
+      toast.success(variables.isVerified ? 'Объявление верифицировано ("Проверено Ijarauz")' : 'Верификация снята');
     },
   });
 
@@ -399,6 +410,16 @@ export const ListingsPage: React.FC = () => {
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="text-sm font-bold text-app truncate">{item.title}</h3>
                         {getStatusBadge(item.moderationStatus)}
+                        {item.isPromoted && (
+                          <Badge variant={item.promotionTier === 'URGENT' ? 'danger' : item.promotionTier === 'TOP' ? 'warning' : 'info'}>
+                            {item.promotionTier === 'URGENT' ? '🔥 Срочно' : item.promotionTier === 'TOP' ? '⭐ ТОП' : 'Boost'}
+                          </Badge>
+                        )}
+                        {item.isVerified && (
+                          <Badge variant="success">
+                            <ShieldCheck size={12} className="inline mr-1" /> Проверено
+                          </Badge>
+                        )}
                         <span className="text-[10px] text-muted font-mono bg-gray-100 dark:bg-white/5 px-2 py-0.5 rounded-md">
                           LST-{item.id.slice(-4).toUpperCase()}
                         </span>
@@ -431,6 +452,27 @@ export const ListingsPage: React.FC = () => {
                     </div>
 
                     <div className="flex items-center gap-1.5">
+                      {/* Кнопка быстрой верификации */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          verifyMutation.mutate({
+                            id: item.id,
+                            isVerified: !item.isVerified,
+                          })
+                        }
+                        className={
+                          item.isVerified
+                            ? 'text-emerald-600 border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'
+                            : 'text-muted hover:text-app'
+                        }
+                        title={item.isVerified ? 'Снять статус проверки' : 'Подтвердить (Проверено Ijarauz)'}
+                        leftIcon={<ShieldCheck size={14} />}
+                      >
+                        {item.isVerified ? 'Проверено' : 'Подтвердить'}
+                      </Button>
+
                       {item.moderationStatus === 'PENDING' && (
                         <>
                           <Button
