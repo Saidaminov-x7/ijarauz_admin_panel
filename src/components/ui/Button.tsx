@@ -7,12 +7,16 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   variant?: ButtonVariant;
   size?: ButtonSize;
   as?: React.ElementType;
+  icon?: React.ReactNode;
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
+  loading?: boolean;
 }
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary: 'bg-teal-600 text-white hover:bg-teal-700 shadow-sm',
+  primary: 'bg-primary-500 text-white hover:bg-primary-600 active:bg-primary-700 shadow-xs',
   ghost: 'bg-transparent text-app hover:bg-gray-100 dark:hover:bg-white/5',
-  danger: 'bg-red-600 text-white hover:bg-red-700',
+  danger: 'bg-red-600 text-white hover:bg-red-700 shadow-xs',
   outline: 'bg-transparent border border-app text-app hover:bg-gray-50 dark:hover:bg-white/5',
 };
 
@@ -24,20 +28,44 @@ const sizeClasses: Record<ButtonSize, string> = {
 };
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className = '', variant = 'primary', size = 'md', as: Component = 'button', children, ...props }, ref) => {
+  (
+    {
+      className = '',
+      variant = 'primary',
+      size = 'md',
+      as: Component = 'button',
+      children,
+      icon,
+      leftIcon,
+      rightIcon,
+      loading = false,
+      disabled,
+      ...props
+    },
+    ref,
+  ) => {
     const Comp: any = Component;
+    const effectiveLeftIcon = leftIcon || icon;
+
     return (
       <Comp
         ref={ref}
+        disabled={disabled || loading}
         className={[
-          'inline-flex items-center justify-center rounded-xl font-semibold whitespace-nowrap transition-colors disabled:opacity-50 disabled:pointer-events-none cursor-pointer',
+          'inline-flex items-center justify-center rounded-xl font-semibold whitespace-nowrap transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none cursor-pointer outline-none select-none',
           variantClasses[variant],
           sizeClasses[size],
           className,
         ].join(' ')}
         {...props}
       >
-        <span className="truncate flex items-center gap-1.5">{children}</span>
+        {loading ? (
+          <div className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin shrink-0" />
+        ) : (
+          effectiveLeftIcon && <span className="shrink-0">{effectiveLeftIcon}</span>
+        )}
+        {children && <span className="truncate">{children}</span>}
+        {!loading && rightIcon && <span className="shrink-0">{rightIcon}</span>}
       </Comp>
     );
   },

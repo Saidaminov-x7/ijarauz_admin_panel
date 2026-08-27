@@ -61,6 +61,14 @@ const SettingsIcon = () => (
   </svg>
 );
 
+const MediaIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+    <circle cx="8.5" cy="8.5" r="1.5" />
+    <polyline points="21 15 16 10 5 21" />
+  </svg>
+);
+
 const ChevronDownIcon = ({ isOpen }: { isOpen: boolean }) => (
   <svg
     width="14"
@@ -219,6 +227,23 @@ const Sidebar: React.FC = () => {
         >
           <span className="flex-shrink-0"><UsersIcon /></span>
           <span>Пользователи</span>
+        </NavLink>
+
+        {/* Медиа-библиотека */}
+        <NavLink
+          to="/media"
+          className={({ isActive }) => `
+            flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+            transition-all duration-150 cursor-pointer
+            ${
+              isActive
+                ? 'bg-primary-500 text-white shadow-sm'
+                : 'text-muted hover:bg-gray-100 dark:hover:bg-white/5 hover:text-app'
+            }
+          `}
+        >
+          <span className="flex-shrink-0"><MediaIcon /></span>
+          <span>Медиа-библиотека</span>
         </NavLink>
 
         {/* ─── Страницы сайта (Dropdown) ─── */}

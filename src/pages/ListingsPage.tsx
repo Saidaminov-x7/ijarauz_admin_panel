@@ -1,11 +1,22 @@
 // src/pages/ListingsPage.tsx
-// Страница модерации объявлений — табы, карточки, кнопки одобрить/отклонить/правки
+// Страница модерации и управления объявлениями с массовыми действиями и фильтрами
 
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import {
+  Search,
+  CheckCircle2,
+  XCircle,
+  Trash2,
+  RotateCcw,
+  CheckSquare,
+  Square,
+  Building,
+  Home,
+  MapPin,
+} from 'lucide-react';
 import Layout from '../components/Layout';
-import Badge, { getModerationBadge } from '../components/Badge/Badge';
-import { Dropdown, DropdownItem } from '../components/Dropdown';
 import {
   getAdminListingsApi,
   approveListingApi,
@@ -14,446 +25,556 @@ import {
   deleteListingApi,
   type ModerationStatus,
 } from '../lib/listingsApi';
-import { getSiteSettingsApi } from '../lib/siteSettingsApi';
-
-// ─── Типы табов ──────────────────────────────────────────────────────────────
+import {
+  Button,
+  Modal,
+  Input,
+  Select,
+  Textarea,
+  Tabs,
+  Pagination,
+  Badge,
+  Card,
+  ConfirmDialog,
+  EmptyState,
+} from '../components/ui';
 
 type TabKey = 'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'CHANGES_REQUESTED';
 
-const TABS: { key: TabKey; label: string; status?: ModerationStatus }[] = [
-  { key: 'ALL', label: 'Все' },
-  { key: 'PENDING', label: 'Ожидают', status: 'PENDING' },
-  { key: 'APPROVED', label: 'Одобрены', status: 'APPROVED' },
-  { key: 'REJECTED', label: 'Отклонены', status: 'REJECTED' },
-  { key: 'CHANGES_REQUESTED', label: 'Правки', status: 'CHANGES_REQUESTED' },
+const TABS = [
+  { id: 'ALL' as const, label: 'Все' },
+  { id: 'PENDING' as const, label: 'Ожидают модерации' },
+  { id: 'APPROVED' as const, label: 'Одобрены' },
+  { id: 'REJECTED' as const, label: 'Отклонены' },
+  { id: 'CHANGES_REQUESTED' as const, label: 'Требуют правок' },
 ];
 
-// ─── Компонент карточки объявления ───────────────────────────────────────────
+const SORT_OPTIONS = [
+  { value: 'createdAt-desc', label: 'Сначала новые' },
+  { value: 'createdAt-asc', label: 'Сначала старые' },
+  { value: 'price-desc', label: 'Сначала дороже' },
+  { value: 'price-asc', label: 'Сначала дешевле' },
+  { value: 'viewsCount-desc', label: 'По популярности (просмотры)' },
+];
 
-interface ListingCardProps {
-  listing: {
-    id: string;
-    title: string;
-    description: string;
-    price: string;
-    city: string;
-    district: string;
-    area: string;
-    rooms: number;
-    moderationStatus: ModerationStatus;
-    moderationNote: string | null;
-    createdAt: string;
-    owner: { id: string; name: string; phone: string };
-    images: { id: string; url: string }[];
-  };
-  onApprove: (id: string) => void;
-  onReject: (id: string) => void;
-  onRequestChanges: (id: string) => void;
-  onDelete: (id: string) => void;
-  isLoading: boolean;
-}
-
-const ListingCard: React.FC<ListingCardProps> = ({
-  listing, onApprove, onReject, onRequestChanges, onDelete, isLoading,
-}) => {
-  const badge = getModerationBadge(listing.moderationStatus);
-  const price = parseFloat(listing.price);
-  const priceUsd = Math.round(price / 12500); // ~курс
-
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-  const imageUrl = listing.images[0]?.url
-    ? (listing.images[0].url.startsWith('http') ? listing.images[0].url : `${API_URL}${listing.images[0].url}`)
-    : null;
-
-  return (
-    <div className="card animate-fade-in">
-      <div className="flex gap-4">
-        {/* Фото */}
-        <div className="w-32 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 dark:bg-white/5">
-          {imageUrl ? (
-            <img src={imageUrl} alt={listing.title} className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-2xl text-muted">🏠</div>
-          )}
-        </div>
-
-        {/* Основная информация */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              <h3 className="text-base font-semibold text-app leading-snug">
-                {listing.title.replace('•', '·')}
-              </h3>
-              <p className="text-xs text-muted mt-0.5">
-                ID: LST-{listing.id.slice(-4).toUpperCase()} &nbsp;•&nbsp;
-                Разместил: {listing.owner.name} ({listing.owner.phone}) &nbsp;•&nbsp;
-                {new Date(listing.createdAt).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-              </p>
-            </div>
-            <div className="text-right flex-shrink-0">
-              <div className="text-base font-bold text-primary-500">
-                {priceUsd.toLocaleString()} у.е. / месяц
-              </div>
-              <Badge variant={badge.variant} className="mt-1">
-                {badge.label}
-              </Badge>
-            </div>
-          </div>
-
-          <p className="text-sm text-muted mt-2 line-clamp-2">{listing.description}</p>
-
-          {/* Причина отклонения */}
-          {listing.moderationNote && (
-            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1.5 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded">
-              💬 {listing.moderationNote}
-            </p>
-          )}
-
-          {/* Кнопки действий (только для ожидающих) */}
-          {listing.moderationStatus === 'PENDING' && (
-            <div className="flex items-center gap-2 mt-3">
-              <button
-                id={`approve-${listing.id}`}
-                onClick={() => onApprove(listing.id)}
-                disabled={isLoading}
-                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white transition-colors disabled:opacity-50"
-              >
-                Одобрить
-              </button>
-              <button
-                id={`reject-${listing.id}`}
-                onClick={() => onReject(listing.id)}
-                disabled={isLoading}
-                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors disabled:opacity-50"
-              >
-                Отклонить
-              </button>
-              <button
-                id={`changes-${listing.id}`}
-                onClick={() => onRequestChanges(listing.id)}
-                disabled={isLoading}
-                className="px-3 py-1.5 text-xs font-medium rounded-lg border border-app text-app hover:bg-gray-100 dark:hover:bg-white/5 transition-colors disabled:opacity-50"
-              >
-                Запросить правки
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Кнопка удаления */}
-        <button
-          onClick={() => onDelete(listing.id)}
-          className="flex-shrink-0 p-2 text-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all self-start"
-          title="Удалить объявление"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polyline points="3 6 5 6 21 6" />
-            <path d="M19 6l-1 14H6L5 6" />
-            <path d="M10 11v6" />
-            <path d="M14 11v6" />
-            <path d="M9 6V4h6v2" />
-          </svg>
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// ─── Модалка для причины ──────────────────────────────────────────────────────
-
-interface ReasonModalProps {
-  title: string;
-  placeholder: string;
-  onConfirm: (reason: string) => void;
-  onClose: () => void;
-  isLoading: boolean;
-}
-
-const ReasonModal: React.FC<ReasonModalProps> = ({ title, placeholder, onConfirm, onClose, isLoading }) => {
-  const [value, setValue] = useState('');
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative card w-full max-w-md animate-fade-in">
-        <h3 className="text-base font-semibold text-app mb-3">{title}</h3>
-        <textarea
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          placeholder={placeholder}
-          rows={4}
-          className="input resize-none mb-4"
-          autoFocus
-        />
-        <div className="flex gap-2 justify-end">
-          <button onClick={onClose} className="btn-ghost text-sm">Отмена</button>
-          <button
-            onClick={() => value.trim() && onConfirm(value.trim())}
-            disabled={!value.trim() || isLoading}
-            className="btn-primary text-sm disabled:opacity-50"
-          >
-            {isLoading ? 'Отправка...' : 'Подтвердить'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ─── Главная страница ─────────────────────────────────────────────────────────
-
-const ListingsPage: React.FC = () => {
+export const ListingsPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<TabKey>('PENDING');
   const [page, setPage] = useState(1);
-  const [sortBy, setSortBy] = useState<'createdAt' | 'price' | 'viewsCount' | 'area'>('createdAt');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [modal, setModal] = useState<{ type: 'reject' | 'changes'; id: string } | null>(null);
+  const [pageSize, setPageSize] = useState(10);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOption, setSortOption] = useState('createdAt-desc');
 
-  const currentTab = TABS.find((t) => t.key === activeTab)!;
+  // Bulk actions state
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [modalAction, setModalAction] = useState<{
+    type: 'reject' | 'changes' | 'bulk-reject';
+    id?: string;
+  } | null>(null);
+  const [actionReason, setActionReason] = useState('');
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
 
-  const { data: settings } = useQuery({
-    queryKey: ['admin', 'site-settings'],
-    queryFn: getSiteSettingsApi,
+  const [sortByField, sortDirection] = sortOption.split('-') as [
+    'createdAt' | 'price' | 'viewsCount' | 'area',
+    'asc' | 'desc',
+  ];
+
+  const currentStatus = activeTab === 'ALL' ? undefined : (activeTab as ModerationStatus);
+
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['admin', 'listings', activeTab, page, pageSize, sortByField, sortDirection],
+    queryFn: () =>
+      getAdminListingsApi({
+        moderationStatus: currentStatus,
+        page,
+        limit: pageSize,
+        sortBy: sortByField,
+        sortOrder: sortDirection,
+      }),
   });
 
-  const limit = settings?.listingsPerPage || 10;
-
-  const { data, isLoading } = useQuery({
-    queryKey: ['admin', 'listings', activeTab, page, sortBy, sortOrder, limit],
-    queryFn: () => getAdminListingsApi({
-      moderationStatus: currentTab.status,
-      page,
-      limit,
-      sortBy,
-      sortOrder,
-    }),
-  });
-
-  // Получаем счётчики для каждого таба (без лимита, чтобы получить общее количество)
-  // Счётчики для каждого таба: подгружаем только meta.total (limit=1)
-  const { data: allData } = useQuery({
-    queryKey: ['admin', 'listings', 'ALL-count'],
-    queryFn: () => getAdminListingsApi({ page: 1, limit: 1 }), // Все кроме DELETED
-  });
-  const { data: pendingData } = useQuery({
+  // Tab counters
+  const { data: pendingCountData } = useQuery({
     queryKey: ['admin', 'listings', 'PENDING-count'],
     queryFn: () => getAdminListingsApi({ moderationStatus: 'PENDING', page: 1, limit: 1 }),
   });
-  const { data: approvedData } = useQuery({
-    queryKey: ['admin', 'listings', 'APPROVED-count'],
-    queryFn: () => getAdminListingsApi({ moderationStatus: 'APPROVED', page: 1, limit: 1 }),
-  });
-  const { data: rejectedData } = useQuery({
-    queryKey: ['admin', 'listings', 'REJECTED-count'],
-    queryFn: () => getAdminListingsApi({ moderationStatus: 'REJECTED', page: 1, limit: 1 }),
-  });
-  const { data: changesData } = useQuery({
-    queryKey: ['admin', 'listings', 'CHANGES_REQUESTED-count'],
-    queryFn: () => getAdminListingsApi({ moderationStatus: 'CHANGES_REQUESTED', page: 1, limit: 1 }),
-  });
 
-  const tabCounts: Record<TabKey, number> = {
-    ALL: allData?.meta.total ?? 0,
-    PENDING: pendingData?.meta.total ?? 0,
-    APPROVED: approvedData?.meta.total ?? 0,
-    REJECTED: rejectedData?.meta.total ?? 0,
-    CHANGES_REQUESTED: changesData?.meta.total ?? 0,
+  const invalidateListings = () => {
+    queryClient.invalidateQueries({ queryKey: ['admin', 'listings'] });
   };
-
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['admin', 'listings'] });
 
   const approveMutation = useMutation({
     mutationFn: approveListingApi,
-    onSuccess: invalidate,
+    onSuccess: () => {
+      invalidateListings();
+      toast.success('Объявление успешно одобрено');
+    },
   });
 
   const rejectMutation = useMutation({
-    mutationFn: ({ id, reason }: { id: string; reason: string }) => rejectListingApi(id, reason),
-    onSuccess: () => { invalidate(); setModal(null); },
+    mutationFn: ({ id, reason }: { id: string; reason: string }) =>
+      rejectListingApi(id, reason),
+    onSuccess: () => {
+      invalidateListings();
+      setModalAction(null);
+      setActionReason('');
+      toast.success('Объявление отклонено');
+    },
   });
 
-  const changesMutation = useMutation({
-    mutationFn: ({ id, comment }: { id: string; comment: string }) => requestChangesApi(id, comment),
-    onSuccess: () => { invalidate(); setModal(null); },
+  const requestChangesMutation = useMutation({
+    mutationFn: ({ id, note }: { id: string; note: string }) =>
+      requestChangesApi(id, note),
+    onSuccess: () => {
+      invalidateListings();
+      setModalAction(null);
+      setActionReason('');
+      toast.success('Запрос на внесение правок отправлен автору');
+    },
   });
 
   const deleteMutation = useMutation({
     mutationFn: deleteListingApi,
-    onSuccess: invalidate,
+    onSuccess: () => {
+      invalidateListings();
+      setDeleteConfirmId(null);
+      toast.success('Объявление удалено');
+    },
   });
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Удалить объявление? Это действие необратимо.')) {
-      deleteMutation.mutate(id);
+  // Selection handlers
+  const handleToggleSelect = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (data?.items && selectedIds.length === data.items.length) {
+      setSelectedIds([]);
+    } else if (data?.items) {
+      setSelectedIds(data.items.map((i) => i.id));
     }
   };
 
-  const isMutating = approveMutation.isPending || rejectMutation.isPending || changesMutation.isPending || deleteMutation.isPending;
+  // Bulk actions
+  const handleBulkApprove = async () => {
+    for (const id of selectedIds) {
+      await approveListingApi(id);
+    }
+    invalidateListings();
+    toast.success(`Одобрено объявлений: ${selectedIds.length}`);
+    setSelectedIds([]);
+  };
+
+  const handleBulkRejectSubmit = async () => {
+    if (!actionReason.trim()) return;
+    for (const id of selectedIds) {
+      await rejectListingApi(id, actionReason.trim());
+    }
+    invalidateListings();
+    toast.success(`Отклонено объявлений: ${selectedIds.length}`);
+    setSelectedIds([]);
+    setModalAction(null);
+    setActionReason('');
+  };
+
+  const handleBulkDelete = async () => {
+    for (const id of selectedIds) {
+      await deleteListingApi(id);
+    }
+    invalidateListings();
+    toast.success(`Удалено объявлений: ${selectedIds.length}`);
+    setSelectedIds([]);
+    setIsBulkDeleteOpen(false);
+  };
+
+  const items = data?.items || [];
+  const total = data?.meta?.total || 0;
+  const totalPages = data?.meta?.totalPages || 1;
+  const pendingCount = pendingCountData?.meta?.total || 0;
+
+  const filteredItems = items.filter((item) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      item.title?.toLowerCase().includes(q) ||
+      item.city?.toLowerCase().includes(q) ||
+      item.district?.toLowerCase().includes(q) ||
+      item.id.toLowerCase().includes(q) ||
+      item.owner?.name?.toLowerCase().includes(q)
+    );
+  });
+
+  const getStatusBadge = (status: ModerationStatus) => {
+    switch (status) {
+      case 'APPROVED':
+        return <Badge variant="success">Одобрено</Badge>;
+      case 'PENDING':
+        return <Badge variant="warning">Ожидает</Badge>;
+      case 'REJECTED':
+        return <Badge variant="danger">Отклонено</Badge>;
+      case 'CHANGES_REQUESTED':
+        return <Badge variant="info">Требуются правки</Badge>;
+      default:
+        return <Badge variant="neutral">{status}</Badge>;
+    }
+  };
 
   return (
-    <Layout title="Модерация объявлений">
-      <div className="space-y-4 max-w-5xl mx-auto">
-
-        {/* ─── Табы и сортировка ─── */}
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-1 bg-surface border border-app rounded-lg p-1">
-            {TABS.map((tab) => (
-              <button
-                key={tab.key}
-                id={`tab-${tab.key.toLowerCase()}`}
-                onClick={() => { setActiveTab(tab.key); setPage(1); }}
-                className={`
-                  flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all
-                  ${activeTab === tab.key
-                    ? 'bg-primary-500 text-white shadow-sm'
-                    : 'text-muted hover:text-app'
-                  }
-                `}
-              >
-                {tab.label}
-                <span className={`text-xs px-1.5 py-0.5 rounded-full ${activeTab === tab.key ? 'bg-white/20' : 'bg-gray-100 dark:bg-white/10'
-                  }`}>
-                  {tabCounts[tab.key]}
-                </span>
-              </button>
-            ))}
+    <Layout title="Управление объявлениями">
+      <div className="space-y-6 animate-fade-in max-w-7xl mx-auto pb-12">
+        {/* Header Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-black text-app tracking-tight flex items-center gap-2.5">
+              <span>Каталог объявлений</span>
+              {pendingCount > 0 && (
+                <Badge variant="warning" size="sm" dot>
+                  {pendingCount} на модерации
+                </Badge>
+              )}
+            </h1>
+            <p className="text-xs text-muted mt-0.5">
+              Модерация объектов недвижимости, проверка собственников и управление статусами
+            </p>
           </div>
 
-          <div className="flex items-center justify-end gap-4">
-          <Dropdown
-            trigger={
-              <button className="flex items-center gap-2 px-3 py-2 rounded-lg border border-app bg-surface text-sm hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">
-                {(() => {
-                  switch (sortBy) {
-                    case 'viewsCount': return 'По популярности';
-                    case 'price': return 'По цене';
-                    case 'area': return 'По площади';
-                    default: return sortOrder === 'desc' ? 'Сначала новые' : 'Сначала старые';
-                  }
-                })()}
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
-              </button>
-            }
-            align="right"
-          >
-            <DropdownItem onClick={() => { setSortBy('createdAt'); setSortOrder('desc'); }}>
-              Сначала новые
-            </DropdownItem>
-            <DropdownItem onClick={() => { setSortBy('createdAt'); setSortOrder('asc'); }}>
-              Сначала старые
-            </DropdownItem>
-            <DropdownItem onClick={() => { setSortBy('viewsCount'); setSortOrder('desc'); }}>
-              По популярности
-            </DropdownItem>
-            <DropdownItem onClick={() => { setSortBy('price'); setSortOrder('asc'); }}>
-              По цене (дешевле)
-            </DropdownItem>
-            <DropdownItem onClick={() => { setSortBy('price'); setSortOrder('desc'); }}>
-              По цене (дороже)
-            </DropdownItem>
-            <DropdownItem onClick={() => { setSortBy('area'); setSortOrder('desc'); }}>
-              По площади (больше)
-            </DropdownItem>
-          </Dropdown>
+          <div className="flex items-center gap-2.5">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => refetch()}
+              icon={<RotateCcw size={14} />}
+            >
+              Обновить
+            </Button>
           </div>
         </div>
 
-        {/* ─── Список объявлений ─── */}
-        {isLoading ? (
-          <div className="space-y-4">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="card animate-pulse">
-                <div className="flex gap-4">
-                  <div className="w-32 h-24 bg-gray-200 dark:bg-white/10 rounded-lg flex-shrink-0" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-gray-200 dark:bg-white/10 rounded w-2/3" />
-                    <div className="h-3 bg-gray-200 dark:bg-white/10 rounded w-1/2" />
-                    <div className="h-3 bg-gray-200 dark:bg-white/10 rounded w-full" />
-                    <div className="h-3 bg-gray-200 dark:bg-white/10 rounded w-3/4" />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : data?.items.length === 0 ? (
-          <div className="card text-center py-12">
-            <div className="text-4xl mb-3">📋</div>
-            <p className="text-muted">Объявлений в этой категории нет</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {data?.items.map((listing) => (
-              <ListingCard
-                key={listing.id}
-                listing={listing}
-                onApprove={(id) => approveMutation.mutate(id)}
-                onReject={(id) => setModal({ type: 'reject', id })}
-                onRequestChanges={(id) => setModal({ type: 'changes', id })}
-                onDelete={handleDelete}
-                isLoading={isMutating}
-              />
-            ))}
-          </div>
-        )}
+        {/* Tab Filters */}
+        <div className="flex items-center justify-between border-b border-app pb-2">
+          <Tabs
+            tabs={TABS}
+            activeTab={activeTab}
+            onChange={(tab) => {
+              setActiveTab(tab);
+              setPage(1);
+              setSelectedIds([]);
+            }}
+            variant="underline"
+            size="sm"
+          />
+        </div>
 
-        {/* ─── Пагинация ─── */}
-        {data && data.meta.totalPages > 1 && (
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted">
-              Показано {(page - 1) * limit + 1}–{Math.min(page * limit, data.meta.total)} из {data.meta.total}
+        {/* Filters Toolbar */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 rounded-2xl bg-surface border border-app shadow-xs">
+          <Input
+            placeholder="Поиск по названию, городу, ID или автору..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            leftIcon={<Search size={16} />}
+          />
+
+          <Select
+            options={SORT_OPTIONS}
+            value={sortOption}
+            onChange={(val) => setSortOption(val)}
+          />
+
+          <div className="flex items-center justify-end gap-2 text-xs text-muted">
+            <span>
+              Показано: <strong className="text-app">{filteredItems.length}</strong> из{' '}
+              <strong className="text-app">{total}</strong>
             </span>
-            <div className="flex gap-1">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="px-3 py-1.5 rounded-lg border border-app text-sm hover:bg-gray-100 dark:hover:bg-white/5 disabled:opacity-40 transition-colors"
+          </div>
+        </div>
+
+        {/* Bulk Action Bar */}
+        {selectedIds.length > 0 && (
+          <div className="p-3.5 rounded-2xl bg-primary-50 dark:bg-primary-950/40 border border-primary-200 dark:border-primary-800/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fade-in">
+            <span className="text-xs font-bold text-primary-900 dark:text-primary-200">
+              Выбрано объявлений: {selectedIds.length}
+            </span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleBulkApprove}
+                icon={<CheckCircle2 size={14} />}
               >
-                Назад
-              </button>
-              {Array.from({ length: Math.min(5, data.meta.totalPages) }, (_, i) => i + 1).map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setPage(p)}
-                  className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${p === page ? 'bg-primary-500 text-white' : 'border border-app hover:bg-gray-100 dark:hover:bg-white/5'
-                    }`}
-                >
-                  {p}
-                </button>
-              ))}
-              <button
-                onClick={() => setPage((p) => Math.min(data.meta.totalPages, p + 1))}
-                disabled={page === data.meta.totalPages}
-                className="px-3 py-1.5 rounded-lg border border-app text-sm hover:bg-gray-100 dark:hover:bg-white/5 disabled:opacity-40 transition-colors"
+                Одобрить все
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setModalAction({ type: 'bulk-reject' })}
+                icon={<XCircle size={14} />}
               >
-                Вперед
-              </button>
+                Отклонить все
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={() => setIsBulkDeleteOpen(true)}
+                icon={<Trash2 size={14} />}
+              >
+                Удалить все
+              </Button>
             </div>
           </div>
         )}
-      </div>
 
-      {/* ─── Модалки ─── */}
-      {modal?.type === 'reject' && (
-        <ReasonModal
-          title="Причина отклонения"
-          placeholder="Укажите причину отклонения объявления..."
-          onConfirm={(reason) => rejectMutation.mutate({ id: modal.id, reason })}
-          onClose={() => setModal(null)}
-          isLoading={rejectMutation.isPending}
+        {/* Select all header */}
+        <div className="flex items-center justify-between px-1 text-xs text-muted">
+          <button
+            type="button"
+            onClick={handleSelectAll}
+            className="flex items-center gap-2 font-semibold text-app hover:text-primary-600 cursor-pointer"
+          >
+            {selectedIds.length === filteredItems.length && filteredItems.length > 0 ? (
+              <CheckSquare size={16} className="text-primary-500" />
+            ) : (
+              <Square size={16} className="text-muted" />
+            )}
+            <span>Выбрать все на этой странице</span>
+          </button>
+        </div>
+
+        {/* Listings List */}
+        {isLoading ? (
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-32 rounded-2xl bg-surface border border-app animate-pulse" />
+            ))}
+          </div>
+        ) : filteredItems.length === 0 ? (
+          <EmptyState
+            icon={<Home size={32} />}
+            title="Объявления не найдены"
+            description="В выбранной категории сейчас нет объявлений, соответствующих заданным критериям фильтра"
+          />
+        ) : (
+          <div className="space-y-3">
+            {filteredItems.map((item) => {
+              const isSelected = selectedIds.includes(item.id);
+              const priceNum = parseFloat(item.price || '0');
+              const priceUsd = Math.round(priceNum / 12500);
+              const firstImage = item.images?.[0]?.url;
+
+              return (
+                <Card
+                  key={item.id}
+                  padding="sm"
+                  className={`flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-all duration-150 ${
+                    isSelected ? 'ring-2 ring-primary-500 border-primary-500' : ''
+                  }`}
+                >
+                  <div className="flex items-start gap-3.5 min-w-0 w-full md:w-auto flex-1">
+                    {/* Checkbox */}
+                    <button
+                      type="button"
+                      onClick={() => handleToggleSelect(item.id)}
+                      className="mt-1 text-muted hover:text-primary-500 shrink-0"
+                    >
+                      {isSelected ? (
+                        <CheckSquare size={16} className="text-primary-500" />
+                      ) : (
+                        <Square size={16} />
+                      )}
+                    </button>
+
+                    {/* Image thumbnail */}
+                    <div className="h-20 w-24 rounded-xl overflow-hidden bg-gray-100 dark:bg-white/5 shrink-0 border border-app flex items-center justify-center">
+                      {firstImage ? (
+                        <img src={firstImage} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <Building size={24} className="text-muted opacity-50" />
+                      )}
+                    </div>
+
+                    {/* Content info */}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="text-sm font-bold text-app truncate">{item.title}</h3>
+                        {getStatusBadge(item.moderationStatus)}
+                        <span className="text-[10px] text-muted font-mono bg-gray-100 dark:bg-white/5 px-2 py-0.5 rounded-md">
+                          LST-{item.id.slice(-4).toUpperCase()}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-3 text-xs text-muted mt-1 flex-wrap">
+                        <span className="flex items-center gap-1">
+                          <MapPin size={12} className="text-primary-500" /> {item.city}, {item.district}
+                        </span>
+                        {item.area && <span>• {item.area} м²</span>}
+                        {item.rooms && <span>• {item.rooms} комн.</span>}
+                        <span>• Автор: {item.owner?.name || 'Не указан'} ({item.owner?.phone})</span>
+                      </div>
+
+                      {item.moderationNote && (
+                        <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1.5 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-md inline-block">
+                          💬 Примечание: {item.moderationNote}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Price & Action Buttons */}
+                  <div className="flex flex-row md:flex-col items-center md:items-end justify-between w-full md:w-auto gap-3 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-app">
+                    <div className="text-right">
+                      <div className="text-base font-black text-primary-600 dark:text-primary-400">
+                        {priceUsd > 0 ? `${priceUsd.toLocaleString()} у.е.` : `${priceNum.toLocaleString()} сум`}
+                      </div>
+                      <span className="text-[10px] text-muted block">в месяц</span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      {item.moderationStatus === 'PENDING' && (
+                        <>
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => approveMutation.mutate(item.id)}
+                            icon={<CheckCircle2 size={14} />}
+                            title="Одобрить публикацию"
+                          >
+                            Одобрить
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setModalAction({ type: 'reject', id: item.id })}
+                            className="text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40"
+                            title="Отклонить"
+                          >
+                            Отклонить
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setModalAction({ type: 'changes', id: item.id })}
+                            title="Запросить исправления"
+                          >
+                            Правки
+                          </Button>
+                        </>
+                      )}
+
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setDeleteConfirmId(item.id)}
+                        className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40"
+                        title="Удалить объявление"
+                      >
+                        <Trash2 size={16} />
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Pagination */}
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          totalItems={total}
+          pageSize={pageSize}
+          onPageChange={(p) => setPage(p)}
+          onPageSizeChange={(s) => {
+            setPageSize(s);
+            setPage(1);
+          }}
         />
-      )}
-      {modal?.type === 'changes' && (
-        <ReasonModal
-          title="Запрос правок"
-          placeholder="Опишите, что нужно исправить в объявлении..."
-          onConfirm={(comment) => changesMutation.mutate({ id: modal.id, comment })}
-          onClose={() => setModal(null)}
-          isLoading={changesMutation.isPending}
+
+        {/* Reject / Request Changes Reason Modal */}
+        {modalAction && (
+          <Modal
+            isOpen={!!modalAction}
+            onClose={() => {
+              setModalAction(null);
+              setActionReason('');
+            }}
+            title={
+              modalAction.type === 'reject'
+                ? 'Отклонить объявление'
+                : modalAction.type === 'bulk-reject'
+                ? 'Массовое отклонение объявлений'
+                : 'Запросить правки у автора'
+            }
+            subtitle="Укажите причину для автора объявления"
+            size="md"
+            footer={
+              <div className="flex justify-end gap-2 w-full">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setModalAction(null);
+                    setActionReason('');
+                  }}
+                >
+                  Отмена
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => {
+                    if (modalAction.type === 'reject' && modalAction.id) {
+                      rejectMutation.mutate({ id: modalAction.id, reason: actionReason });
+                    } else if (modalAction.type === 'changes' && modalAction.id) {
+                      requestChangesMutation.mutate({ id: modalAction.id, note: actionReason });
+                    } else if (modalAction.type === 'bulk-reject') {
+                      handleBulkRejectSubmit();
+                    }
+                  }}
+                  disabled={!actionReason.trim()}
+                >
+                  Отправить
+                </Button>
+              </div>
+            }
+          >
+            <Textarea
+              label="Текст замечания или причины *"
+              value={actionReason}
+              onChange={(e) => setActionReason(e.target.value)}
+              placeholder="Например: Некачественные фотографии объекта, не указан точный адрес..."
+              rows={4}
+            />
+          </Modal>
+        )}
+
+        {/* Delete Single Confirm Dialog */}
+        <ConfirmDialog
+          isOpen={!!deleteConfirmId}
+          onClose={() => setDeleteConfirmId(null)}
+          onConfirm={() => {
+            if (deleteConfirmId) deleteMutation.mutate(deleteConfirmId);
+          }}
+          title="Удалить объявление?"
+          message="Вы уверены, что хотите удалить это объявление? Оно будет снято с публикации."
+          confirmLabel="Удалить"
+          variant="danger"
+          loading={deleteMutation.isPending}
         />
-      )}
+
+        {/* Bulk Delete Confirm Dialog */}
+        <ConfirmDialog
+          isOpen={isBulkDeleteOpen}
+          onClose={() => setIsBulkDeleteOpen(false)}
+          onConfirm={handleBulkDelete}
+          title="Удалить выбранные объявления?"
+          message={`Вы уверены, что хотите удалить ${selectedIds.length} объявлений?`}
+          confirmLabel="Удалить все"
+          variant="danger"
+        />
+      </div>
     </Layout>
   );
 };

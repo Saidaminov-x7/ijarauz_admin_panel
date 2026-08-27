@@ -17,6 +17,12 @@ export interface AuditLogItem {
   } | null;
 }
 
+// Получить все логи действий платформы
+export const getAuditLogsApi = async (params: { page?: number; limit?: number } = {}): Promise<AuditLogItem[]> => {
+  const { data } = await api.get('/admin/audit-logs', { params });
+  return Array.isArray(data) ? data : data.items || [];
+};
+
 // Получить логи действий пользователя
 export const getUserAuditLogsApi = async (userId: string): Promise<AuditLogItem[]> => {
   const { data } = await api.get(`/admin/audit-logs`, { params: { userId } });

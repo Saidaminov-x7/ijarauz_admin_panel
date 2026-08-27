@@ -2,7 +2,7 @@ import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ExternalLink, ArrowLeft } from 'lucide-react';
 import Layout from '../components/Layout';
-import PageBuilder from '../components/PageBuilder/PageBuilder';
+import { PageBuilder } from '../components/PageBuilder/PageBuilder';
 import { Button } from '../components/ui/Button';
 
 const PAGE_TITLES: Record<string, string> = {

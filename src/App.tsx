@@ -12,6 +12,7 @@ import DashboardPage from './pages/DashboardPage';
 import ListingsPage from './pages/ListingsPage';
 import UsersPage from './pages/UsersPage';
 import UserProfilePage from './pages/UserProfilePage';
+import MediaLibraryPage from './pages/MediaLibraryPage';
 import PagesPage from './pages/PagesPage';
 import PageBuilderPage from './pages/PageBuilderPage';
 import AnalyticsPage from './pages/AnalyticsPage';
@@ -74,6 +75,16 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <UserProfilePage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Медиа-библиотека */}
+        <Route
+          path="/media"
+          element={
+            <ProtectedRoute>
+              <MediaLibraryPage />
             </ProtectedRoute>
           }
         />
