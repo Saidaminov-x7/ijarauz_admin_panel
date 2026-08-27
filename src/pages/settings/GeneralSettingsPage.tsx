@@ -1,13 +1,28 @@
 // src/pages/settings/GeneralSettingsPage.tsx
-// Основные настройки: maintenance mode, название сайта, контакты для футера
+// Основные настройки: maintenance mode, название сайта, контакты для футера, логотип
 
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import {
+  Upload,
+  Trash2,
+  Save,
+  Globe,
+  Mail,
+  Phone,
+  Plus,
+  AlertTriangle,
+  Image as ImageIcon,
+} from 'lucide-react';
 import Layout from '../../components/Layout';
-import { getSiteSettingsApi, updateSiteSettingsApi, uploadSiteLogoApi, deleteSiteLogoApi } from '../../lib/siteSettingsApi';
-
-const TrashIcon = () => <span aria-hidden="true">x</span>;
-const UploadIcon = () => <span aria-hidden="true">+</span>;
+import {
+  getSiteSettingsApi,
+  updateSiteSettingsApi,
+  uploadSiteLogoApi,
+  deleteSiteLogoApi,
+} from '../../lib/siteSettingsApi';
+import { Button, Input, Textarea, Switch, Card } from '../../components/ui';
 
 const GeneralSettingsPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -22,11 +37,11 @@ const GeneralSettingsPage: React.FC = () => {
   const [contactPhone, setContactPhone] = useState('+998 71 200-00-00');
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [maintenanceMessage, setMaintenanceMessage] = useState('');
-  const [successMsg, setSuccessMsg] = useState('');
-  const [errorMsg, setErrorMsg] = useState('');
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [navLinks, setNavLinks] = useState<Array<{ label: string; href: string; position: 'header' | 'footer' }>>([
+  const [navLinks, setNavLinks] = useState<
+    Array<{ label: string; href: string; position: 'header' | 'footer' }>
+  >([
     { label: 'Объявления', href: '/catalog', position: 'header' },
     { label: 'Разместить', href: '/add-listing', position: 'header' },
     { label: 'Чат', href: '/chat', position: 'header' },
@@ -51,22 +66,18 @@ const GeneralSettingsPage: React.FC = () => {
     mutationFn: updateSiteSettingsApi,
     onSuccess: (updated) => {
       queryClient.setQueryData(['admin', 'site-settings'], updated);
-      setSuccessMsg('Основные настройки и меню успешно сохранены');
-      setErrorMsg('');
-      setTimeout(() => setSuccessMsg(''), 3000);
+      toast.success('Основные настройки и меню успешно сохранены');
     },
     onError: (err: unknown) => {
       const error = err as { response?: { data?: { message?: string } } };
-      setErrorMsg(error.response?.data?.message || 'Ошибка сохранения настроек');
+      toast.error(error.response?.data?.message || 'Ошибка сохранения настроек');
     },
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSuccessMsg('');
-    setErrorMsg('');
-    
-    // Сначала обновляем основные настройки и ссылки меню
+
+    // 1. Обновляем основные настройки и навигацию
     await mutation.mutateAsync({
       siteName,
       contactEmail,
@@ -75,15 +86,17 @@ const GeneralSettingsPage: React.FC = () => {
       maintenanceMessage: maintenanceMessage.trim() || null,
       navLinks,
     });
-    
-    // Затем загружаем логотип, если он выбран
+
+    // 2. Загружаем логотип при наличии нового файла
     if (logoFile) {
       try {
         await uploadSiteLogoApi(logoFile);
         queryClient.invalidateQueries({ queryKey: ['admin', 'site-settings'] });
-      } catch (err) {
+        setLogoFile(null);
+        toast.success('Логотип успешно обновлен');
+      } catch (err: unknown) {
         const error = err as { response?: { data?: { message?: string } } };
-        setErrorMsg(error.response?.data?.message || 'Ошибка загрузки логотипа');
+        toast.error(error.response?.data?.message || 'Ошибка загрузки логотипа');
       }
     }
   };
@@ -91,12 +104,12 @@ const GeneralSettingsPage: React.FC = () => {
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
+
     if (!file.type.startsWith('image/')) {
-      setErrorMsg('Можно загружать только изображения');
+      toast.error('Можно загружать только изображения (PNG, JPG, SVG, WebP)');
       return;
     }
-    
+
     setLogoFile(file);
     setLogoPreview(URL.createObjectURL(file));
   };
@@ -107,98 +120,91 @@ const GeneralSettingsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'site-settings'] });
       setLogoPreview(null);
       setLogoFile(null);
-    } catch (err) {
+      toast.success('Логотип удален (используется стандартный)');
+    } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
-      setErrorMsg(error.response?.data?.message || 'Ошибка удаления логотипа');
+      toast.error(error.response?.data?.message || 'Ошибка удаления логотипа');
     }
   };
 
   return (
     <Layout title="Основные настройки">
       <div className="max-w-4xl mx-auto space-y-6">
-        {successMsg && (
-          <div className="p-4 rounded-xl bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-sm border border-green-200 dark:border-green-800 flex items-center gap-2">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-            {successMsg}
-          </div>
-        )}
-
-        {errorMsg && (
-          <div className="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm border border-red-200 dark:border-red-800">
-            {errorMsg}
-          </div>
-        )}
-
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Режим обслуживания */}
-          <div className="card border-2 border-primary-500/20">
-            <div className="flex items-center justify-between gap-4 mb-4">
-              <div>
-                <h3 className="text-base font-semibold text-app">Режим технического обслуживания</h3>
-                <p className="text-sm text-muted mt-0.5">
-                  Если включено, публичная часть сайта будет недоступна для посетителей.
-                </p>
+          <Card
+            title="Режим технического обслуживания"
+            description="Если включено, публичная часть сайта будет недоступна для посетителей"
+            className="border-amber-500/20 bg-amber-500/5"
+          >
+            <div className="space-y-4 pt-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
+                    <AlertTriangle size={20} />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-app">Статус техобслуживания</p>
+                    <p className="text-xs text-muted">
+                      {maintenanceMode ? 'Сайт переведен в режим обслуживания' : 'Сайт работает в обычном режиме'}
+                    </p>
+                  </div>
+                </div>
+                <Switch checked={maintenanceMode} onChange={setMaintenanceMode} />
               </div>
-              <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
-                <input
-                  type="checkbox"
-                  checked={maintenanceMode}
-                  onChange={(e) => setMaintenanceMode(e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500" />
-              </label>
-            </div>
 
-            {maintenanceMode && (
-              <div className="mt-4 pt-4 border-t border-app">
-                <label className="block text-sm font-medium text-app mb-1.5">
-                  Сообщение для посетителей при техобслуживании
-                </label>
-                <textarea
-                  value={maintenanceMessage}
-                  onChange={(e) => setMaintenanceMessage(e.target.value)}
-                  rows={3}
-                  placeholder="Сайт временно недоступен. Мы проводим технические работы..."
-                  className="input w-full"
-                />
-              </div>
-            )}
-          </div>
+              {maintenanceMode && (
+                <div className="pt-3 border-t border-app">
+                  <Textarea
+                    label="Сообщение для посетителей при техобслуживании"
+                    value={maintenanceMessage}
+                    onChange={(e) => setMaintenanceMessage(e.target.value)}
+                    rows={3}
+                    placeholder="Сайт временно недоступен. Мы проводим плановые технические работы..."
+                  />
+                </div>
+              )}
+            </div>
+          </Card>
 
           {/* Логотип платформы */}
-          <div className="card space-y-4">
-            <h3 className="text-base font-semibold text-app">Логотип платформы</h3>
-            <p className="text-sm text-muted">
-              Загруженный логотип будет отображаться в шапке сайта и админ-панели.
-            </p>
-            <div className="flex items-center gap-4">
+          <Card
+            title="Логотип платформы"
+            description="Загруженный логотип будет отображаться в шапке сайта и административной панели"
+          >
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 pt-2">
               {logoPreview ? (
                 <div className="relative group">
-                  <img
-                    src={logoPreview}
-                    alt="Логотип платформы"
-                    className="h-16 w-auto rounded-lg border border-app"
-                  />
+                  <div className="h-20 w-44 rounded-xl border border-app bg-surface p-2 flex items-center justify-center overflow-hidden">
+                    <img
+                      src={logoPreview}
+                      alt="Логотип платформы"
+                      className="max-h-full max-w-full object-contain"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = '/logotip.png';
+                      }}
+                    />
+                  </div>
                   <button
                     type="button"
                     onClick={handleLogoDelete}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute -top-2 -right-2 bg-red-600 hover:bg-red-700 text-white rounded-full p-1.5 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
                     title="Удалить логотип"
                   >
-                    <TrashIcon />
+                    <Trash2 size={14} />
                   </button>
                 </div>
               ) : (
-                <div className="h-16 w-16 rounded-lg border-2 border-dashed border-app flex items-center justify-center text-muted">
-                  Нет логотипа
+                <div className="h-20 w-44 rounded-xl border-2 border-dashed border-app flex flex-col items-center justify-center text-muted gap-1 bg-surface">
+                  <ImageIcon size={20} />
+                  <span className="text-xs">Стандартный логотип</span>
                 </div>
               )}
-              <label className="btn-ghost flex items-center gap-2 cursor-pointer">
-                <UploadIcon />
-                Загрузить логотип
+
+              <label className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-app bg-surface hover:bg-gray-50 dark:hover:bg-white/5 text-app text-sm font-medium cursor-pointer transition-colors">
+                <Upload size={16} />
+                <span>Загрузить новый логотип</span>
                 <input
                   type="file"
                   accept="image/*"
@@ -207,123 +213,117 @@ const GeneralSettingsPage: React.FC = () => {
                 />
               </label>
             </div>
-          </div>
+          </Card>
 
           {/* Общая информация */}
-          <div className="card space-y-4">
-            <h3 className="text-base font-semibold text-app">Информация о сайте и контакты</h3>
-
-            <div>
-              <label className="block text-sm font-medium text-app mb-1.5">Название платформы</label>
-              <input
-                type="text"
+          <Card title="Информация о сайте и контакты" description="Название и контактные данные, отображаемые в подвале">
+            <div className="space-y-4 pt-2">
+              <Input
+                label="Название платформы"
                 value={siteName}
                 onChange={(e) => setSiteName(e.target.value)}
                 required
-                className="input max-w-md"
+                leftIcon={<Globe size={16} />}
               />
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-app mb-1.5">Контактный Email</label>
-                <input
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Input
+                  label="Контактный Email"
                   type="email"
                   value={contactEmail}
                   onChange={(e) => setContactEmail(e.target.value)}
                   required
-                  className="input"
+                  leftIcon={<Mail size={16} />}
                 />
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-app mb-1.5">Контактный телефон</label>
-                <input
+                <Input
+                  label="Контактный телефон"
                   type="text"
                   value={contactPhone}
                   onChange={(e) => setContactPhone(e.target.value)}
                   required
-                  className="input"
+                  leftIcon={<Phone size={16} />}
                 />
               </div>
             </div>
-          </div>
+          </Card>
 
-          {/* Навигационное меню сайта (Header & Footer) */}
-          <div className="card space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-semibold text-app">Навигационное меню сайта</h3>
-                <p className="text-sm text-muted mt-0.5">
-                  Управляйте пунктами меню в шапке сайта: добавляйте ссылки, меняйте названия и адреса
-                </p>
-              </div>
-              <button
+          {/* Навигационное меню сайта */}
+          <Card
+            title="Навигационное меню сайта"
+            description="Управляйте пунктами меню в шапке сайта: добавляйте ссылки, меняйте названия и адреса"
+            headerAction={
+              <Button
                 type="button"
-                onClick={() => setNavLinks(prev => [...prev, { label: 'Новая ссылка', href: '/catalog', position: 'header' }])}
-                className="btn-ghost text-xs px-3 py-1.5 border border-app rounded-lg"
+                variant="outline"
+                size="sm"
+                leftIcon={<Plus size={14} />}
+                onClick={() =>
+                  setNavLinks((prev) => [
+                    ...prev,
+                    { label: 'Новая ссылка', href: '/catalog', position: 'header' },
+                  ])
+                }
               >
-                + Добавить пункт
-              </button>
-            </div>
-
-            <div className="space-y-3">
+                Добавить пункт
+              </Button>
+            }
+          >
+            <div className="space-y-3 pt-2">
               {navLinks.map((link, idx) => (
-                <div key={idx} className="flex flex-col sm:flex-row items-center gap-3 p-3 rounded-xl border border-app bg-surface">
+                <div
+                  key={idx}
+                  className="flex flex-col sm:flex-row items-center gap-3 p-3.5 rounded-xl border border-app bg-surface"
+                >
                   <div className="flex-1 w-full sm:w-auto">
-                    <label className="block text-xs text-muted mb-1">Название пункта</label>
-                    <input
-                      type="text"
+                    <Input
+                      label="Название пункта"
                       value={link.label}
                       onChange={(e) => {
                         const updated = [...navLinks];
                         updated[idx] = { ...updated[idx], label: e.target.value };
                         setNavLinks(updated);
                       }}
-                      placeholder="Например: Объявления"
-                      className="input w-full text-sm"
+                      placeholder="Например: Каталог"
                     />
                   </div>
                   <div className="flex-1 w-full sm:w-auto">
-                    <label className="block text-xs text-muted mb-1">Ссылка (URL или путь)</label>
-                    <input
-                      type="text"
+                    <Input
+                      label="Ссылка (URL или относительный путь)"
                       value={link.href}
                       onChange={(e) => {
                         const updated = [...navLinks];
                         updated[idx] = { ...updated[idx], href: e.target.value };
                         setNavLinks(updated);
                       }}
-                      placeholder="Например: /catalog"
-                      className="input w-full text-sm font-mono"
+                      placeholder="/catalog"
                     />
                   </div>
-                  <div className="w-full sm:w-auto flex sm:flex-col justify-end items-end sm:items-center pt-2 sm:pt-4">
+                  <div className="w-full sm:w-auto flex sm:flex-col justify-end items-end sm:items-center pt-2 sm:pt-6">
                     <button
                       type="button"
-                      onClick={() => setNavLinks(prev => prev.filter((_, i) => i !== idx))}
-                      className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-sm transition-colors"
+                      onClick={() => setNavLinks((prev) => prev.filter((_, i) => i !== idx))}
+                      className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
                       title="Удалить пункт меню"
                     >
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <polyline points="3 6 5 6 21 6" />
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                      </svg>
+                      <Trash2 size={16} />
                     </button>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
+          </Card>
 
           <div className="flex justify-end">
-            <button
+            <Button
               type="submit"
-              disabled={isLoading || mutation.isPending}
-              className="btn-primary px-6"
+              variant="primary"
+              size="lg"
+              leftIcon={<Save size={18} />}
+              loading={isLoading || mutation.isPending}
             >
-              {mutation.isPending ? 'Сохранение...' : 'Сохранить основные настройки и меню'}
-            </button>
+              Сохранить основные настройки
+            </Button>
           </div>
         </form>
       </div>

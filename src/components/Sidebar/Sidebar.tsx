@@ -168,11 +168,15 @@ const Sidebar: React.FC = () => {
     >
       {/* ─── Логотип ─── */}
       <div className="flex items-center gap-2.5 px-5 h-16 border-b sidebar-border flex-shrink-0">
-        {settings?.logoUrl ? (
-          <img src={settings.logoUrl} alt="Ijarauz Admin" className="h-8" />
-        ) : (
-          <img src="/logotip.png" alt="Ijarauz Admin" className="h-8" />
-        )}
+        <img
+          src={settings?.logoUrl || '/logotip.png'}
+          alt="Ijarauz Admin"
+          className="h-8 w-auto object-contain"
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = '/logotip.png';
+          }}
+        />
       </div>
 
       {/* ─── Навигация ─── */}

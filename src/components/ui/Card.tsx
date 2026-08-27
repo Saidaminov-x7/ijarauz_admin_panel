@@ -2,14 +2,20 @@ import React from 'react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
-export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface CardProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'title'> {
   variant?: 'default' | 'flat' | 'bordered' | 'elevated';
   padding?: 'none' | 'sm' | 'md' | 'lg';
+  title?: React.ReactNode;
+  description?: React.ReactNode;
+  headerAction?: React.ReactNode;
 }
 
 export const Card: React.FC<CardProps> = ({
   variant = 'default',
   padding = 'md',
+  title,
+  description,
+  headerAction,
   className,
   children,
   ...props
@@ -36,6 +42,21 @@ export const Card: React.FC<CardProps> = ({
       )}
       {...props}
     >
+      {(title || description || headerAction) && (
+        <div className="flex items-center justify-between gap-4 mb-4 pb-3 border-b border-app">
+          <div>
+            {title && typeof title === 'string' ? (
+              <h3 className="text-base font-bold text-app tracking-tight">{title}</h3>
+            ) : (
+              title
+            )}
+            {description && (
+              <p className="text-xs text-muted mt-0.5">{description}</p>
+            )}
+          </div>
+          {headerAction && <div className="shrink-0">{headerAction}</div>}
+        </div>
+      )}
       {children}
     </div>
   );

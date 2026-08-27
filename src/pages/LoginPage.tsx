@@ -186,7 +186,15 @@ const LoginPage: React.FC = () => {
         {/* Логотип */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-4">
-            <img src="/logotip.png" alt="Ijarauz" className="h-10 w-auto object-contain" />
+            <img
+              src="/logotip.png"
+              alt="Ijarauz"
+              className="h-10 w-auto object-contain"
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = '/logo.png';
+              }}
+            />
             <div className="flex items-center gap-1.5">
               <span className="font-bold text-app text-xl tracking-tight">ijarauz</span>
               <span className="text-[10px] font-semibold bg-primary-500 text-white px-1.5 py-0.5 rounded uppercase tracking-wider">
