@@ -69,3 +69,21 @@ export const exportReportUrl = (params: {
   if (params.type) query.set('type', params.type);
   return `${base}/analytics/admin/export?${query.toString()}`;
 };
+
+export interface FunnelAnalyticsResponse {
+  views: number;
+  favorites: number;
+  viewingRequests: number;
+  favoriteRate: number;
+  viewingRate: number;
+  conversionRate: number;
+}
+
+export const getFunnelAnalyticsApi = async (params: {
+  from?: string;
+  to?: string;
+  days?: number;
+}): Promise<FunnelAnalyticsResponse> => {
+  const { data } = await api.get('/analytics/funnel', { params });
+  return data;
+};

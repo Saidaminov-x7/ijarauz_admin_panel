@@ -16,7 +16,7 @@ import {
   Legend,
 } from 'recharts';
 import Layout from '../components/Layout';
-import { getRangeAnalyticsApi, exportReportUrl } from '../lib/analyticsApi';
+import { getRangeAnalyticsApi, getFunnelAnalyticsApi, exportReportUrl } from '../lib/analyticsApi';
 
 const PERIODS = [
   { label: '7 дней', value: 7 },
@@ -44,6 +44,11 @@ const AnalyticsPage: React.FC = () => {
   const { data: analytics, isLoading } = useQuery({
     queryKey: ['admin', 'analytics', 'range', queryParams],
     queryFn: () => getRangeAnalyticsApi(queryParams),
+  });
+
+  const { data: funnel } = useQuery({
+    queryKey: ['admin', 'analytics', 'funnel', queryParams],
+    queryFn: () => getFunnelAnalyticsApi(queryParams),
   });
 
   const chartData = analytics?.chartData || [];
@@ -214,6 +219,48 @@ const AnalyticsPage: React.FC = () => {
             </ResponsiveContainer>
           )}
         </div>
+
+        {/* Воронка конверсии */}
+        {funnel && (
+          <div className="card">
+            <h3 className="text-base font-semibold text-app mb-4">Воронка конверсии пользователей</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="p-4 rounded-xl bg-teal-500/10 border border-teal-500/20">
+                <div className="text-xs font-semibold text-teal-600 dark:text-teal-400">1. Просмотры страниц</div>
+                <div className="text-2xl font-bold text-app mt-1">{funnel.views}</div>
+                <div className="text-[11px] text-muted mt-1">Визиты за период</div>
+              </div>
+              <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/20">
+                <div className="text-xs font-semibold text-purple-600 dark:text-purple-400">2. Добавления в избранное</div>
+                <div className="text-2xl font-bold text-app mt-1">{funnel.favorites}</div>
+                <div className="text-[11px] text-muted mt-1">Конверсия: {(funnel.favoriteRate * 100).toFixed(1)}%</div>
+              </div>
+              <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                <div className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">3. Заявки на просмотр</div>
+                <div className="text-2xl font-bold text-app mt-1">{funnel.viewingRequests}</div>
+                <div className="text-[11px] text-muted mt-1">Из избранного в заявку: {(funnel.viewingRate * 100).toFixed(1)}%</div>
+              </div>
+            </div>
+
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart
+                layout="vertical"
+                data={[
+                  { stage: '1. Просмотры', count: funnel.views },
+                  { stage: '2. Избранное', count: funnel.favorites },
+                  { stage: '3. Заявки', count: funnel.viewingRequests },
+                ]}
+                margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" horizontal={false} />
+                <XAxis type="number" tick={{ fontSize: 11, fill: 'var(--color-text-muted)' }} />
+                <YAxis dataKey="stage" type="category" tick={{ fontSize: 11, fill: 'var(--color-text-muted)' }} />
+                <Tooltip />
+                <Bar dataKey="count" fill="#14b8a6" radius={[0, 6, 6, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
 
         {/* Разбивка по городам */}
         <div className="card">

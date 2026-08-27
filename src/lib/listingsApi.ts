@@ -144,3 +144,29 @@ export const updateReportStatusApi = async (
   const { data } = await api.patch<ReportItem>(`/admin/reports/${id}/status`, { status });
   return data;
 };
+
+export type ViewingStatus = 'PENDING' | 'CONFIRMED' | 'DECLINED' | 'COMPLETED';
+
+export interface ViewingRequestItem {
+  id: string;
+  listingId: string;
+  status: ViewingStatus;
+  preferredDate: string | null;
+  message: string | null;
+  createdAt: string;
+  listing: { id: string; title: string; ownerId: string };
+  requester: { id: string; name: string; phone: string; email: string };
+}
+
+export const getViewingRequestsApi = async (): Promise<ViewingRequestItem[]> => {
+  const { data } = await api.get<ViewingRequestItem[]>('/admin/viewing-requests');
+  return data;
+};
+
+export const updateViewingStatusApi = async (
+  id: string,
+  status: ViewingStatus,
+): Promise<ViewingRequestItem> => {
+  const { data } = await api.patch<ViewingRequestItem>(`/viewing-requests/${id}/status`, { status });
+  return data;
+};

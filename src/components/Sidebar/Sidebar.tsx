@@ -8,6 +8,7 @@ import { logoutApi } from '../../lib/authApi';
 import { useAuthStore } from '../../store/authStore';
 import { useQuery } from '@tanstack/react-query';
 import { getSiteSettingsApi } from '../../lib/siteSettingsApi';
+import { useTranslation } from 'react-i18next';
 
 // ─── Иконки ─────────────────────────────────────────────────────────────────
 
@@ -117,6 +118,7 @@ const Sidebar: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { i18n } = useTranslation();
 
   const { data: settings } = useQuery({
     queryKey: ['admin', 'site-settings'],
@@ -237,6 +239,30 @@ const Sidebar: React.FC = () => {
             </svg>
           </span>
           <span>Жалобы</span>
+        </NavLink>
+
+        {/* Заявки на просмотр */}
+        <NavLink
+          to="/viewing-requests"
+          className={({ isActive }) => `
+            flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+            transition-all duration-150 cursor-pointer
+            ${
+              isActive
+                ? 'bg-primary-500 text-white shadow-sm'
+                : 'text-muted hover:bg-gray-100 dark:hover:bg-white/5 hover:text-app'
+            }
+          `}
+        >
+          <span className="flex-shrink-0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+          </span>
+          <span>Заявки на просмотр</span>
         </NavLink>
 
         {/* Пользователи */}
@@ -529,8 +555,32 @@ const Sidebar: React.FC = () => {
         </div>
       </nav>
 
+      {/* ─── Переключатель языка (RU/UZ/EN) ─── */}
+      <div className="px-3 py-2 border-t sidebar-border flex items-center justify-between gap-1 flex-shrink-0">
+        <span className="text-[11px] font-semibold text-muted">Язык / Til:</span>
+        <div className="flex items-center gap-1">
+          {(['ru', 'uz', 'en'] as const).map((lng) => {
+            const active = i18n.language === lng;
+            return (
+              <button
+                key={lng}
+                type="button"
+                onClick={() => i18n.changeLanguage(lng)}
+                className={`px-2 py-0.5 text-[10px] font-bold rounded-md uppercase transition-colors ${
+                  active
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-gray-100 dark:bg-white/5 text-muted hover:text-app'
+                }`}
+              >
+                {lng}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* ─── Профиль администратора (клик открывает /profile) ─── */}
-      <div className="px-3 pb-4 border-t sidebar-border pt-4 flex-shrink-0">
+      <div className="px-3 pb-4 pt-2 flex-shrink-0">
         <div
           onClick={() => navigate('/profile')}
           className={`
