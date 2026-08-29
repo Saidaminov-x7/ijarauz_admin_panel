@@ -38,7 +38,7 @@ export interface SiteSettings {
   yandexMetrikaId?: string;
   yandexMetrikaEnabled?: boolean;
   maintenancePasswordEnabled?: boolean;
-  maintenanceBypassPassword?: string;
+  maintenanceBypassPassword?: string | null;
 
   updatedAt: string;
   updatedBy: {
