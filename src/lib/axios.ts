@@ -85,7 +85,7 @@ const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue = [];
 };
 
-const AUTH_SKIP = ['/auth/login', '/auth/register', '/auth/google', '/auth/refresh'];
+const AUTH_SKIP = ['/auth/login', '/auth/register', '/auth/google', '/auth/refresh', '/auth/logout'];
 
 api.interceptors.response.use(
   (response) => response,
