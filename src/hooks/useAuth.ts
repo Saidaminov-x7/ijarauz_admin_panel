@@ -3,9 +3,7 @@
 import { useEffect } from 'react';
 import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
-import { api, scheduleProactiveRefresh } from '../lib/axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'https://api-production-ed76.up.railway.app';
+import { api, API_URL, scheduleProactiveRefresh } from '../lib/axios';
 
 function hasAdminAccess(user: { role?: string; adminRole?: string | null }) {
   return user.role === 'ADMIN' || !!user.adminRole;

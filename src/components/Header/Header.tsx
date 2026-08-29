@@ -12,11 +12,12 @@ import {
   markAllNotificationsReadApi,
 } from '../../lib/notificationsApi';
 import type { AdminNotificationItem } from '../../lib/notificationsApi';
+import { API_URL } from '../../lib/axios';
 
 function useBackendHealth() {
   const [isHealthy, setIsHealthy] = useState<boolean | null>(null);
   useEffect(() => {
-    const apiUrl = import.meta.env.VITE_API_URL || 'https://api-production-ed76.up.railway.app';
+    const apiUrl = API_URL;
     const check = () =>
       fetch(`${apiUrl}/health`)
         .then((r) => setIsHealthy(r.ok))
