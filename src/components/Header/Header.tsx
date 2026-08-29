@@ -4,6 +4,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import ThemeToggle from '../ThemeToggle/ThemeToggle';
 import { CountBadge } from '../ui/CountBadge';
 import {
@@ -63,6 +64,7 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ title, onToggleMobileMenu }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
@@ -190,25 +192,27 @@ const Header: React.FC<HeaderProps> = ({ title, onToggleMobileMenu }) => {
 
       {/* Правая часть */}
       <div className="flex items-center gap-2 ml-auto">
-        {/* Поиск */}
-        <div className="relative hidden md:block">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none">
+        {/* Поиск / Command Palette */}
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
+          id="header-search-btn"
+          className="
+            hidden sm:flex items-center gap-2 pl-9 pr-3 py-2 text-sm rounded-lg w-52 md:w-64
+            bg-gray-50 dark:bg-white/5
+            border border-app hover:border-primary-500/50 dark:hover:border-primary-500/50
+            text-muted hover:text-app
+            transition-all duration-150 relative cursor-pointer group
+          "
+        >
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted group-hover:text-primary-500 transition-colors">
             <SearchIcon />
           </span>
-          <input
-            type="text"
-            placeholder="Поиск по панели..."
-            id="header-search"
-            className="
-              pl-9 pr-4 py-2 text-sm rounded-lg w-56
-              bg-gray-50 dark:bg-white/5
-              border border-app
-              text-app placeholder:text-muted
-              outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20
-              transition-all duration-150
-            "
-          />
-        </div>
+          <span className="truncate text-xs md:text-sm">{t('common.search', 'Поиск по панели...')}</span>
+          <kbd className="ml-auto text-[11px] font-mono px-1.5 py-0.5 rounded bg-gray-200 dark:bg-white/10 text-muted opacity-80 group-hover:opacity-100">
+            ⌘K
+          </kbd>
+        </button>
 
         {/* Переключатель темы */}
         <ThemeToggle />
