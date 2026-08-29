@@ -94,16 +94,22 @@ export const ListingsPage: React.FC = () => {
     }, { replace: true });
   }, [debouncedSearch, setSearchParams]);
 
-  const updateParam = (key: string, value: string | number) => {
+  const updateParams = (updates: Record<string, string | number | undefined | null>) => {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
-      if (value !== undefined && value !== '' && value !== null) {
-        next.set(key, String(value));
-      } else {
-        next.delete(key);
-      }
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value !== undefined && value !== '' && value !== null) {
+          next.set(key, String(value));
+        } else {
+          next.delete(key);
+        }
+      });
       return next;
     });
+  };
+
+  const updateParam = (key: string, value: string | number) => {
+    updateParams({ [key]: value });
   };
 
   // Bulk actions state
@@ -142,7 +148,7 @@ export const ListingsPage: React.FC = () => {
   const currentStatus = activeTab === 'ALL' ? undefined : (activeTab as ModerationStatus);
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['admin', 'listings', activeTab, page, pageSize, sortByField, sortDirection],
+    queryKey: ['admin', 'listings', activeTab, currentStatus, page, pageSize, sortByField, sortDirection, debouncedSearch],
     queryFn: () =>
       getAdminListingsApi({
         moderationStatus: currentStatus,
@@ -390,8 +396,7 @@ export const ListingsPage: React.FC = () => {
             tabs={TABS}
             activeTab={activeTab}
             onChange={(tab) => {
-              updateParam('tab', tab);
-              updateParam('page', 1);
+              updateParams({ tab, page: 1 });
               setSelectedIds([]);
             }}
             variant="underline"

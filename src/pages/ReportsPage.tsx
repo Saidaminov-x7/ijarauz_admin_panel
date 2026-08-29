@@ -50,26 +50,32 @@ export const ReportsPage: React.FC = () => {
     { id: 'DISMISSED' as const, label: t('reports.dismissed', 'Отклонённые') },
   ];
 
-  const activeTab = (searchParams.get('tab') as TabKey) || 'OPEN';
+  const activeTab = (searchParams.get('tab') as TabKey) || 'ALL';
   const page = Number(searchParams.get('page')) || 1;
   const [pageSize, setPageSize] = useState(10);
 
-  const updateParam = (key: string, value: string | number) => {
+  const updateParams = (updates: Record<string, string | number | undefined | null>) => {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
-      if (value !== undefined && value !== '' && value !== null) {
-        next.set(key, String(value));
-      } else {
-        next.delete(key);
-      }
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value !== undefined && value !== '' && value !== null) {
+          next.set(key, String(value));
+        } else {
+          next.delete(key);
+        }
+      });
       return next;
     });
+  };
+
+  const updateParam = (key: string, value: string | number) => {
+    updateParams({ [key]: value });
   };
 
   const currentStatus = activeTab === 'ALL' ? undefined : (activeTab as ReportStatus);
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['admin', 'reports', activeTab, page, pageSize],
+    queryKey: ['admin', 'reports', activeTab, currentStatus, page, pageSize],
     queryFn: () =>
       getReportsApi({
         status: currentStatus,
@@ -199,8 +205,7 @@ export const ReportsPage: React.FC = () => {
           tabs={TABS}
           activeTab={activeTab}
           onChange={(tab) => {
-            updateParam('tab', tab);
-            updateParam('page', 1);
+            updateParams({ tab, page: 1 });
           }}
         />
 

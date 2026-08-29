@@ -109,8 +109,8 @@ export function Tabs<T extends string = string>({
               'flex items-center justify-center gap-1.5 rounded-lg transition-all cursor-pointer outline-none select-none font-medium',
               isSm ? 'px-2.5 py-1 text-xs' : 'px-3.5 py-1.5 text-xs sm:text-sm',
               isActive
-                ? 'bg-surface text-app shadow-xs font-semibold'
-                : 'text-muted hover:text-app',
+                ? 'bg-surface text-app shadow-xs font-bold dark:bg-white/15 dark:text-white border border-gray-200/60 dark:border-white/10'
+                : 'text-muted hover:text-app hover:bg-black/5 dark:hover:bg-white/5',
               tab.disabled && 'opacity-50 cursor-not-allowed',
             )}
           >

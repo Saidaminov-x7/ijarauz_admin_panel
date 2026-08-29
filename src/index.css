@@ -15,8 +15,8 @@
   --color-text-muted:  #6b7280;
   --color-sidebar-bg:  #ffffff;
   --color-sidebar-border: #f0f0f0;
-  --color-primary:     #14b8a6;
-  --color-primary-hover: #0d9488;
+  --color-primary:     #2563eb;
+  --color-primary-hover: #1d4ed8;
 }
 
 /* ─── Dark Mode CSS Variables ─────────────────────────────────────────────── */
@@ -28,8 +28,8 @@
   --color-text-muted:  #9ca3af;
   --color-sidebar-bg:  #111111;
   --color-sidebar-border: #222222;
-  --color-primary:     #14b8a6;
-  --color-primary-hover: #0d9488;
+  --color-primary:     #3b82f6;
+  --color-primary-hover: #2563eb;
 }
 
 /* ─── Base Styles ─────────────────────────────────────────────────────────── */

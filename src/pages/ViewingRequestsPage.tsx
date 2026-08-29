@@ -8,14 +8,32 @@ import { getViewingRequestsApi, updateViewingStatusApi, type ViewingRequestItem,
 import { toast } from 'sonner';
 import { Calendar, CheckCircle2, XCircle, Clock, User, ExternalLink } from 'lucide-react';
 
+import { Tabs } from '../components/ui';
+
+type TabKey = 'ALL' | 'PENDING' | 'CONFIRMED' | 'DECLINED' | 'COMPLETED';
+
 const ViewingRequestsPage: React.FC = () => {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
+  const [activeTab, setActiveTab] = React.useState<TabKey>('ALL');
 
   const { data: requests = [], isLoading } = useQuery({
     queryKey: ['admin', 'viewing-requests'],
     queryFn: getViewingRequestsApi,
   });
+
+  const TABS = [
+    { id: 'ALL' as const, label: t('common.all', 'Все') },
+    { id: 'PENDING' as const, label: t('viewingRequests.pending', 'В ожидании') },
+    { id: 'CONFIRMED' as const, label: t('viewingRequests.confirmed', 'Подтверждены') },
+    { id: 'DECLINED' as const, label: t('viewingRequests.rejected', 'Отклонены') },
+    { id: 'COMPLETED' as const, label: t('viewingRequests.completed', 'Завершены') },
+  ];
+
+  const filteredRequests = React.useMemo(() => {
+    if (activeTab === 'ALL') return requests;
+    return requests.filter((r) => r.status === activeTab);
+  }, [requests, activeTab]);
 
   const updateMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: ViewingStatus }) =>
@@ -66,19 +84,31 @@ const ViewingRequestsPage: React.FC = () => {
   return (
     <Layout title={t('viewingRequests.title', 'Заявки на просмотр')}>
       <div className="space-y-6 max-w-7xl mx-auto pb-12">
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted">
-            {t('common.total', { count: requests.length, defaultValue: `Всего заявок: ${requests.length}` })}
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-bold text-app tracking-tight">
+              {t('viewingRequests.title', 'Заявки на просмотр')}
+            </h1>
+            <p className="text-xs text-muted mt-0.5">
+              {t('common.total', { count: requests.length, defaultValue: `Всего заявок: ${requests.length}` })}
+            </p>
+          </div>
         </div>
+
+        {/* Tabs Filter */}
+        <Tabs
+          tabs={TABS}
+          activeTab={activeTab}
+          onChange={(tab) => setActiveTab(tab)}
+        />
 
         {isLoading ? (
           <div className="p-12 text-center text-muted">{t('common.loading', 'Загрузка заявок...')}</div>
-        ) : requests.length === 0 ? (
-          <div className="card p-12 text-center text-muted">{t('viewingRequests.noRequests', 'Заявок на просмотр пока нет')}</div>
+        ) : filteredRequests.length === 0 ? (
+          <div className="card p-12 text-center text-muted">{t('viewingRequests.noRequests', 'Заявок в этой категории пока нет')}</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {requests.map((item: ViewingRequestItem) => (
+            {filteredRequests.map((item: ViewingRequestItem) => (
               <div key={item.id} className="card space-y-3">
                 <div className="flex items-start justify-between gap-2 border-b border-app pb-3">
                   <div>

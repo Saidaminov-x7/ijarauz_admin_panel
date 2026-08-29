@@ -84,16 +84,22 @@ export const UsersPage: React.FC = () => {
     }, { replace: true });
   }, [debouncedSearch, setSearchParams]);
 
-  const updateParam = (key: string, value: string | number) => {
+  const updateParams = (updates: Record<string, string | number | undefined | null>) => {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
-      if (value !== undefined && value !== '' && value !== null) {
-        next.set(key, String(value));
-      } else {
-        next.delete(key);
-      }
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value !== undefined && value !== '' && value !== null) {
+          next.set(key, String(value));
+        } else {
+          next.delete(key);
+        }
+      });
       return next;
     });
+  };
+
+  const updateParam = (key: string, value: string | number) => {
+    updateParams({ [key]: value });
   };
 
   // Bulk state

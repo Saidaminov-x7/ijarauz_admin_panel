@@ -51,8 +51,13 @@ export const AuditLogPage: React.FC = () => {
     { value: 'SECURITY_DENIED', label: 'Отказы в доступе (401/403)' },
     { value: 'LISTING_APPROVED', label: 'Одобрение объявлений' },
     { value: 'LISTING_REJECTED', label: 'Отклонение объявлений' },
+    { value: 'LISTING_CHANGES_REQUESTED', label: 'Запросы правок' },
+    { value: 'LISTING_VERIFIED', label: 'Верификация объявлений' },
+    { value: 'LISTING_DELETED', label: 'Удаление объявлений' },
     { value: 'USER_BLOCKED', label: 'Блокировки пользователей' },
+    { value: 'USER_UNBLOCKED', label: 'Разблокировки пользователей' },
     { value: 'SETTINGS_UPDATED', label: 'Изменения настроек' },
+    { value: 'THEME_SETTINGS_UPDATED', label: 'Обновление темы' },
   ];
 
   const { data: logs = [], isLoading, refetch, isRefetching } = useQuery({
