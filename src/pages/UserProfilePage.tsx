@@ -5,21 +5,26 @@ import React, { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import Layout from '../components/Layout';
-import { getAdminUserByIdApi, blockUserApi, unblockUserApi } from '../lib/usersApi';
+import { getAdminUserByIdApi, blockUserApi, unblockUserApi, getUserActivityApi } from '../lib/usersApi';
 import { getUserAuditLogsApi } from '../lib/auditLogApi';
 import Badge from '../components/Badge/Badge';
-import { ArrowLeft, Shield, Lock, Unlock, Mail, Phone, Calendar, Home, Clock } from 'lucide-react';
+import { ArrowLeft, Shield, Lock, Unlock, Mail, Phone, Calendar, Home, Clock, Activity } from 'lucide-react';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
 const UserProfilePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'info' | 'listings' | 'history'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'listings' | 'activity' | 'history'>('info');
 
   const { data: user, isLoading: isUserLoading } = useQuery({
     queryKey: ['admin', 'user', id],
     queryFn: () => getAdminUserByIdApi(id!),
+  });
+
+  const { data: userActivity, isLoading: isActivityLoading } = useQuery({
+    queryKey: ['admin', 'user', id, 'activity'],
+    queryFn: () => getUserActivityApi(id!),
   });
 
   const { data: auditLogs, isLoading: isAuditLoading } = useQuery({
@@ -170,12 +175,20 @@ const UserProfilePage: React.FC = () => {
               Объявления ({user.listings?.length || 0})
             </button>
             <button
+              onClick={() => setActiveTab('activity')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'activity' ? 'border-primary-500 text-primary-500' : 'border-transparent text-muted hover:text-app'
+              }`}
+            >
+              Активность ({userActivity?.items?.length || 0})
+            </button>
+            <button
               onClick={() => setActiveTab('history')}
               className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === 'history' ? 'border-primary-500 text-primary-500' : 'border-transparent text-muted hover:text-app'
               }`}
             >
-              История действий ({auditLogs?.length || 0})
+              Админ-аудит ({auditLogs?.length || 0})
             </button>
           </nav>
         </div>
@@ -242,6 +255,59 @@ const UserProfilePage: React.FC = () => {
                         <div className="text-sm text-muted">
                           {listing.rooms} комн., {listing.area} м², {listing.price.toLocaleString()} сум/мес
                         </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'activity' && (
+          <div className="card p-0 overflow-hidden">
+            {isActivityLoading ? (
+              <div className="p-6 text-center text-muted">Загрузка логов активности...</div>
+            ) : !userActivity?.items || userActivity.items.length === 0 ? (
+              <div className="p-6 text-center text-muted">Активности пользователя не найдено</div>
+            ) : (
+              <div className="divide-y divide-app">
+                {userActivity.items.map((act) => (
+                  <div key={act.id} className="p-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 mt-0.5">
+                        <Activity size={18} className="text-teal-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-app text-sm">
+                              {act.action === 'LOGIN' ? 'Вход в аккаунт'
+                                : act.action === 'REGISTER' ? 'Регистрация аккаунта'
+                                : act.action === 'LISTING_CREATED' ? 'Создано объявление'
+                                : act.action === 'MESSAGE_SENT' ? 'Отправлено сообщение'
+                                : act.action}
+                            </span>
+                            {act.ip && (
+                              <span className="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-white/10 text-muted font-mono">
+                                {act.ip}
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-xs text-muted">
+                            {format(new Date(act.createdAt), 'd MMM yyyy, HH:mm:ss', { locale: ru })}
+                          </span>
+                        </div>
+                        {act.meta && Object.keys(act.meta).length > 0 && (
+                          <pre className="text-xs text-muted bg-gray-50 dark:bg-white/5 p-2 rounded mt-1 font-mono overflow-x-auto max-w-full">
+                            {JSON.stringify(act.meta, null, 2)}
+                          </pre>
+                        )}
+                        {act.userAgent && (
+                          <div className="text-[11px] text-muted truncate mt-1">
+                            {act.userAgent}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

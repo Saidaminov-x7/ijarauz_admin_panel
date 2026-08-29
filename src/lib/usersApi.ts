@@ -96,3 +96,23 @@ export const exportUsersApi = async (filter: Omit<UsersFilter, 'page' | 'limit'>
   });
   return data;
 };
+
+export interface UserActivityItem {
+  id: string;
+  userId: string;
+  action: string;
+  meta: any;
+  ip: string | null;
+  userAgent: string | null;
+  createdAt: string;
+}
+
+// Логи активности пользователя
+export const getUserActivityApi = async (
+  userId: string,
+  params?: { page?: number; limit?: number; action?: string },
+): Promise<PaginatedResponse<UserActivityItem>> => {
+  const { data } = await api.get<PaginatedResponse<UserActivityItem>>(`/admin/users/${userId}/activity`, { params });
+  return data;
+};
+

@@ -28,6 +28,7 @@ import StaffPage from './pages/settings/StaffPage';
 import AppearanceSettingsPage from './pages/settings/AppearanceSettingsPage';
 import ProfilePage from './pages/ProfilePage';
 import AuditLogPage from './pages/AuditLogPage';
+import ErrorLogsPage from './pages/ErrorLogsPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 // Инициализация темы (применяем до рендера UI)
@@ -227,6 +228,16 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <AuditLogPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Ошибки фронтенда */}
+        <Route
+          path="/errors"
+          element={
+            <ProtectedRoute>
+              <ErrorLogsPage />
             </ProtectedRoute>
           }
         />
