@@ -133,16 +133,18 @@ const Sidebar: React.FC = () => {
     pages: false,
     analytics: false,
     settings: false,
+    monetization: false,
+    system: false,
   });
 
   // Автоматически раскрываем родительский аккордеон, если активен дочерний роут
   useEffect(() => {
     const path = location.pathname;
-    setOpenSections((prev) => ({
-      pages: prev.pages || path.startsWith('/pages'),
-      analytics: prev.analytics || path.startsWith('/analytics'),
-      settings: prev.settings || path.startsWith('/settings'),
-    }));
+    if (path.startsWith('/pages')) setOpenSections((p) => ({ ...p, pages: true }));
+    if (path.startsWith('/analytics')) setOpenSections((p) => ({ ...p, analytics: true }));
+    if (path.startsWith('/settings')) setOpenSections((p) => ({ ...p, settings: true }));
+    if (path.startsWith('/monetization')) setOpenSections((p) => ({ ...p, monetization: true }));
+    if (path.startsWith('/system')) setOpenSections((p) => ({ ...p, system: true }));
   }, [location.pathname]);
 
   const toggleSection = (key: string) => {
@@ -217,6 +219,29 @@ const Sidebar: React.FC = () => {
         >
           <span className="flex-shrink-0"><ListIcon /></span>
           <span>Объявления</span>
+        </NavLink>
+
+        {/* Канбан модерации */}
+        <NavLink
+          to="/moderation/kanban"
+          className={({ isActive }) => `
+            flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+            transition-all duration-150 cursor-pointer
+            ${
+              isActive
+                ? 'bg-primary-500 text-white shadow-sm'
+                : 'text-muted hover:bg-gray-100 dark:hover:bg-white/5 hover:text-app'
+            }
+          `}
+        >
+          <span className="flex-shrink-0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="5" height="18" rx="1" />
+              <rect x="10" y="3" width="5" height="12" rx="1" />
+              <rect x="17" y="3" width="5" height="15" rx="1" />
+            </svg>
+          </span>
+          <span>Канбан модерации</span>
         </NavLink>
 
         {/* Жалобы */}
@@ -476,6 +501,32 @@ const Sidebar: React.FC = () => {
                 По городам
               </NavLink>
               <NavLink
+                to="/analytics/heatmap"
+                className={({ isActive }) => `
+                  block px-3 py-1.5 rounded-md text-xs font-medium transition-colors
+                  ${
+                    isActive
+                      ? 'text-primary-600 dark:text-primary-400 bg-primary-100/50 dark:bg-primary-900/20 font-semibold'
+                      : 'text-muted hover:text-app hover:bg-gray-100 dark:hover:bg-white/5'
+                  }
+                `}
+              >
+                Тепловая карта (Heatmap)
+              </NavLink>
+              <NavLink
+                to="/analytics/search-queries"
+                className={({ isActive }) => `
+                  block px-3 py-1.5 rounded-md text-xs font-medium transition-colors
+                  ${
+                    isActive
+                      ? 'text-primary-600 dark:text-primary-400 bg-primary-100/50 dark:bg-primary-900/20 font-semibold'
+                      : 'text-muted hover:text-app hover:bg-gray-100 dark:hover:bg-white/5'
+                  }
+                `}
+              >
+                Поисковые запросы
+              </NavLink>
+              <NavLink
                 to="/analytics/export"
                 className={({ isActive }) => `
                   block px-3 py-1.5 rounded-md text-xs font-medium transition-colors
@@ -594,6 +645,135 @@ const Sidebar: React.FC = () => {
                   Сотрудники и роли
                 </NavLink>
               )}
+            </div>
+          )}
+        </div>
+
+        {/* ─── Монетизация (Dropdown) ─── */}
+        <div>
+          <button
+            type="button"
+            onClick={() => toggleSection('monetization')}
+            className={`
+              w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+              transition-all duration-150 cursor-pointer
+              ${
+                location.pathname.startsWith('/monetization')
+                  ? 'text-primary-600 dark:text-primary-400 bg-primary-50/50 dark:bg-primary-900/10'
+                  : 'text-muted hover:bg-gray-100 dark:hover:bg-white/5 hover:text-app'
+              }
+            `}
+          >
+            <span className="flex-shrink-0">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="12" y1="1" x2="12" y2="23" />
+                <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+              </svg>
+            </span>
+            <span>Монетизация</span>
+            <ChevronDownIcon isOpen={openSections.monetization} />
+          </button>
+
+          {openSections.monetization && (
+            <div className="pl-9 pr-2 py-1 space-y-1">
+              <NavLink
+                to="/monetization/revenue"
+                className={({ isActive }) => `
+                  block px-3 py-1.5 rounded-md text-xs font-medium transition-colors
+                  ${
+                    isActive
+                      ? 'text-primary-600 dark:text-primary-400 bg-primary-100/50 dark:bg-primary-900/20 font-semibold'
+                      : 'text-muted hover:text-app hover:bg-gray-100 dark:hover:bg-white/5'
+                  }
+                `}
+              >
+                Выручка (MRR)
+              </NavLink>
+              <NavLink
+                to="/monetization/promo-codes"
+                className={({ isActive }) => `
+                  block px-3 py-1.5 rounded-md text-xs font-medium transition-colors
+                  ${
+                    isActive
+                      ? 'text-primary-600 dark:text-primary-400 bg-primary-100/50 dark:bg-primary-900/20 font-semibold'
+                      : 'text-muted hover:text-app hover:bg-gray-100 dark:hover:bg-white/5'
+                  }
+                `}
+              >
+                Промокоды
+              </NavLink>
+            </div>
+          )}
+        </div>
+
+        {/* ─── Инфраструктура и бэкапы (Dropdown) ─── */}
+        <div>
+          <button
+            type="button"
+            onClick={() => toggleSection('system')}
+            className={`
+              w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+              transition-all duration-150 cursor-pointer
+              ${
+                location.pathname.startsWith('/system')
+                  ? 'text-primary-600 dark:text-primary-400 bg-primary-50/50 dark:bg-primary-900/10'
+                  : 'text-muted hover:bg-gray-100 dark:hover:bg-white/5 hover:text-app'
+              }
+            `}
+          >
+            <span className="flex-shrink-0">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="2" y="2" width="20" height="8" rx="2" ry="2" />
+                <rect x="2" y="14" width="20" height="8" rx="2" ry="2" />
+                <line x1="6" y1="6" x2="6.01" y2="6" />
+                <line x1="6" y1="18" x2="6.01" y2="18" />
+              </svg>
+            </span>
+            <span>Инфраструктура</span>
+            <ChevronDownIcon isOpen={openSections.system} />
+          </button>
+
+          {openSections.system && (
+            <div className="pl-9 pr-2 py-1 space-y-1">
+              <NavLink
+                to="/system/health"
+                className={({ isActive }) => `
+                  block px-3 py-1.5 rounded-md text-xs font-medium transition-colors
+                  ${
+                    isActive
+                      ? 'text-primary-600 dark:text-primary-400 bg-primary-100/50 dark:bg-primary-900/20 font-semibold'
+                      : 'text-muted hover:text-app hover:bg-gray-100 dark:hover:bg-white/5'
+                  }
+                `}
+              >
+                Здоровье серверов
+              </NavLink>
+              <NavLink
+                to="/system/webhooks"
+                className={({ isActive }) => `
+                  block px-3 py-1.5 rounded-md text-xs font-medium transition-colors
+                  ${
+                    isActive
+                      ? 'text-primary-600 dark:text-primary-400 bg-primary-100/50 dark:bg-primary-900/20 font-semibold'
+                      : 'text-muted hover:text-app hover:bg-gray-100 dark:hover:bg-white/5'
+                  }
+                `}
+              >
+                Webhooks / Telegram
+              </NavLink>
+              <NavLink
+                to="/system/backups"
+                className={({ isActive }) => `
+                  block px-3 py-1.5 rounded-md text-xs font-medium transition-colors
+                  ${
+                    isActive
+                      ? 'text-primary-600 dark:text-primary-400 bg-primary-100/50 dark:bg-primary-900/20 font-semibold'
+                      : 'text-muted hover:text-app hover:bg-gray-100 dark:hover:bg-white/5'
+                  }
+                `}
+              >
+                Бэкапы и дампы
+              </NavLink>
             </div>
           )}
         </div>

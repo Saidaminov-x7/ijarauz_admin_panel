@@ -18,8 +18,11 @@ import {
   Home,
   MapPin,
   ShieldCheck,
+  ShieldAlert,
+  AlertTriangle,
 } from 'lucide-react';
 import Layout from '../components/Layout';
+import { getFraudAnalysisApi, type FraudAnalysisResult } from '../lib/extendedAdminApi';
 import {
   getAdminListingsApi,
   approveListingApi,
@@ -108,6 +111,24 @@ export const ListingsPage: React.FC = () => {
   const [actionReason, setActionReason] = useState('');
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
+
+  // Fraud / Scam modal
+  const [fraudModalListingId, setFraudModalListingId] = useState<string | null>(null);
+  const [fraudData, setFraudData] = useState<FraudAnalysisResult | null>(null);
+  const [isFraudLoading, setIsFraudLoading] = useState(false);
+
+  const handleOpenFraudAnalysis = async (listingId: string) => {
+    setFraudModalListingId(listingId);
+    setIsFraudLoading(true);
+    try {
+      const data = await getFraudAnalysisApi(listingId);
+      setFraudData(data);
+    } catch {
+      toast.error('Не удалось загрузить скоринг безопасности');
+    } finally {
+      setIsFraudLoading(false);
+    }
+  };
 
   const [sortByField, sortDirection] = sortOption.split('-') as [
     'createdAt' | 'price' | 'viewsCount' | 'area',
@@ -518,6 +539,18 @@ export const ListingsPage: React.FC = () => {
                     </div>
 
                     <div className="flex items-center gap-1.5">
+                      {/* Кнопка проверки на Скам / Fraud Score */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleOpenFraudAnalysis(item.id)}
+                        className="text-amber-600 border-amber-500/30 hover:bg-amber-50 dark:hover:bg-amber-950/40"
+                        title="Проверить риск мошенничества (Fraud Score)"
+                        leftIcon={<ShieldAlert size={14} />}
+                      >
+                        AI-Скор
+                      </Button>
+
                       {/* Кнопка быстрой верификации */}
                       <Button
                         variant="outline"
@@ -682,6 +715,125 @@ export const ListingsPage: React.FC = () => {
           confirmLabel="Удалить все"
           variant="danger"
         />
+
+        {/* Fraud Analysis / Anti-Scam Modal */}
+        {fraudModalListingId && (
+          <Modal
+            isOpen={!!fraudModalListingId}
+            onClose={() => {
+              setFraudModalListingId(null);
+              setFraudData(null);
+            }}
+            title="🛡️ AI-Анализ риска мошенничества и дубликатов"
+            subtitle={`Объявление ID: ${fraudModalListingId}`}
+            size="lg"
+            footer={
+              <div className="flex justify-end w-full">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => {
+                    setFraudModalListingId(null);
+                    setFraudData(null);
+                  }}
+                >
+                  Закрыть
+                </Button>
+              </div>
+            }
+          >
+            {isFraudLoading ? (
+              <div className="p-8 text-center text-muted">Выполняется скоринг факторов риска...</div>
+            ) : !fraudData ? (
+              <div className="p-8 text-center text-muted">Данные скоринга недоступны</div>
+            ) : (
+              <div className="space-y-4">
+                {/* Главный скор */}
+                <div className="flex items-center justify-between p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border border-app">
+                  <div>
+                    <div className="text-xs text-muted">Индекс подозрительности (Fraud Score)</div>
+                    <div className="text-2xl font-black mt-0.5 flex items-center gap-2">
+                      <span
+                        className={
+                          fraudData.riskLevel === 'CRITICAL'
+                            ? 'text-rose-600 dark:text-rose-400'
+                            : fraudData.riskLevel === 'HIGH'
+                            ? 'text-amber-600 dark:text-amber-400'
+                            : fraudData.riskLevel === 'MEDIUM'
+                            ? 'text-yellow-600 dark:text-yellow-400'
+                            : 'text-emerald-600 dark:text-emerald-400'
+                        }
+                      >
+                        {fraudData.score} / 100
+                      </span>
+                      <Badge
+                        variant={
+                          fraudData.riskLevel === 'CRITICAL' || fraudData.riskLevel === 'HIGH'
+                            ? 'danger'
+                            : fraudData.riskLevel === 'MEDIUM'
+                            ? 'warning'
+                            : 'success'
+                        }
+                      >
+                        Уровень риска: {fraudData.riskLevel}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  {/* Оценка рыночной цены */}
+                  <div className="text-right">
+                    <div className="text-xs text-muted">Справедливая рыночная цена</div>
+                    <div className="text-sm font-bold text-app mt-0.5">
+                      Медиана: {fraudData.marketFairPrice.medianPrice.toLocaleString()} сум
+                    </div>
+                    <div className="text-xs text-muted font-mono">
+                      Отклонение: {fraudData.marketFairPrice.differencePercent > 0 ? '+' : ''}
+                      {fraudData.marketFairPrice.differencePercent}% ({fraudData.marketFairPrice.verdict})
+                    </div>
+                  </div>
+                </div>
+
+                {/* Факторы риска */}
+                <div>
+                  <h4 className="text-xs font-bold text-app uppercase tracking-wide mb-2">Обнаруженные триггеры риска:</h4>
+                  {fraudData.factors.length === 0 ? (
+                    <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 text-xs flex items-center gap-2">
+                      <CheckCircle2 size={16} /> Подозрительных триггеров и стоп-слов не обнаружено
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {fraudData.factors.map((f, idx) => (
+                        <div key={idx} className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 text-xs flex items-center justify-between text-rose-700 dark:text-rose-300">
+                          <span>• {f.description}</span>
+                          <span className="font-mono font-bold">+{f.weight} баллов</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Возможные дубликаты */}
+                {fraudData.possibleDuplicates.length > 0 && (
+                  <div>
+                    <h4 className="text-xs font-bold text-app uppercase tracking-wide mb-2 flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+                      <AlertTriangle size={14} /> Найдено похожих объявлений (AI-детектор):
+                    </h4>
+                    <div className="space-y-1.5">
+                      {fraudData.possibleDuplicates.map((dup) => (
+                        <div key={dup.id} className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 text-xs flex items-center justify-between">
+                          <span className="font-semibold text-app truncate">{dup.title}</span>
+                          <span className="font-mono text-amber-600 dark:text-amber-400 font-bold shrink-0 ml-2">
+                            Совпадение {dup.similarity}%
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </Modal>
+        )}
       </div>
     </Layout>
   );

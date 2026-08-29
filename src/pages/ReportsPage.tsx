@@ -38,6 +38,7 @@ const REASON_LABELS: Record<string, string> = {
   WRONG_PRICE: '💰 Неверная цена',
   WRONG_PHOTOS: '🖼️ Чужие или фейковые фото',
   DUPLICATE: '📑 Дубликат объявления',
+  REALTOR: '👔 Скрытый риелтор / Агентство',
   OTHER: 'ℹ️ Другая причина',
 };
 

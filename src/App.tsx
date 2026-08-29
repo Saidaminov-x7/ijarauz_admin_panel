@@ -22,6 +22,14 @@ import AnalyticsPage from './pages/AnalyticsPage';
 import TrafficAnalyticsPage from './pages/analytics/TrafficAnalyticsPage';
 import CityAnalyticsPage from './pages/analytics/CityAnalyticsPage';
 import ExportReportsPage from './pages/analytics/ExportReportsPage';
+import HeatmapPage from './pages/analytics/HeatmapPage';
+import SearchAnalyticsPage from './pages/analytics/SearchAnalyticsPage';
+import PromoCodesPage from './pages/monetization/PromoCodesPage';
+import RevenueAnalyticsPage from './pages/monetization/RevenueAnalyticsPage';
+import SystemHealthPage from './pages/system/SystemHealthPage';
+import WebhooksPage from './pages/system/WebhooksPage';
+import BackupsPage from './pages/system/BackupsPage';
+import ModerationKanbanPage from './pages/ModerationKanbanPage';
 import GeneralSettingsPage from './pages/settings/GeneralSettingsPage';
 import AppSettingsPage from './pages/settings/AppSettingsPage';
 import StaffPage from './pages/settings/StaffPage';
@@ -228,6 +236,86 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <AuditLogPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Канбан модерации */}
+        <Route
+          path={ROUTES.KANBAN}
+          element={
+            <ProtectedRoute>
+              <ModerationKanbanPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Тепловая карта */}
+        <Route
+          path={ROUTES.HEATMAP}
+          element={
+            <ProtectedRoute>
+              <HeatmapPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Поисковые запросы */}
+        <Route
+          path={ROUTES.SEARCH_ANALYTICS}
+          element={
+            <ProtectedRoute>
+              <SearchAnalyticsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Промокоды */}
+        <Route
+          path={ROUTES.PROMO_CODES}
+          element={
+            <ProtectedRoute>
+              <PromoCodesPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Выручка и финансы */}
+        <Route
+          path={ROUTES.REVENUE}
+          element={
+            <ProtectedRoute>
+              <RevenueAnalyticsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Мониторинг здоровья */}
+        <Route
+          path={ROUTES.HEALTH}
+          element={
+            <ProtectedRoute>
+              <SystemHealthPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Webhooks */}
+        <Route
+          path={ROUTES.WEBHOOKS}
+          element={
+            <ProtectedRoute>
+              <WebhooksPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Резервные копии */}
+        <Route
+          path={ROUTES.BACKUPS}
+          element={
+            <ProtectedRoute>
+              <BackupsPage />
             </ProtectedRoute>
           }
         />
