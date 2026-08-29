@@ -1,5 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import {
   LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -15,6 +16,7 @@ import {
   getModerationStatsApi,
   getRecentComplaintsApi,
 } from '../lib/dashboardApi';
+import { Sparkles, Users, List, AlertTriangle } from 'lucide-react';
 
 // ─── Иконки для метрик ────────────────────────────────────────────────────────
 
@@ -105,6 +107,8 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?:
 // ─── Страница ──────────────────────────────────────────────────────────────────
 
 const DashboardPage: React.FC = () => {
+  const { t } = useTranslation();
+
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['admin', 'stats', 'overview'],
     queryFn: getOverviewStatsApi,
@@ -138,13 +142,70 @@ const DashboardPage: React.FC = () => {
   });
 
   return (
-    <Layout title="Главная панель управления">
-      <div className="space-y-6 max-w-7xl mx-auto">
+    <Layout title={t('dashboard.title', 'Панель управления')}>
+      <div className="space-y-6 max-w-7xl mx-auto pb-12">
+        {/* ─── [ФИЧА: ВИДЖЕТ ЗА 24 ЧАСА] ─── */}
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-primary-500/10 via-primary-500/5 to-transparent border border-primary-500/20 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-primary-500 text-white shadow-xs">
+              <Sparkles size={20} />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-app flex items-center gap-2">
+                <span>{t('dashboard.last24Hours', 'За последние 24 часа')}</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-primary-100 dark:bg-primary-950/60 text-primary-600 dark:text-primary-400">
+                  Live
+                </span>
+              </h3>
+              <p className="text-xs text-muted">
+                Сводка ключевых показателей активности пользователей платформы
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 sm:gap-6">
+            <div className="flex items-center gap-2 text-xs">
+              <span className="p-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 shrink-0">
+                <Users size={14} />
+              </span>
+              <div>
+                <span className="font-bold text-app text-sm block">
+                  +{stats?.newUsers?.value || 0}
+                </span>
+                <span className="text-[11px] text-muted">{t('dashboard.newRegistrations24h', 'Новых пользователей')}</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 text-xs">
+              <span className="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-950/40 text-blue-600 shrink-0">
+                <List size={14} />
+              </span>
+              <div>
+                <span className="font-bold text-app text-sm block">
+                  {stats?.activeListings?.value || 0}
+                </span>
+                <span className="text-[11px] text-muted">{t('dashboard.newListings24h', 'Новых объявлений')}</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 text-xs">
+              <span className="p-1.5 rounded-lg bg-amber-100 dark:bg-amber-950/40 text-amber-600 shrink-0">
+                <AlertTriangle size={14} />
+              </span>
+              <div>
+                <span className="font-bold text-app text-sm block">
+                  {stats?.pendingModeration?.value || 0}
+                </span>
+                <span className="text-[11px] text-muted">{t('dashboard.newReports24h', 'Ожидают проверки')}</span>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* ─── 4 карточки метрик ─── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricCard
-            label="Посетители сегодня"
+            label={t('dashboard.visitorsToday', 'Посетители сегодня')}
             value={stats?.visitorsToday.value ?? 0}
             change={stats?.visitorsToday.change}
             trend={stats?.visitorsToday.trend}
@@ -152,7 +213,7 @@ const DashboardPage: React.FC = () => {
             loading={statsLoading}
           />
           <MetricCard
-            label="Активные объявления"
+            label={t('dashboard.activeListings', 'Активные объявления')}
             value={stats?.activeListings.value ?? 0}
             change={stats?.activeListings.change}
             trend={stats?.activeListings.trend}
@@ -160,7 +221,7 @@ const DashboardPage: React.FC = () => {
             loading={statsLoading}
           />
           <MetricCard
-            label="Новые пользователи"
+            label={t('dashboard.newUsers', 'Новые пользователи')}
             value={stats?.newUsers.value ?? 0}
             change={stats?.newUsers.change}
             trend={stats?.newUsers.trend}
@@ -168,7 +229,7 @@ const DashboardPage: React.FC = () => {
             loading={statsLoading}
           />
           <MetricCard
-            label="Ожидают модерации"
+            label={t('dashboard.pendingModeration', 'Ожидают модерации')}
             value={stats?.pendingModeration.value ?? 0}
             change={stats?.pendingModeration.change}
             isAbsolute
@@ -183,9 +244,9 @@ const DashboardPage: React.FC = () => {
           {/* LineChart посещаемости */}
           <div className="card lg:col-span-2">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-semibold text-app">Посещаемость за 30 дней</h2>
+              <h2 className="text-base font-semibold text-app">{t('dashboard.traffic30Days', 'Посещаемость за 30 дней')}</h2>
               <span className="text-xs text-muted bg-gray-100 dark:bg-white/5 px-2.5 py-1 rounded-md">
-                Последний месяц
+                30 дней
               </span>
             </div>
             {trafficLoading ? (
@@ -225,32 +286,32 @@ const DashboardPage: React.FC = () => {
           <div className="space-y-4">
             {/* Конверсия модерации */}
             <div className="card">
-              <h2 className="text-base font-semibold text-app mb-3">Конверсия модерации</h2>
+              <h2 className="text-base font-semibold text-app mb-3">{t('dashboard.moderationConversion', 'Конверсия модерации')}</h2>
               {moderationStats ? (
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-muted">Одобрено</span>
+                    <span className="text-muted">{t('dashboard.approvedRate', 'Одобрено')}</span>
                     <span className="font-medium text-emerald-500">{moderationStats.approved} ({moderationStats.conversionRate}%)</span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-muted">Отклонено</span>
+                    <span className="text-muted">{t('dashboard.rejectedRate', 'Отклонено')}</span>
                     <span className="font-medium text-red-500">{moderationStats.rejected}</span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-muted">На проверке</span>
+                    <span className="text-muted">{t('common.pending', 'На проверке')}</span>
                     <span className="font-medium text-amber-500">{moderationStats.pending}</span>
                   </div>
                 </div>
               ) : (
-                <div className="h-24 flex items-center justify-center text-muted text-sm">Нет данных</div>
+                <div className="h-24 flex items-center justify-center text-muted text-sm">{t('common.noData', 'Нет данных')}</div>
               )}
             </div>
 
             {/* Топ объявлений */}
             <div className="card">
-              <h2 className="text-base font-semibold text-app mb-3">Топ объявлений по просмотрам</h2>
+              <h2 className="text-base font-semibold text-app mb-3">{t('dashboard.topListings', 'Популярные объявления')}</h2>
               {topListings.length === 0 ? (
-                <div className="h-24 flex items-center justify-center text-muted text-sm">Нет данных</div>
+                <div className="h-24 flex items-center justify-center text-muted text-sm">{t('common.noData', 'Нет данных')}</div>
               ) : (
                 <div className="space-y-3">
                   {topListings.slice(0, 3).map((listing) => (
@@ -281,16 +342,16 @@ const DashboardPage: React.FC = () => {
 
             {/* Последние жалобы */}
             <div className="card">
-              <h2 className="text-base font-semibold text-app mb-3">Последние жалобы</h2>
+              <h2 className="text-base font-semibold text-app mb-3">{t('dashboard.recentComplaints', 'Недавние жалобы')}</h2>
               {recentComplaints.length === 0 ? (
-                <div className="h-24 flex items-center justify-center text-muted text-sm">Нет жалоб</div>
+                <div className="h-24 flex items-center justify-center text-muted text-sm">{t('common.noData', 'Нет жалоб')}</div>
               ) : (
                 <div className="space-y-3">
                   {recentComplaints.map((complaint) => (
                     <div key={complaint.id} className="text-sm">
                       <div className="flex items-center justify-between mb-1">
                         <p className="font-medium text-app truncate">{complaint.title}</p>
-                        <span className="text-xs text-red-500 bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded-full">Отклонено</span>
+                        <span className="text-xs text-red-500 bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded-full">{t('common.rejected', 'Отклонено')}</span>
                       </div>
                       <p className="text-xs text-muted truncate">{complaint.city} • {complaint.owner.name} ({complaint.owner.email})</p>
                       <p className="text-xs text-muted mt-1">Причина: {complaint.moderationNote}</p>
@@ -305,9 +366,9 @@ const DashboardPage: React.FC = () => {
 
         {/* ─── Лента последних действий ─── */}
         <div className="card">
-          <h2 className="text-base font-semibold text-app mb-4">Последние действия на платформе</h2>
+          <h2 className="text-base font-semibold text-app mb-4">{t('dashboard.recentActivity', 'Лента последних действий')}</h2>
           {activity.length === 0 ? (
-            <p className="text-muted text-sm text-center py-8">Действий пока нет</p>
+            <p className="text-muted text-sm text-center py-8">{t('common.noData', 'Действий пока нет')}</p>
           ) : (
             <div className="space-y-3">
               {activity.slice(0, 6).map((item) => {

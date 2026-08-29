@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Layout from '../components/Layout';
-import { getSiteSettingsApi, updateSiteSettingsApi, uploadSiteLogoApi, deleteSiteLogoApi } from '../lib/siteSettingsApi';
+import { getSiteSettingsApi, updateSiteSettingsApi, uploadSiteLogoApi, deleteSiteLogoApi, getMediaUrl } from '../lib/siteSettingsApi';
 
 const SettingsPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -190,9 +190,9 @@ const SettingsPage: React.FC = () => {
             {logoPreview ? (
               <div className="relative">
                 <img
-                  src={logoPreview}
+                  src={getMediaUrl(logoPreview)}
                   alt="Логотип"
-                  className="h-16 w-auto rounded-lg border border-app"
+                  className="h-16 w-auto rounded-lg border border-app object-contain"
                 />
                 <button
                   onClick={handleDeleteLogo}

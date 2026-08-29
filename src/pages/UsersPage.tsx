@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { useDebounce } from '../hooks/useDebounce';
 import {
@@ -40,24 +41,25 @@ import {
   EmptyState,
 } from '../components/ui';
 
-const ROLE_OPTIONS = [
-  { value: '', label: 'Все роли' },
-  { value: 'TENANT', label: 'Арендаторы (TENANT)' },
-  { value: 'LANDLORD', label: 'Собственники (LANDLORD)' },
-  { value: 'ADMIN', label: 'Администраторы (ADMIN)' },
-];
-
-const SORT_OPTIONS = [
-  { value: 'createdAt-desc', label: 'Сначала новые' },
-  { value: 'createdAt-asc', label: 'Сначала старые' },
-  { value: 'name-asc', label: 'По имени (А-Я)' },
-  { value: 'listingsCount-desc', label: 'По количеству объявлений' },
-];
-
 export const UsersPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  const ROLE_OPTIONS = [
+    { value: '', label: t('users.allRoles', 'Все роли') },
+    { value: 'TENANT', label: `${t('users.tenants', 'Арендаторы')} (TENANT)` },
+    { value: 'LANDLORD', label: `${t('users.landlords', 'Собственники')} (LANDLORD)` },
+    { value: 'ADMIN', label: `${t('users.administrators', 'Администраторы')} (ADMIN)` },
+  ];
+
+  const SORT_OPTIONS = [
+    { value: 'createdAt-desc', label: t('users.newestFirst', 'Сначала новые') },
+    { value: 'createdAt-asc', label: t('users.oldestFirst', 'Сначала старые') },
+    { value: 'name-asc', label: 'По имени (А-Я)' },
+    { value: 'listingsCount-desc', label: 'По количеству объявлений' },
+  ];
 
   const roleFilter = (searchParams.get('role') as UserRole) || '';
   const sortOption = searchParams.get('sort') || 'createdAt-desc';
@@ -269,19 +271,19 @@ export const UsersPage: React.FC = () => {
   };
 
   return (
-    <Layout title="Управление пользователями">
+    <Layout title={t('users.title', 'Управление пользователями')}>
       <div className="space-y-6 animate-fade-in max-w-7xl mx-auto pb-12">
         {/* Header Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-xl sm:text-2xl font-black text-app tracking-tight flex items-center gap-2.5">
-              <span>База пользователей</span>
+              <span>{t('users.subtitle', 'База пользователей')}</span>
               <Badge variant="primary" size="sm">
-                {total} аккаунтов
+                {t('users.totalRecords', { count: total, defaultValue: `Всего: ${total} записей` })}
               </Badge>
             </h1>
             <p className="text-xs text-muted mt-0.5">
-              Управление профилями, верификация, права доступа и блокировки
+              {t('users.subtitleDesc', 'Управление профилями, верификация, права доступа и блокировки')}
             </p>
           </div>
 
@@ -292,7 +294,7 @@ export const UsersPage: React.FC = () => {
               onClick={() => refetch()}
               icon={<RotateCcw size={14} />}
             >
-              Обновить
+              {t('common.refresh', 'Обновить')}
             </Button>
             <Button
               variant="outline"
@@ -301,7 +303,7 @@ export const UsersPage: React.FC = () => {
               loading={isExporting}
               icon={<Download size={14} />}
             >
-              Экспорт в CSV
+              {t('users.exportCsv', 'Экспорт в CSV')}
             </Button>
           </div>
         </div>
@@ -309,7 +311,7 @@ export const UsersPage: React.FC = () => {
         {/* Filters Toolbar */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 rounded-2xl bg-surface border border-app shadow-xs">
           <Input
-            placeholder="Поиск по имени, email, телефону или ID..."
+            placeholder={t('users.searchPlaceholder', 'Поиск по имени, email, телефону или ID...')}
             value={searchInput}
             onChange={(e) => {
               setSearchInput(e.target.value);
@@ -374,8 +376,8 @@ export const UsersPage: React.FC = () => {
         ) : users.length === 0 ? (
           <EmptyState
             icon={<Users size={32} />}
-            title="Пользователи не найдены"
-            description="По заданным параметрам поиска пользователей не обнаружено"
+            title={t('users.userNotFound', 'Пользователи не найдены')}
+            description={t('users.emptyDesc', 'По заданным параметрам поиска пользователей не обнаружено')}
           />
         ) : (
           <div className="rounded-2xl border border-app bg-surface overflow-hidden shadow-xs">
@@ -396,13 +398,13 @@ export const UsersPage: React.FC = () => {
                         )}
                       </button>
                     </th>
-                    <th className="p-3.5">Пользователь</th>
-                    <th className="p-3.5">Контакты</th>
-                    <th className="p-3.5">Роль</th>
-                    <th className="p-3.5">Статус</th>
-                    <th className="p-3.5">Объявлений</th>
-                    <th className="p-3.5">Дата регистрации</th>
-                    <th className="p-3.5 text-right">Действия</th>
+                    <th className="p-3.5">{t('users.name', 'Пользователь')}</th>
+                    <th className="p-3.5">{t('users.phone', 'Контакты')}</th>
+                    <th className="p-3.5">{t('users.role', 'Роль')}</th>
+                    <th className="p-3.5">{t('common.status', 'Статус')}</th>
+                    <th className="p-3.5">{t('nav.listings', 'Объявлений')}</th>
+                    <th className="p-3.5">{t('users.registeredAt', 'Дата регистрации')}</th>
+                    <th className="p-3.5 text-right">{t('common.actions', 'Действия')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-app">
@@ -470,11 +472,11 @@ export const UsersPage: React.FC = () => {
                         <td className="p-3.5">
                           {isBlocked ? (
                             <Badge variant="danger" dot>
-                              Заблокирован
+                              {t('users.block', 'Заблокирован')}
                             </Badge>
                           ) : (
                             <Badge variant="success" dot>
-                              Активен
+                              {t('common.active', 'Активен')}
                             </Badge>
                           )}
                         </td>
@@ -493,7 +495,7 @@ export const UsersPage: React.FC = () => {
                               variant="ghost"
                               size="icon"
                               onClick={() => navigate(`/users/${user.id}`)}
-                              title="Профиль пользователя"
+                              title={t('users.profile', 'Профиль пользователя')}
                             >
                               <Eye size={15} />
                             </Button>
@@ -504,7 +506,7 @@ export const UsersPage: React.FC = () => {
                                 size="icon"
                                 onClick={() => unblockMutation.mutate(user.id)}
                                 className="text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
-                                title="Разблокировать"
+                                title={t('users.unblock', 'Разблокировать')}
                               >
                                 <Unlock size={15} />
                               </Button>
@@ -514,7 +516,7 @@ export const UsersPage: React.FC = () => {
                                 size="icon"
                                 onClick={() => setBlockUser(user)}
                                 className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40"
-                                title="Заблокировать"
+                                title={t('users.block', 'Заблокировать')}
                               >
                                 <Lock size={15} />
                               </Button>
@@ -551,8 +553,8 @@ export const UsersPage: React.FC = () => {
               setBlockUser(null);
               setBlockReason('');
             }}
-            title={`Блокировка: ${blockUser.name || blockUser.email}`}
-            subtitle="Укажите причину блокировки пользователя"
+            title={`${t('users.block', 'Блокировка')}: ${blockUser.name || blockUser.email}`}
+            subtitle={t('users.blockReasonSubtitle', 'Укажите причину блокировки пользователя')}
             size="md"
             footer={
               <div className="flex justify-end gap-2 w-full">
@@ -564,7 +566,7 @@ export const UsersPage: React.FC = () => {
                     setBlockReason('');
                   }}
                 >
-                  Отмена
+                  {t('common.cancel', 'Отмена')}
                 </Button>
                 <Button
                   variant="danger"
@@ -579,16 +581,16 @@ export const UsersPage: React.FC = () => {
                   }}
                   loading={blockMutation.isPending}
                 >
-                  Заблокировать
+                  {t('users.block', 'Заблокировать')}
                 </Button>
               </div>
             }
           >
             <Textarea
-              label="Причина блокировки *"
+              label={t('users.blockReasonLabel', 'Причина блокировки *')}
               value={blockReason}
               onChange={(e) => setBlockReason(e.target.value)}
-              placeholder="Спам, фейковые объявления, подозрительная активность..."
+              placeholder={t('users.blockReasonPlaceholder', 'Спам, фейковые объявления, подозрительная активность...')}
               rows={3}
             />
           </Modal>
@@ -601,7 +603,7 @@ export const UsersPage: React.FC = () => {
           onConfirm={handleBulkBlockSubmit}
           title="Заблокировать выбранных пользователей?"
           message={`Вы уверены, что хотите заблокировать ${selectedIds.length} пользователей? Они не смогут входить в свои аккаунты.`}
-          confirmLabel="Заблокировать всех"
+          confirmLabel={t('users.block', 'Заблокировать всех')}
           variant="danger"
         />
       </div>

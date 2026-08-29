@@ -3,6 +3,7 @@
 
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import Layout from '../../components/Layout';
 import {
   getStaffListApi,
@@ -16,28 +17,29 @@ import type { AdminRoleType } from '../../store/authStore';
 const roleLabels: Record<AdminRoleType, { label: string; color: string; desc: string }> = {
   SUPER_ADMIN: {
     label: 'Супер Администратор',
-    color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+    color: 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400',
     desc: 'Полный доступ ко всей системе, сотрудникам и настройкам',
   },
   ADMIN: {
     label: 'Администратор',
-    color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+    color: 'bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-400',
     desc: 'Модерация, пользователи, аналитика, конструктор страниц',
   },
   MODERATOR: {
     label: 'Модератор',
-    color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    color: 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400',
     desc: 'Одобрение/отклонение объявлений, просмотр пользователей',
   },
   SUPPORT: {
     label: 'Поддержка',
-    color: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+    color: 'bg-gray-100 text-gray-800 dark:bg-white/10 dark:text-gray-200',
     desc: 'Только чтение (read-only) объявлений и пользователей',
   },
 };
 
 const StaffPage: React.FC = () => {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   const currentUser = useAuthStore((state) => state.user);
 
   const { data: staffList = [], isLoading } = useQuery({
@@ -62,7 +64,7 @@ const StaffPage: React.FC = () => {
       setEmail('');
       setName('');
       setPassword('');
-      setFeedbackMsg('Сотрудник успешно добавлен');
+      setFeedbackMsg(t('common.saved', 'Сотрудник успешно добавлен'));
       setTimeout(() => setFeedbackMsg(''), 3000);
     },
     onError: (err: unknown) => {
@@ -77,7 +79,7 @@ const StaffPage: React.FC = () => {
       updateStaffRoleApi(id, role),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'staff'] });
-      setFeedbackMsg('Роль сотрудника обновлена');
+      setFeedbackMsg(t('common.saved', 'Роль сотрудника обновлена'));
       setTimeout(() => setFeedbackMsg(''), 3000);
     },
   });
@@ -87,7 +89,7 @@ const StaffPage: React.FC = () => {
     mutationFn: revokeStaffApi,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'staff'] });
-      setFeedbackMsg('Доступ сотрудника отозван');
+      setFeedbackMsg(t('common.saved', 'Доступ сотрудника отозван'));
       setTimeout(() => setFeedbackMsg(''), 3000);
     },
   });
@@ -110,10 +112,10 @@ const StaffPage: React.FC = () => {
   };
 
   return (
-    <Layout title="Сотрудники и роли">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <Layout title={t('nav.staff', 'Сотрудники и роли')}>
+      <div className="max-w-6xl mx-auto space-y-6 pb-12">
         {feedbackMsg && (
-          <div className="p-4 rounded-xl bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-sm border border-green-200 dark:border-green-800 flex items-center gap-2">
+          <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 text-sm border border-emerald-200 dark:border-emerald-800/40 flex items-center gap-2">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <polyline points="20 6 9 17 4 12" />
             </svg>
@@ -124,7 +126,7 @@ const StaffPage: React.FC = () => {
         {/* Информационная плашка и кнопка добавления */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-lg font-bold text-app">Администраторы и персонал</h2>
+            <h2 className="text-lg font-bold text-app">{t('nav.staff', 'Администраторы и персонал')}</h2>
             <p className="text-xs text-muted mt-0.5">
               Управление правами доступа к модулям админ-панели. Доступно исключительно Супер-Администратору.
             </p>
@@ -137,7 +139,7 @@ const StaffPage: React.FC = () => {
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
-            Добавить администратора
+            {t('common.add', 'Добавить сотрудника')}
           </button>
         </div>
 
@@ -147,24 +149,24 @@ const StaffPage: React.FC = () => {
             <table className="w-full text-left text-sm">
               <thead className="bg-gray-50 dark:bg-white/5 border-b border-app text-xs uppercase text-muted font-semibold">
                 <tr>
-                  <th className="px-6 py-3.5">Сотрудник</th>
-                  <th className="px-6 py-3.5">Роль в панели</th>
-                  <th className="px-6 py-3.5">Последний вход</th>
-                  <th className="px-6 py-3.5">Дата добавления</th>
-                  <th className="px-6 py-3.5 text-right">Действия</th>
+                  <th className="px-6 py-3.5">{t('users.name', 'Сотрудник')}</th>
+                  <th className="px-6 py-3.5">{t('users.role', 'Роль в панели')}</th>
+                  <th className="px-6 py-3.5">{t('users.lastActive', 'Последний вход')}</th>
+                  <th className="px-6 py-3.5">{t('users.registeredAt', 'Дата добавления')}</th>
+                  <th className="px-6 py-3.5 text-right">{t('common.actions', 'Действия')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-app">
                 {isLoading ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-12 text-center text-muted">
-                      Загрузка списка сотрудников...
+                      {t('common.loading', 'Загрузка списка сотрудников...')}
                     </td>
                   </tr>
                 ) : staffList.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-12 text-center text-muted">
-                      Сотрудники не найдены
+                      {t('users.userNotFound', 'Сотрудники не найдены')}
                     </td>
                   </tr>
                 ) : (
@@ -198,14 +200,14 @@ const StaffPage: React.FC = () => {
                                   </span>
                                 )}
                               </div>
-                              <div className="text-xs text-muted">{staff.email}</div>
+                              <div className="text-xs text-muted font-mono">{staff.email}</div>
                             </div>
                           </div>
                         </td>
 
                         <td className="px-6 py-4">
                           {isPrimarySuperAdmin ? (
-                            <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${roleMeta.color}`}>
+                            <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-bold ${roleMeta.color}`}>
                               {roleMeta.label}
                             </span>
                           ) : (
@@ -217,42 +219,35 @@ const StaffPage: React.FC = () => {
                                   role: e.target.value as AdminRoleType,
                                 })
                               }
-                              disabled={isSelf || updateRoleMutation.isPending}
-                              className="text-xs font-semibold rounded-lg border border-app bg-surface px-2.5 py-1 outline-none cursor-pointer focus:ring-2 focus:ring-primary-500/20"
+                              disabled={updateRoleMutation.isPending}
+                              className="text-xs font-semibold px-2.5 py-1 rounded-lg border border-app bg-surface text-app cursor-pointer outline-none"
                             >
-                              <option value="SUPER_ADMIN">Супер Администратор</option>
                               <option value="ADMIN">Администратор</option>
                               <option value="MODERATOR">Модератор</option>
                               <option value="SUPPORT">Поддержка</option>
+                              <option value="SUPER_ADMIN">Супер-Админ</option>
                             </select>
                           )}
                         </td>
 
-                        <td className="px-6 py-4 text-xs text-muted">
-                          {staff.lastLoginAt
-                            ? new Date(staff.lastLoginAt).toLocaleString('ru-RU', {
-                                day: 'numeric',
-                                month: 'short',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })
-                            : 'Никогда'}
+                        <td className="px-6 py-4 text-xs text-muted font-mono">
+                          {staff.lastLoginAt ? new Date(staff.lastLoginAt).toLocaleString('ru-RU') : 'Никогда'}
                         </td>
 
-                        <td className="px-6 py-4 text-xs text-muted">
-                          {staff.createdAt
-                            ? new Date(staff.createdAt).toLocaleDateString('ru-RU')
-                            : '—'}
+                        <td className="px-6 py-4 text-xs text-muted font-mono">
+                          {staff.createdAt ? new Date(staff.createdAt).toLocaleDateString('ru-RU') : '—'}
                         </td>
 
                         <td className="px-6 py-4 text-right">
-                          {!isPrimarySuperAdmin && !isSelf && (
+                          {isPrimarySuperAdmin || isSelf ? (
+                            <span className="text-xs text-muted italic">—</span>
+                          ) : (
                             <button
                               onClick={() => handleRevoke(staff.id, staff.name)}
                               disabled={revokeMutation.isPending}
                               className="text-xs text-red-600 dark:text-red-400 hover:underline font-medium cursor-pointer"
                             >
-                              Отозвать доступ
+                              {t('users.block', 'Отозвать доступ')}
                             </button>
                           )}
                         </td>
@@ -287,7 +282,7 @@ const StaffPage: React.FC = () => {
           <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-150">
             <div className="bg-surface rounded-2xl border border-app shadow-2xl max-w-md w-full p-6 space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold text-app">Добавить сотрудника</h3>
+                <h3 className="text-lg font-bold text-app">{t('common.add', 'Добавить сотрудника')}</h3>
                 <button
                   onClick={() => setIsAddModalOpen(false)}
                   className="text-muted hover:text-app p-1 rounded-lg"
@@ -371,14 +366,14 @@ const StaffPage: React.FC = () => {
                     onClick={() => setIsAddModalOpen(false)}
                     className="px-4 py-2 text-sm font-medium text-muted hover:text-app transition-colors"
                   >
-                    Отмена
+                    {t('common.cancel', 'Отмена')}
                   </button>
                   <button
                     type="submit"
                     disabled={addMutation.isPending}
                     className="btn-primary"
                   >
-                    {addMutation.isPending ? 'Сохранение...' : 'Назначить права'}
+                    {addMutation.isPending ? t('common.saving', 'Сохранение...') : t('common.save', 'Назначить права')}
                   </button>
                 </div>
               </form>

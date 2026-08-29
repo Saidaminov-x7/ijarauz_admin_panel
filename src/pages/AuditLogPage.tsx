@@ -3,8 +3,9 @@
 
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { formatDistanceToNow } from 'date-fns';
-import { ru } from 'date-fns/locale';
+import { ru, enUS } from 'date-fns/locale';
 import {
   ShieldCheck,
   RotateCcw,
@@ -36,22 +37,23 @@ const ACTION_LABELS: Record<string, { label: string; variant: 'success' | 'warni
   ADMIN_PROFILE_UPDATED: { label: 'Профиль администратора обновлён', variant: 'info' },
 };
 
-const ACTION_FILTER_OPTIONS = [
-  { value: '', label: 'Все действия' },
-  { value: 'SECURITY_DENIED', label: 'Отказы в доступе (401/403)' },
-  { value: 'LISTING_APPROVED', label: 'Одобрение объявлений' },
-  { value: 'LISTING_REJECTED', label: 'Отклонение объявлений' },
-  { value: 'USER_BLOCKED', label: 'Блокировки пользователей' },
-  { value: 'SETTINGS_UPDATED', label: 'Изменения настроек' },
-];
-
 export const AuditLogPage: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const [searchInput, setSearchInput] = useState('');
   const debouncedSearch = useDebounce(searchInput, 300);
   const [actionFilter, setActionFilter] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(15);
   const [selectedMeta, setSelectedMeta] = useState<{ action: string; meta: Record<string, unknown> } | null>(null);
+
+  const ACTION_FILTER_OPTIONS = [
+    { value: '', label: t('common.all', 'Все действия') },
+    { value: 'SECURITY_DENIED', label: 'Отказы в доступе (401/403)' },
+    { value: 'LISTING_APPROVED', label: 'Одобрение объявлений' },
+    { value: 'LISTING_REJECTED', label: 'Отклонение объявлений' },
+    { value: 'USER_BLOCKED', label: 'Блокировки пользователей' },
+    { value: 'SETTINGS_UPDATED', label: 'Изменения настроек' },
+  ];
 
   const { data: logs = [], isLoading, refetch, isRefetching } = useQuery({
     queryKey: ['admin', 'audit-logs'],
@@ -94,18 +96,20 @@ export const AuditLogPage: React.FC = () => {
     );
   };
 
+  const currentLocale = i18n.language === 'en' ? enUS : ru;
+
   return (
-    <Layout title="Журнал действий">
-      <div className="space-y-6 max-w-7xl mx-auto">
+    <Layout title={t('auditLog.title', 'Журнал действий')}>
+      <div className="space-y-6 max-w-7xl mx-auto pb-12">
         {/* Заголовок страницы */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-app tracking-tight flex items-center gap-2">
               <Activity className="text-primary-500" size={24} />
-              Журнал действий и безопасности
+              {t('auditLog.title', 'Журнал действий и безопасности')}
             </h1>
             <p className="text-sm text-muted mt-1">
-              Аудит всех изменений, модераторских решений и событий безопасности
+              {t('auditLog.subtitle', 'Аудит всех изменений, модераторских решений и событий безопасности')}
             </p>
           </div>
           <Button
@@ -115,15 +119,15 @@ export const AuditLogPage: React.FC = () => {
             loading={isRefetching}
             leftIcon={<RotateCcw size={14} />}
           >
-            Обновить
+            {t('common.refresh', 'Обновить')}
           </Button>
         </div>
 
         {/* Фильтры */}
-        <Card className="p-4">
+        <Card className="p-4 border-app bg-surface">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <Input
-              placeholder="Поиск по пользователю, ресурсу или ID..."
+              placeholder={t('auditLog.searchPlaceholder', 'Поиск по пользователю, ресурсу или ID...')}
               value={searchInput}
               onChange={(e) => {
                 setSearchInput(e.target.value);
@@ -151,23 +155,23 @@ export const AuditLogPage: React.FC = () => {
         ) : filteredLogs.length === 0 ? (
           <EmptyState
             icon={<ShieldCheck size={36} />}
-            title="Записей не найдено"
+            title={t('common.noData', 'Записей не найдено')}
             description={debouncedSearch || actionFilter ? 'Попробуйте изменить параметры поиска или фильтр' : 'Журнал действий пока пуст'}
           />
         ) : (
-          <Card className="overflow-hidden p-0">
+          <Card className="overflow-hidden p-0 border-app bg-surface shadow-xs">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-border bg-gray-50/60 dark:bg-white/[0.02] text-muted font-semibold uppercase tracking-wider">
-                    <th className="py-3.5 px-4">Инициатор</th>
-                    <th className="py-3.5 px-4">Действие</th>
-                    <th className="py-3.5 px-4">Объект / Ресурс</th>
-                    <th className="py-3.5 px-4">Детали</th>
-                    <th className="py-3.5 px-4 text-right">Время</th>
+                  <tr className="border-b border-app bg-gray-50/60 dark:bg-white/[0.02] text-muted font-semibold uppercase tracking-wider">
+                    <th className="py-3.5 px-4">{t('auditLog.actor', 'Инициатор')}</th>
+                    <th className="py-3.5 px-4">{t('auditLog.action', 'Действие')}</th>
+                    <th className="py-3.5 px-4">{t('auditLog.resource', 'Объект / Ресурс')}</th>
+                    <th className="py-3.5 px-4">{t('auditLog.details', 'Детали')}</th>
+                    <th className="py-3.5 px-4 text-right">{t('auditLog.timestamp', 'Время')}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border">
+                <tbody className="divide-y divide-app">
                   {paginatedLogs.map((log: AuditLogItem) => (
                     <tr
                       key={log.id}
@@ -215,7 +219,7 @@ export const AuditLogPage: React.FC = () => {
                             onClick={() => setSelectedMeta({ action: log.action, meta: log.meta! })}
                             className="inline-flex items-center gap-1 text-[11px] font-medium text-primary-600 dark:text-primary-400 hover:underline cursor-pointer"
                           >
-                            <Info size={12} /> Посмотреть
+                            <Info size={12} /> {t('common.view', 'Посмотреть')}
                           </button>
                         ) : (
                           <span className="text-muted text-[11px]">—</span>
@@ -225,7 +229,7 @@ export const AuditLogPage: React.FC = () => {
                       {/* Когда */}
                       <td className="py-3 px-4 text-right whitespace-nowrap text-muted">
                         <div className="font-medium text-app">
-                          {formatDistanceToNow(new Date(log.timestamp), { addSuffix: true, locale: ru })}
+                          {formatDistanceToNow(new Date(log.timestamp), { addSuffix: true, locale: currentLocale })}
                         </div>
                         <div className="text-[11px]">
                           {new Date(log.timestamp).toLocaleString('ru-RU')}
@@ -238,7 +242,7 @@ export const AuditLogPage: React.FC = () => {
             </div>
 
             {/* Пагинация */}
-            <div className="p-4 border-t border-border">
+            <div className="p-4 border-t border-app">
               <Pagination
                 currentPage={page}
                 totalPages={totalPages}
@@ -258,10 +262,10 @@ export const AuditLogPage: React.FC = () => {
         <Modal
           isOpen={!!selectedMeta}
           onClose={() => setSelectedMeta(null)}
-          title={`Детали действия: ${selectedMeta?.action || ''}`}
+          title={`${t('auditLog.details', 'Детали действия')}: ${selectedMeta?.action || ''}`}
         >
           <div className="p-4">
-            <pre className="p-3.5 rounded-xl bg-gray-900 text-gray-100 text-xs font-mono overflow-x-auto max-h-96">
+            <pre className="p-3.5 rounded-xl bg-gray-900 text-emerald-400 dark:bg-black/90 dark:text-emerald-400 text-xs font-mono overflow-x-auto max-h-96 border border-app">
               {JSON.stringify(selectedMeta?.meta, null, 2)}
             </pre>
           </div>

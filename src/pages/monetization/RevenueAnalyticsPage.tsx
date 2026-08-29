@@ -1,28 +1,32 @@
 // src/pages/monetization/RevenueAnalyticsPage.tsx
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import Layout from '../../components/Layout';
 import { getRevenueStatsApi } from '../../lib/extendedAdminApi';
 import { DollarSign, TrendingUp, Zap, Crown, Award } from 'lucide-react';
 import { format } from 'date-fns';
-import { ru } from 'date-fns/locale';
+import { ru, enUS } from 'date-fns/locale';
 
 const RevenueAnalyticsPage: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const { data, isLoading } = useQuery({
     queryKey: ['admin', 'revenue-stats'],
     queryFn: getRevenueStatsApi,
   });
 
+  const currentLocale = i18n.language === 'en' ? enUS : ru;
+
   return (
-    <Layout title="Финансовая аналитика и выручка">
-      <div className="space-y-6">
-        {/* Баннер отсутствия интеграции онлайн-оплаты */}
+    <Layout title={t('monetization.revenueTitle', 'Финансовая аналитика и выручка')}>
+      <div className="space-y-6 max-w-7xl mx-auto pb-12">
+        {/* Баннер статуса онлайн-оплаты */}
         {!data?.hasPaymentIntegration && (
-          <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm dark:bg-amber-950/30 dark:border-amber-900 dark:text-amber-300 flex items-center gap-3">
+          <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-sm dark:bg-amber-950/30 dark:border-amber-900/50 dark:text-amber-300 flex items-center gap-3">
             <span className="text-xl">⚠️</span>
             <div>
-              <div className="font-semibold">Онлайн-оплата (Payme / Click) находится в разработке</div>
-              <div className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
+              <div className="font-semibold">{t('monetization.paymentNotice', 'Онлайн-оплата (Payme / Click) находится в разработке')}</div>
+              <div className="text-xs text-amber-800/80 dark:text-amber-400 mt-0.5">
                 Показанные ниже метрики разделяют подтверждённую выручку по транзакциям от расчётной потенциальной стоимости текущих активных Boost-объявлений.
               </div>
             </div>
@@ -33,7 +37,7 @@ const RevenueAnalyticsPage: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="card p-5">
             <div className="flex items-center justify-between text-muted mb-2">
-              <span className="text-xs font-semibold uppercase">Подтверждённая выручка</span>
+              <span className="text-xs font-semibold uppercase">{t('monetization.actualRevenue', 'Подтверждённая выручка')}</span>
               <DollarSign size={18} className="text-emerald-500" />
             </div>
             <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
@@ -46,7 +50,7 @@ const RevenueAnalyticsPage: React.FC = () => {
 
           <div className="card p-5">
             <div className="flex items-center justify-between text-muted mb-2">
-              <span className="text-xs font-semibold uppercase">Потенциальная стоимость промо</span>
+              <span className="text-xs font-semibold uppercase">{t('monetization.potentialRevenue', 'Потенциальная стоимость промо')}</span>
               <TrendingUp size={18} className="text-primary-500" />
             </div>
             <div className="text-2xl font-bold text-app">
@@ -57,7 +61,7 @@ const RevenueAnalyticsPage: React.FC = () => {
 
           <div className="card p-5">
             <div className="flex items-center justify-between text-muted mb-2">
-              <span className="text-xs font-semibold uppercase">Активных продвижений</span>
+              <span className="text-xs font-semibold uppercase">{t('monetization.activePromotions', 'Активных продвижений')}</span>
               <Zap size={18} className="text-amber-500" />
             </div>
             <div className="text-2xl font-bold text-app">
@@ -107,7 +111,7 @@ const RevenueAnalyticsPage: React.FC = () => {
           </div>
 
           {isLoading ? (
-            <div className="p-8 text-center text-muted">Загрузка данных...</div>
+            <div className="p-8 text-center text-muted">{t('common.loading', 'Загрузка данных...')}</div>
           ) : !data?.promotedListings || data.promotedListings.length === 0 ? (
             <div className="p-8 text-center text-muted">Активных платных продвижений пока нет</div>
           ) : (
@@ -115,10 +119,10 @@ const RevenueAnalyticsPage: React.FC = () => {
               <table className="w-full text-left text-sm">
                 <thead className="bg-gray-50 dark:bg-white/5 border-b border-app text-xs text-muted uppercase">
                   <tr>
-                    <th className="p-3">Объявление</th>
+                    <th className="p-3">{t('nav.listings', 'Объявление')}</th>
                     <th className="p-3">Тариф</th>
                     <th className="p-3">Действует до</th>
-                    <th className="p-3">Дата подключения</th>
+                    <th className="p-3">{t('common.date', 'Дата подключения')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-app">
@@ -132,11 +136,11 @@ const RevenueAnalyticsPage: React.FC = () => {
                       </td>
                       <td className="p-3 text-muted font-mono text-xs">
                         {p.promotedUntil
-                          ? format(new Date(p.promotedUntil), 'd MMM yyyy, HH:mm', { locale: ru })
+                          ? format(new Date(p.promotedUntil), 'd MMM yyyy, HH:mm', { locale: currentLocale })
                           : 'Бессрочно'}
                       </td>
                       <td className="p-3 text-xs text-muted">
-                        {format(new Date(p.createdAt), 'd MMM yyyy', { locale: ru })}
+                        {format(new Date(p.createdAt), 'd MMM yyyy', { locale: currentLocale })}
                       </td>
                     </tr>
                   ))}

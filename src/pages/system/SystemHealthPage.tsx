@@ -1,11 +1,13 @@
 // src/pages/system/SystemHealthPage.tsx
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import Layout from '../../components/Layout';
 import { getSystemHealthApi } from '../../lib/extendedAdminApi';
 import { Activity, Database, Cpu, RefreshCw, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 const SystemHealthPage: React.FC = () => {
+  const { t } = useTranslation();
   const { data, refetch } = useQuery({
     queryKey: ['admin', 'system-health'],
     queryFn: getSystemHealthApi,
@@ -20,10 +22,10 @@ const SystemHealthPage: React.FC = () => {
   };
 
   return (
-    <Layout title="Мониторинг здоровья инфраструктуры">
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted">
+    <Layout title={t('system.healthTitle', 'Мониторинг здоровья инфраструктуры')}>
+      <div className="space-y-6 max-w-7xl mx-auto pb-12">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <p className="text-xs sm:text-sm text-muted">
             Статус критических сервисов бэкенда, latency базы данных PostgreSQL, Redis и потребление оперативной памяти.
           </p>
           <button
@@ -31,7 +33,7 @@ const SystemHealthPage: React.FC = () => {
             onClick={() => refetch()}
             className="btn btn-secondary flex items-center gap-2"
           >
-            <RefreshCw size={16} /> Обновить
+            <RefreshCw size={16} /> {t('common.refresh', 'Обновить')}
           </button>
         </div>
 
@@ -56,7 +58,7 @@ const SystemHealthPage: React.FC = () => {
           </div>
           <div className="text-right">
             <div className="text-xs text-muted">Аптайм сервера</div>
-            <div className="text-lg font-mono font-bold text-teal-600 dark:text-teal-400">
+            <div className="text-lg font-mono font-bold text-primary-600 dark:text-primary-400">
               {data ? formatUptime(data.uptimeSeconds) : '...'}
             </div>
           </div>

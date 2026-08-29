@@ -7,7 +7,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { logoutApi } from '../../lib/authApi';
 import { useAuthStore } from '../../store/authStore';
 import { useQuery } from '@tanstack/react-query';
-import { getSiteSettingsApi } from '../../lib/siteSettingsApi';
+import { getSiteSettingsApi, getMediaUrl } from '../../lib/siteSettingsApi';
 import { getOverviewStatsApi } from '../../lib/dashboardApi';
 import { useTranslation } from 'react-i18next';
 import { ROUTES } from '../../routes';
@@ -153,7 +153,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
           title="Ijarauz Admin"
         >
           <img
-            src={settings?.logoUrl || '/logotip.png'}
+            src={getMediaUrl(settings?.logoUrl)}
             alt="Ijarauz Admin"
             className="h-7 w-auto object-contain shrink-0"
             onError={(e) => {

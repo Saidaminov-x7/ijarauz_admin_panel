@@ -1,14 +1,16 @@
 // src/pages/monetization/PromoCodesPage.tsx
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import Layout from '../../components/Layout';
 import { getPromoCodesApi, createPromoCodeApi, deletePromoCodeApi } from '../../lib/extendedAdminApi';
 import { Ticket, Plus, Trash2, CheckCircle2 } from 'lucide-react';
 import { format } from 'date-fns';
-import { ru } from 'date-fns/locale';
+import { ru, enUS } from 'date-fns/locale';
 
 const PromoCodesPage: React.FC = () => {
   const queryClient = useQueryClient();
+  const { t, i18n } = useTranslation();
   const [isOpenModal, setIsOpenModal] = useState(false);
   const [code, setCode] = useState('');
   const [discountPercent, setDiscountPercent] = useState(15);
@@ -45,11 +47,13 @@ const PromoCodesPage: React.FC = () => {
     });
   };
 
+  const currentLocale = i18n.language === 'en' ? enUS : ru;
+
   return (
-    <Layout title="Управление промокодами и скидками">
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted">
+    <Layout title={t('monetization.promoCodesTitle', 'Управление промокодами и скидками')}>
+      <div className="space-y-6 max-w-7xl mx-auto pb-12">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <p className="text-xs sm:text-sm text-muted">
             Создавайте промокоды на скидку для продвижения объявлений арендодателей (TOP, VIP, Срочно).
           </p>
           <button
@@ -57,34 +61,34 @@ const PromoCodesPage: React.FC = () => {
             onClick={() => setIsOpenModal(true)}
             className="btn btn-primary flex items-center gap-2"
           >
-            <Plus size={16} /> Создать промокод
+            <Plus size={16} /> {t('monetization.addPromoCode', 'Создать промокод')}
           </button>
         </div>
 
         {/* Список промокодов */}
         <div className="card p-0 overflow-hidden">
           {isLoading ? (
-            <div className="p-8 text-center text-muted">Загрузка промокодов...</div>
+            <div className="p-8 text-center text-muted">{t('common.loading', 'Загрузка промокодов...')}</div>
           ) : !promoCodes || promoCodes.length === 0 ? (
-            <div className="p-8 text-center text-muted">Промокодов пока нет</div>
+            <div className="p-8 text-center text-muted">{t('common.noData', 'Промокодов пока нет')}</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead className="bg-gray-50 dark:bg-white/5 border-b border-app text-xs text-muted uppercase">
                   <tr>
-                    <th className="p-3">Код</th>
-                    <th className="p-3">Скидка</th>
-                    <th className="p-3">Использовано</th>
-                    <th className="p-3">Статус</th>
-                    <th className="p-3">Дата создания</th>
-                    <th className="p-3 text-right">Действия</th>
+                    <th className="p-3">{t('monetization.code', 'Код')}</th>
+                    <th className="p-3">{t('monetization.discount', 'Скидка')}</th>
+                    <th className="p-3">{t('monetization.uses', 'Использовано')}</th>
+                    <th className="p-3">{t('common.status', 'Статус')}</th>
+                    <th className="p-3">{t('common.date', 'Дата создания')}</th>
+                    <th className="p-3 text-right">{t('common.actions', 'Действия')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-app">
                   {promoCodes.map((p) => (
                     <tr key={p.id} className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
                       <td className="p-3 font-mono font-bold text-app flex items-center gap-2">
-                        <Ticket size={16} className="text-teal-500" />
+                        <Ticket size={16} className="text-primary-500" />
                         {p.code}
                       </td>
                       <td className="p-3 font-semibold text-emerald-600 dark:text-emerald-400">
@@ -95,19 +99,20 @@ const PromoCodesPage: React.FC = () => {
                       </td>
                       <td className="p-3">
                         <span className="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center gap-1 w-fit">
-                          <CheckCircle2 size={12} /> Активен
+                          <CheckCircle2 size={12} /> {t('common.active', 'Активен')}
                         </span>
                       </td>
                       <td className="p-3 text-xs text-muted">
-                        {format(new Date(p.createdAt), 'd MMM yyyy, HH:mm', { locale: ru })}
+                        {format(new Date(p.createdAt), 'd MMM yyyy', { locale: currentLocale })}
                       </td>
                       <td className="p-3 text-right">
                         <button
                           type="button"
                           onClick={() => deleteMutation.mutate(p.id)}
-                          className="text-rose-500 hover:text-rose-700 p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30"
+                          className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                          title={t('common.delete', 'Удалить')}
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={15} />
                         </button>
                       </td>
                     </tr>
@@ -120,25 +125,25 @@ const PromoCodesPage: React.FC = () => {
 
         {/* Модалка создания */}
         {isOpenModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
-            <div className="card w-full max-w-md p-6 animate-in fade-in zoom-in-95">
-              <h3 className="text-lg font-bold text-app mb-4">Новый промокод</h3>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+            <div className="bg-surface border border-app rounded-2xl p-6 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-150">
+              <h3 className="text-lg font-bold text-app mb-4">{t('monetization.addPromoCode', 'Создать промокод')}</h3>
               <form onSubmit={handleCreate} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold text-muted mb-1">Код промокода</label>
+                  <label className="block text-xs font-semibold text-muted mb-1">{t('monetization.code', 'Код (например, SUMMER25)')}</label>
                   <input
                     type="text"
                     required
                     value={code}
                     onChange={(e) => setCode(e.target.value.toUpperCase())}
-                    placeholder="SUMMER2026"
-                    className="input font-mono"
+                    placeholder="SUMMER25"
+                    className="w-full px-3 py-2 rounded-xl border border-app bg-app text-app font-mono text-sm uppercase outline-none focus:border-primary-500"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-semibold text-muted mb-1">Скидка (%)</label>
+                    <label className="block text-xs font-semibold text-muted mb-1">{t('monetization.discount', 'Скидка (%)')}</label>
                     <input
                       type="number"
                       required
@@ -146,36 +151,37 @@ const PromoCodesPage: React.FC = () => {
                       max={100}
                       value={discountPercent}
                       onChange={(e) => setDiscountPercent(Number(e.target.value))}
-                      className="input"
+                      className="w-full px-3 py-2 rounded-xl border border-app bg-app text-app text-sm outline-none focus:border-primary-500"
                     />
                   </div>
+
                   <div>
-                    <label className="block text-xs font-semibold text-muted mb-1">Лимит активаций</label>
+                    <label className="block text-xs font-semibold text-muted mb-1">{t('monetization.maxUses', 'Лимит использований')}</label>
                     <input
                       type="number"
                       required
                       min={1}
                       value={maxUses}
                       onChange={(e) => setMaxUses(Number(e.target.value))}
-                      className="input"
+                      className="w-full px-3 py-2 rounded-xl border border-app bg-app text-app text-sm outline-none focus:border-primary-500"
                     />
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-2 pt-2">
+                <div className="flex justify-end gap-2 pt-4">
                   <button
                     type="button"
                     onClick={() => setIsOpenModal(false)}
-                    className="btn btn-secondary"
+                    className="px-4 py-2 rounded-xl border border-app text-sm font-medium text-muted hover:text-app"
                   >
-                    Отмена
+                    {t('common.cancel', 'Отмена')}
                   </button>
                   <button
                     type="submit"
                     disabled={createMutation.isPending}
-                    className="btn btn-primary"
+                    className="btn btn-primary text-sm"
                   >
-                    {createMutation.isPending ? 'Создание...' : 'Сохранить'}
+                    {createMutation.isPending ? t('common.saving', 'Сохранение...') : t('common.create', 'Создать')}
                   </button>
                 </div>
               </form>

@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { useDebounce } from '../hooks/useDebounce';
 import {
@@ -20,6 +21,7 @@ import {
   ShieldCheck,
   ShieldAlert,
   AlertTriangle,
+  Download,
 } from 'lucide-react';
 import Layout from '../components/Layout';
 import { getFraudAnalysisApi, type FraudAnalysisResult } from '../lib/extendedAdminApi';
@@ -48,25 +50,26 @@ import {
 
 type TabKey = 'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'CHANGES_REQUESTED';
 
-const TABS = [
-  { id: 'ALL' as const, label: 'Все' },
-  { id: 'PENDING' as const, label: 'Ожидают модерации' },
-  { id: 'APPROVED' as const, label: 'Одобрены' },
-  { id: 'REJECTED' as const, label: 'Отклонены' },
-  { id: 'CHANGES_REQUESTED' as const, label: 'Требуют правок' },
-];
-
-const SORT_OPTIONS = [
-  { value: 'createdAt-desc', label: 'Сначала новые' },
-  { value: 'createdAt-asc', label: 'Сначала старые' },
-  { value: 'price-desc', label: 'Сначала дороже' },
-  { value: 'price-asc', label: 'Сначала дешевле' },
-  { value: 'viewsCount-desc', label: 'По популярности (просмотры)' },
-];
-
 export const ListingsPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  const TABS = [
+    { id: 'ALL' as const, label: t('common.all', 'Все') },
+    { id: 'PENDING' as const, label: t('dashboard.pendingModeration', 'Ожидают модерации') },
+    { id: 'APPROVED' as const, label: t('common.approved', 'Одобрены') },
+    { id: 'REJECTED' as const, label: t('common.rejected', 'Отклонены') },
+    { id: 'CHANGES_REQUESTED' as const, label: t('kanban.changesRequestedCol', 'Требуют правок') },
+  ];
+
+  const SORT_OPTIONS = [
+    { value: 'createdAt-desc', label: t('users.newestFirst', 'Сначала новые') },
+    { value: 'createdAt-asc', label: t('users.oldestFirst', 'Сначала старые') },
+    { value: 'price-desc', label: 'Сначала дороже' },
+    { value: 'price-asc', label: 'Сначала дешевле' },
+    { value: 'viewsCount-desc', label: 'По популярности (просмотры)' },
+  ];
 
   const activeTab = (searchParams.get('tab') as TabKey) || 'PENDING';
   const page = Number(searchParams.get('page')) || 1;
@@ -299,37 +302,64 @@ export const ListingsPage: React.FC = () => {
     );
   });
 
+  const handleExportCSV = () => {
+    if (items.length === 0) {
+      toast.error('Нет данных для экспорта');
+      return;
+    }
+    const headers = ['ID', 'Title', 'City', 'Price', 'Status', 'ModerationStatus', 'OwnerName', 'CreatedAt'];
+    const rows = items.map((l: any) => [
+      l.id,
+      `"${(l.title || '').replace(/"/g, '""')}"`,
+      l.city || '',
+      l.price || 0,
+      l.status || '',
+      l.moderationStatus || '',
+      `"${(l.owner?.name || '').replace(/"/g, '""')}"`,
+      l.createdAt || '',
+    ]);
+    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `listings-export-${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    toast.success('Экспорт объявлений в CSV завершен');
+  };
+
   const getStatusBadge = (status: ModerationStatus) => {
     switch (status) {
       case 'APPROVED':
-        return <Badge variant="success">Одобрено</Badge>;
+        return <Badge variant="success">{t('common.approved', 'Одобрено')}</Badge>;
       case 'PENDING':
-        return <Badge variant="warning">Ожидает</Badge>;
+        return <Badge variant="warning">{t('common.pending', 'Ожидает')}</Badge>;
       case 'REJECTED':
-        return <Badge variant="danger">Отклонено</Badge>;
+        return <Badge variant="danger">{t('common.rejected', 'Отклонено')}</Badge>;
       case 'CHANGES_REQUESTED':
-        return <Badge variant="info">Требуются правки</Badge>;
+        return <Badge variant="info">{t('kanban.changesRequestedCol', 'Требуются правки')}</Badge>;
       default:
         return <Badge variant="neutral">{status}</Badge>;
     }
   };
 
   return (
-    <Layout title="Управление объявлениями">
+    <Layout title={t('listings.title', 'Управление объявлениями')}>
       <div className="space-y-6 animate-fade-in max-w-7xl mx-auto pb-12">
         {/* Header Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-xl sm:text-2xl font-black text-app tracking-tight flex items-center gap-2.5">
-              <span>Каталог объявлений</span>
+              <span>{t('listings.title', 'Каталог объявлений')}</span>
               {pendingCount > 0 && (
                 <Badge variant="warning" size="sm" dot>
-                  {pendingCount} на модерации
+                  {pendingCount} {t('dashboard.pendingModeration', 'на модерации')}
                 </Badge>
               )}
             </h1>
             <p className="text-xs text-muted mt-0.5">
-              Модерация объектов недвижимости, проверка собственников и управление статусами
+              {t('listings.subtitle', 'Модерация объектов недвижимости, проверка собственников и управление статусами')}
             </p>
           </div>
 
@@ -340,7 +370,15 @@ export const ListingsPage: React.FC = () => {
               onClick={() => refetch()}
               icon={<RotateCcw size={14} />}
             >
-              Обновить
+              {t('common.refresh', 'Обновить')}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportCSV}
+              icon={<Download size={14} />}
+            >
+              {t('common.export', 'Экспорт в CSV')}
             </Button>
           </div>
         </div>

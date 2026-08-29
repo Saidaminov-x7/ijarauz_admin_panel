@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import Layout from '../components/Layout';
 import { getViewingRequestsApi, updateViewingStatusApi, type ViewingRequestItem, type ViewingStatus } from '../lib/listingsApi';
 import { toast } from 'sonner';
@@ -9,6 +10,7 @@ import { Calendar, CheckCircle2, XCircle, Clock, User, ExternalLink } from 'luci
 
 const ViewingRequestsPage: React.FC = () => {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   const { data: requests = [], isLoading } = useQuery({
     queryKey: ['admin', 'viewing-requests'],
@@ -32,15 +34,15 @@ const ViewingRequestsPage: React.FC = () => {
       if (context?.previous) {
         queryClient.setQueryData(['admin', 'viewing-requests'], context.previous);
       }
-      toast.error('Не удалось обновить статус заявки');
+      toast.error(t('common.error', 'Не удалось обновить статус заявки'));
     },
     onSuccess: (_, variables) => {
       toast.success(
         variables.status === 'CONFIRMED'
-          ? 'Заявка подтверждена'
+          ? t('viewingRequests.confirmed', 'Заявка подтверждена')
           : variables.status === 'DECLINED'
-          ? 'Заявка отклонена'
-          : 'Статус заявки обновлён',
+          ? t('viewingRequests.rejected', 'Заявка отклонена')
+          : t('common.saved', 'Статус заявки обновлён'),
       );
     },
     onSettled: () => {
@@ -51,41 +53,41 @@ const ViewingRequestsPage: React.FC = () => {
   const statusBadge = (status: ViewingStatus) => {
     switch (status) {
       case 'CONFIRMED':
-        return <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 dark:text-emerald-400 px-2.5 py-1 rounded-full"><CheckCircle2 size={13} /> Подтверждена</span>;
+        return <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 dark:text-emerald-400 px-2.5 py-1 rounded-full"><CheckCircle2 size={13} /> {t('viewingRequests.confirmed', 'Подтверждена')}</span>;
       case 'DECLINED':
-        return <span className="inline-flex items-center gap-1 text-xs font-semibold text-rose-600 bg-rose-50 dark:bg-rose-950/40 dark:text-rose-400 px-2.5 py-1 rounded-full"><XCircle size={13} /> Отклонена</span>;
+        return <span className="inline-flex items-center gap-1 text-xs font-semibold text-rose-600 bg-rose-50 dark:bg-rose-950/40 dark:text-rose-400 px-2.5 py-1 rounded-full"><XCircle size={13} /> {t('viewingRequests.rejected', 'Отклонена')}</span>;
       case 'COMPLETED':
-        return <span className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 bg-blue-50 dark:bg-blue-950/40 dark:text-blue-400 px-2.5 py-1 rounded-full"><CheckCircle2 size={13} /> Просмотр завершён</span>;
+        return <span className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 bg-blue-50 dark:bg-blue-950/40 dark:text-blue-400 px-2.5 py-1 rounded-full"><CheckCircle2 size={13} /> {t('viewingRequests.completed', 'Просмотр завершён')}</span>;
       default:
-        return <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-400 px-2.5 py-1 rounded-full"><Clock size={13} /> В ожидании</span>;
+        return <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-400 px-2.5 py-1 rounded-full"><Clock size={13} /> {t('viewingRequests.pending', 'В ожидании')}</span>;
     }
   };
 
   return (
-    <Layout title="Заявки на просмотр">
-      <div className="space-y-6 max-w-7xl mx-auto">
+    <Layout title={t('viewingRequests.title', 'Заявки на просмотр')}>
+      <div className="space-y-6 max-w-7xl mx-auto pb-12">
         <div className="flex items-center justify-between">
           <p className="text-xs text-muted">
-            Всего заявок на просмотр объектов: <strong>{requests.length}</strong>
+            {t('common.total', { count: requests.length, defaultValue: `Всего заявок: ${requests.length}` })}
           </p>
         </div>
 
         {isLoading ? (
-          <div className="p-12 text-center text-muted">Загрузка заявок...</div>
+          <div className="p-12 text-center text-muted">{t('common.loading', 'Загрузка заявок...')}</div>
         ) : requests.length === 0 ? (
-          <div className="card p-12 text-center text-muted">Заявок на просмотр пока нет</div>
+          <div className="card p-12 text-center text-muted">{t('viewingRequests.noRequests', 'Заявок на просмотр пока нет')}</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {requests.map((item: ViewingRequestItem) => (
               <div key={item.id} className="card space-y-3">
-                <div className="flex items-start justify-between gap-2 border-b border-border pb-3">
+                <div className="flex items-start justify-between gap-2 border-b border-app pb-3">
                   <div>
-                    <span className="text-xs font-bold text-teal-600 dark:text-teal-400 flex items-center gap-1">
+                    <span className="text-xs font-bold text-primary-600 dark:text-primary-400 flex items-center gap-1">
                       <Calendar size={13} />
                       {item.listing.title}
                     </span>
                     <div className="text-[11px] text-muted mt-0.5">
-                      Дата создания: {new Date(item.createdAt).toLocaleString('ru-RU')}
+                      {t('common.date', 'Дата')}: {new Date(item.createdAt).toLocaleString('ru-RU')}
                     </div>
                   </div>
                   <div>{statusBadge(item.status)}</div>
@@ -94,11 +96,11 @@ const ViewingRequestsPage: React.FC = () => {
                 <div className="space-y-1.5 text-xs">
                   <div className="flex items-center gap-1.5 text-app font-medium">
                     <User size={13} className="text-muted" />
-                    <span>Заявитель: <strong>{item.requester.name}</strong> ({item.requester.phone || item.requester.email})</span>
+                    <span>{t('viewingRequests.client', 'Заявитель')}: <strong>{item.requester.name}</strong> ({item.requester.phone || item.requester.email})</span>
                   </div>
                   {item.preferredDate && (
-                    <div className="text-stone-700 dark:text-stone-300">
-                      Желаемая дата: <strong>{new Date(item.preferredDate).toLocaleString('ru-RU')}</strong>
+                    <div className="text-app">
+                      {t('viewingRequests.preferredDate', 'Желаемая дата')}: <strong>{new Date(item.preferredDate).toLocaleString('ru-RU')}</strong>
                     </div>
                   )}
                   {item.message && (
@@ -108,38 +110,41 @@ const ViewingRequestsPage: React.FC = () => {
                   )}
                 </div>
 
-                <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-app">
                   {item.status === 'PENDING' && (
                     <>
                       <button
+                        type="button"
                         onClick={() => updateMutation.mutate({ id: item.id, status: 'CONFIRMED' })}
-                        className="btn btn-sm btn-emerald text-xs"
+                        className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-medium text-xs transition-colors cursor-pointer"
                       >
-                        Подтвердить
+                        {t('viewingRequests.confirmAction', 'Подтвердить')}
                       </button>
                       <button
+                        type="button"
                         onClick={() => updateMutation.mutate({ id: item.id, status: 'DECLINED' })}
-                        className="btn btn-sm btn-rose text-xs"
+                        className="px-3 py-1.5 rounded-lg bg-rose-500 hover:bg-rose-600 text-white font-medium text-xs transition-colors cursor-pointer"
                       >
-                        Отклонить
+                        {t('viewingRequests.rejectAction', 'Отклонить')}
                       </button>
                     </>
                   )}
                   {item.status === 'CONFIRMED' && (
                     <button
+                      type="button"
                       onClick={() => updateMutation.mutate({ id: item.id, status: 'COMPLETED' })}
-                      className="btn btn-sm btn-secondary text-xs"
+                      className="px-3 py-1.5 rounded-lg bg-primary-500 hover:bg-primary-600 text-white font-medium text-xs transition-colors cursor-pointer"
                     >
-                      Завершить просмотр
+                      {t('viewingRequests.completeAction', 'Завершить просмотр')}
                     </button>
                   )}
                   <a
                     href={`/catalog/${item.listingId}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="btn btn-sm btn-ghost text-xs inline-flex items-center gap-1"
+                    className="px-3 py-1.5 rounded-lg border border-app hover:bg-gray-100 dark:hover:bg-white/5 text-muted hover:text-app text-xs inline-flex items-center gap-1 transition-colors"
                   >
-                    Объект <ExternalLink size={12} />
+                    {t('viewingRequests.listing', 'Объект')} <ExternalLink size={12} />
                   </a>
                 </div>
               </div>

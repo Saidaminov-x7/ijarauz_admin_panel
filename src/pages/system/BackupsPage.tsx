@@ -1,14 +1,16 @@
 // src/pages/system/BackupsPage.tsx
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import Layout from '../../components/Layout';
 import { getBackupsInfoApi } from '../../lib/extendedAdminApi';
 import { api } from '../../lib/axios';
 import { Download, Database, Users, ShieldAlert, CheckCircle2 } from 'lucide-react';
 import { format } from 'date-fns';
-import { ru } from 'date-fns/locale';
+import { ru, enUS } from 'date-fns/locale';
 
 const BackupsPage: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const [isExporting, setIsExporting] = useState(false);
   const { data } = useQuery({
     queryKey: ['admin', 'backups-info'],
@@ -35,11 +37,13 @@ const BackupsPage: React.FC = () => {
     }
   };
 
+  const currentLocale = i18n.language === 'en' ? enUS : ru;
+
   return (
-    <Layout title="Резервные копии и Snapshot-менеджер">
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted">
+    <Layout title={t('system.backupsTitle', 'Резервные копии и Snapshot-менеджер')}>
+      <div className="space-y-6 max-w-7xl mx-auto pb-12">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <p className="text-xs sm:text-sm text-muted">
             Ежедневные автоматические снимки базы данных и ручной экспорт полного JSON-дампа платформы.
           </p>
           <button
@@ -48,7 +52,7 @@ const BackupsPage: React.FC = () => {
             disabled={isExporting}
             className="btn btn-primary flex items-center gap-2"
           >
-            <Download size={16} /> {isExporting ? 'Формирование дампа...' : 'Скачать JSON-снимок'}
+            <Download size={16} /> {isExporting ? 'Формирование дампа...' : t('system.downloadBackup', 'Скачать JSON-снимок')}
           </button>
         </div>
 
@@ -64,7 +68,7 @@ const BackupsPage: React.FC = () => {
               </div>
               <div className="text-xl font-bold text-app">
                 {data?.lastAutomaticBackup
-                  ? format(new Date(data.lastAutomaticBackup), 'd MMMM yyyy, HH:mm', { locale: ru })
+                  ? format(new Date(data.lastAutomaticBackup), 'd MMMM yyyy, HH:mm', { locale: currentLocale })
                   : 'Снапшоты пока не создавались'}
               </div>
               <div className="text-xs text-muted mt-0.5">

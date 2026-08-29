@@ -56,6 +56,17 @@ export const updateSiteSettingsApi = async (payload: Partial<SiteSettings>): Pro
   return data;
 };
 
+// Вспомогательная функция для формирования полного URL логотипа / медиа
+export const getMediaUrl = (url?: string | null): string => {
+  if (!url) return '/logotip.png';
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:') || url.startsWith('data:')) {
+    return url;
+  }
+  const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '');
+  const cleanPath = url.startsWith('/') ? url : `/${url}`;
+  return `${apiBase}${cleanPath}`;
+};
+
 // Загрузить логотип
 export const uploadSiteLogoApi = async (file: File): Promise<SiteSettings> => {
   const formData = new FormData();
@@ -63,7 +74,7 @@ export const uploadSiteLogoApi = async (file: File): Promise<SiteSettings> => {
 
   const { data } = await api.post('/admin/site-settings/logo', formData, {
     headers: {
-      'Content-Type': 'multipart/form-data',
+      'Content-Type': undefined,
     },
   });
   return data;

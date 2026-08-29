@@ -21,6 +21,7 @@ import {
   updateSiteSettingsApi,
   uploadSiteLogoApi,
   deleteSiteLogoApi,
+  getMediaUrl,
 } from '../../lib/siteSettingsApi';
 import { Button, Input, Textarea, Switch, Card } from '../../components/ui';
 
@@ -74,6 +75,36 @@ const GeneralSettingsPage: React.FC = () => {
     },
   });
 
+  const uploadLogoMutation = useMutation({
+    mutationFn: uploadSiteLogoApi,
+    onSuccess: (updated) => {
+      queryClient.setQueryData(['admin', 'site-settings'], updated);
+      queryClient.invalidateQueries({ queryKey: ['admin', 'site-settings'] });
+      setLogoPreview(updated.logoUrl || null);
+      setLogoFile(null);
+      toast.success('Логотип успешно загружен и сохранён');
+    },
+    onError: (err: unknown) => {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error.response?.data?.message || 'Ошибка загрузки логотипа');
+    },
+  });
+
+  const deleteLogoMutation = useMutation({
+    mutationFn: deleteSiteLogoApi,
+    onSuccess: (updated) => {
+      queryClient.setQueryData(['admin', 'site-settings'], updated);
+      queryClient.invalidateQueries({ queryKey: ['admin', 'site-settings'] });
+      setLogoPreview(null);
+      setLogoFile(null);
+      toast.success('Логотип удалён (используется стандартный)');
+    },
+    onError: (err: unknown) => {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error.response?.data?.message || 'Ошибка удаления логотипа');
+    },
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -87,17 +118,9 @@ const GeneralSettingsPage: React.FC = () => {
       navLinks,
     });
 
-    // 2. Загружаем логотип при наличии нового файла
+    // 2. Загружаем логотип при наличии нового файла (если еще не отправлен)
     if (logoFile) {
-      try {
-        await uploadSiteLogoApi(logoFile);
-        queryClient.invalidateQueries({ queryKey: ['admin', 'site-settings'] });
-        setLogoFile(null);
-        toast.success('Логотип успешно обновлен');
-      } catch (err: unknown) {
-        const error = err as { response?: { data?: { message?: string } } };
-        toast.error(error.response?.data?.message || 'Ошибка загрузки логотипа');
-      }
+      uploadLogoMutation.mutate(logoFile);
     }
   };
 
@@ -105,26 +128,18 @@ const GeneralSettingsPage: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
+    if (!file.type.startsWith('image/') && !file.type.includes('svg')) {
       toast.error('Можно загружать только изображения (PNG, JPG, SVG, WebP)');
       return;
     }
 
     setLogoFile(file);
     setLogoPreview(URL.createObjectURL(file));
+    uploadLogoMutation.mutate(file);
   };
 
-  const handleLogoDelete = async () => {
-    try {
-      await deleteSiteLogoApi();
-      queryClient.invalidateQueries({ queryKey: ['admin', 'site-settings'] });
-      setLogoPreview(null);
-      setLogoFile(null);
-      toast.success('Логотип удален (используется стандартный)');
-    } catch (err: unknown) {
-      const error = err as { response?: { data?: { message?: string } } };
-      toast.error(error.response?.data?.message || 'Ошибка удаления логотипа');
-    }
+  const handleLogoDelete = () => {
+    deleteLogoMutation.mutate();
   };
 
   return (
@@ -177,7 +192,7 @@ const GeneralSettingsPage: React.FC = () => {
                 <div className="relative group">
                   <div className="h-20 w-44 rounded-xl border border-app bg-surface p-2 flex items-center justify-center overflow-hidden">
                     <img
-                      src={logoPreview}
+                      src={getMediaUrl(logoPreview)}
                       alt="Логотип платформы"
                       className="max-h-full max-w-full object-contain"
                       onError={(e) => {

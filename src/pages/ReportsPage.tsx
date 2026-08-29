@@ -4,6 +4,7 @@
 import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
   AlertTriangle,
@@ -13,6 +14,7 @@ import {
   RotateCcw,
   Building,
   Calendar,
+  Download,
 } from 'lucide-react';
 import Layout from '../components/Layout';
 import {
@@ -25,13 +27,6 @@ import { Button, Tabs, Pagination, Badge, Card, EmptyState } from '../components
 
 type TabKey = 'ALL' | 'OPEN' | 'RESOLVED' | 'DISMISSED';
 
-const TABS = [
-  { id: 'ALL' as const, label: 'Все жалобы' },
-  { id: 'OPEN' as const, label: 'Открытые (требуют внимания)' },
-  { id: 'RESOLVED' as const, label: 'Решённые' },
-  { id: 'DISMISSED' as const, label: 'Отклонённые' },
-];
-
 const REASON_LABELS: Record<string, string> = {
   SCAM: '⚠️ Мошенничество / Скам',
   ALREADY_RENTED: '🔒 Уже сдано',
@@ -43,8 +38,16 @@ const REASON_LABELS: Record<string, string> = {
 };
 
 export const ReportsPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  const TABS = [
+    { id: 'ALL' as const, label: t('common.all', 'Все жалобы') },
+    { id: 'OPEN' as const, label: `${t('reports.open', 'Открытые')} (${t('dashboard.pendingModeration', 'требуют внимания')})` },
+    { id: 'RESOLVED' as const, label: t('reports.resolved', 'Решённые') },
+    { id: 'DISMISSED' as const, label: t('reports.dismissed', 'Отклонённые') },
+  ];
 
   const activeTab = (searchParams.get('tab') as TabKey) || 'OPEN';
   const page = Number(searchParams.get('page')) || 1;
@@ -121,38 +124,73 @@ export const ReportsPage: React.FC = () => {
   const total = data?.meta?.total || 0;
   const totalPages = data?.meta?.totalPages || 1;
 
+  const handleExportCSV = () => {
+    if (reports.length === 0) {
+      toast.error(t('common.noData', 'Нет данных для экспорта'));
+      return;
+    }
+    const headers = ['ID', 'ListingTitle', 'Reason', 'Status', 'ReporterName', 'CreatedAt'];
+    const rows = reports.map((r: any) => [
+      r.id,
+      `"${(r.listing?.title || '').replace(/"/g, '""')}"`,
+      r.reason || '',
+      r.status || '',
+      `"${(r.reporter?.name || '').replace(/"/g, '""')}"`,
+      r.createdAt || '',
+    ]);
+    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map((row) => row.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `reports-export-${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    toast.success('Экспорт жалоб завершен');
+  };
+
   const getStatusBadge = (status: ReportStatus) => {
     switch (status) {
       case 'OPEN':
-        return <Badge variant="warning">Открыта</Badge>;
+        return <Badge variant="warning">{t('reports.open', 'Открыта')}</Badge>;
       case 'RESOLVED':
-        return <Badge variant="success">Решена</Badge>;
+        return <Badge variant="success">{t('reports.resolved', 'Решена')}</Badge>;
       case 'DISMISSED':
-        return <Badge variant="neutral">Отклонена</Badge>;
+        return <Badge variant="neutral">{t('reports.dismissed', 'Отклонена')}</Badge>;
       default:
         return <Badge variant="neutral">{status}</Badge>;
     }
   };
 
   return (
-    <Layout title="Жалобы на объявления">
+    <Layout title={t('reports.title', 'Жалобы на объявления')}>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-app tracking-tight">Жалобы и репорты</h1>
+            <h1 className="text-2xl font-bold text-app tracking-tight">{t('reports.title', 'Жалобы и репорты')}</h1>
             <p className="text-sm text-muted mt-1">
-              Обработка жалоб пользователей на подозрительные или неактуальные объявления
+              {t('reports.subtitle', 'Обработка жалоб пользователей на подозрительные или неактуальные объявления')}
             </p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => refetch()}
-            leftIcon={<RotateCcw size={14} />}
-          >
-            Обновить
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => refetch()}
+              leftIcon={<RotateCcw size={14} />}
+            >
+              {t('common.refresh', 'Обновить')}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportCSV}
+              leftIcon={<Download size={14} />}
+            >
+              {t('common.export', 'Экспорт в CSV')}
+            </Button>
+          </div>
         </div>
 
         {/* Tabs */}

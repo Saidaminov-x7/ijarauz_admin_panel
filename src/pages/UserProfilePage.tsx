@@ -4,17 +4,19 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Layout from '../components/Layout';
 import { getAdminUserByIdApi, blockUserApi, unblockUserApi, getUserActivityApi } from '../lib/usersApi';
 import { getUserAuditLogsApi } from '../lib/auditLogApi';
 import Badge from '../components/Badge/Badge';
 import { ArrowLeft, Shield, Lock, Unlock, Mail, Phone, Calendar, Home, Clock, Activity } from 'lucide-react';
 import { format } from 'date-fns';
-import { ru } from 'date-fns/locale';
+import { ru, enUS } from 'date-fns/locale';
 
 const UserProfilePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState<'info' | 'listings' | 'activity' | 'history'>('info');
 
   const { data: user, isLoading: isUserLoading } = useQuery({
@@ -46,21 +48,29 @@ const UserProfilePage: React.FC = () => {
     },
   });
 
+  const currentLocale = i18n.language === 'en' ? enUS : ru;
+
   if (isUserLoading) {
-    return <Layout title="Загрузка...">
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
-      </div>
-    </Layout>;
+    return (
+      <Layout title={t('common.loading', 'Загрузка...')}>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+        </div>
+      </Layout>
+    );
   }
 
   if (!user) {
-    return <Layout title="Пользователь не найден">
-      <div className="card p-8 text-center">
-        <h2 className="text-xl font-semibold text-app mb-4">Пользователь не найден</h2>
-        <button className="btn-primary" onClick={() => navigate('/users')}>Вернуться к списку</button>
-      </div>
-    </Layout>;
+    return (
+      <Layout title={t('users.userNotFound', 'Пользователь не найден')}>
+        <div className="card p-8 text-center max-w-md mx-auto">
+          <h2 className="text-xl font-semibold text-app mb-4">{t('users.userNotFound', 'Пользователь не найден')}</h2>
+          <button className="btn-primary" onClick={() => navigate('/users')}>
+            {t('common.back', 'Вернуться к списку')}
+          </button>
+        </div>
+      </Layout>
+    );
   }
 
   const getRoleBadge = (role: string) => {
@@ -73,20 +83,20 @@ const UserProfilePage: React.FC = () => {
 
   const getStatusBadge = (isBlocked: boolean) => {
     return isBlocked
-      ? { label: 'Заблокирован', variant: 'danger' as const }
-      : { label: 'Активен', variant: 'success' as const };
+      ? { label: t('users.block', 'Заблокирован'), variant: 'danger' as const }
+      : { label: t('common.active', 'Активен'), variant: 'success' as const };
   };
 
   return (
-    <Layout title={`Профиль пользователя: ${user.name}`}>
-      <div className="max-w-4xl mx-auto space-y-6">
+    <Layout title={`${t('users.profile', 'Профиль пользователя')}: ${user.name}`}>
+      <div className="max-w-4xl mx-auto space-y-6 pb-12">
         {/* Хлебные крошки и кнопка назад */}
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate('/users')}
-            className="flex items-center gap-2 text-sm text-muted hover:text-app transition-colors"
+            className="flex items-center gap-2 text-sm text-muted hover:text-app transition-colors cursor-pointer"
           >
-            <ArrowLeft size={16} /> Назад к списку
+            <ArrowLeft size={16} /> {t('common.back', 'Назад к списку')}
           </button>
         </div>
 
@@ -122,12 +132,12 @@ const UserProfilePage: React.FC = () => {
                 )}
                 <div className="flex items-center gap-2 text-muted">
                   <Calendar size={16} />
-                  <span>Зарегистрирован: {format(new Date(user.createdAt), 'd MMMM yyyy', { locale: ru })}</span>
+                  <span>{t('users.registeredAt', 'Зарегистрирован')}: {format(new Date(user.createdAt), 'd MMMM yyyy', { locale: currentLocale })}</span>
                 </div>
                 {user.lastLoginAt && (
                   <div className="flex items-center gap-2 text-muted">
                     <Clock size={16} />
-                    <span>Последний вход: {format(new Date(user.lastLoginAt), 'd MMMM yyyy, HH:mm', { locale: ru })}</span>
+                    <span>{t('users.lastActive', 'Последний вход')}: {format(new Date(user.lastLoginAt), 'd MMMM yyyy, HH:mm', { locale: currentLocale })}</span>
                   </div>
                 )}
               </div>
@@ -135,19 +145,19 @@ const UserProfilePage: React.FC = () => {
               <div className="flex gap-2 mt-6">
                 {user.isBlocked ? (
                   <button
-                    className="btn-ghost gap-1"
+                    className="btn-ghost gap-1 cursor-pointer text-emerald-600"
                     onClick={() => unblockMutation.mutate()}
                     disabled={unblockMutation.isPending}
                   >
-                    <Unlock size={16} /> Разблокировать
+                    <Unlock size={16} /> {t('users.unblock', 'Разблокировать')}
                   </button>
                 ) : (
                   <button
-                    className="btn-danger gap-1"
+                    className="btn-danger gap-1 cursor-pointer"
                     onClick={() => blockMutation.mutate('')}
                     disabled={blockMutation.isPending}
                   >
-                    <Lock size={16} /> Заблокировать
+                    <Lock size={16} /> {t('users.block', 'Заблокировать')}
                   </button>
                 )}
               </div>
@@ -160,35 +170,35 @@ const UserProfilePage: React.FC = () => {
           <nav className="flex gap-6">
             <button
               onClick={() => setActiveTab('info')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors cursor-pointer ${
                 activeTab === 'info' ? 'border-primary-500 text-primary-500' : 'border-transparent text-muted hover:text-app'
               }`}
             >
-              Информация
+              {t('users.profile', 'Информация')}
             </button>
             <button
               onClick={() => setActiveTab('listings')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors cursor-pointer ${
                 activeTab === 'listings' ? 'border-primary-500 text-primary-500' : 'border-transparent text-muted hover:text-app'
               }`}
             >
-              Объявления ({user.listings?.length || 0})
+              {t('nav.listings', 'Объявления')} ({user.listings?.length || 0})
             </button>
             <button
               onClick={() => setActiveTab('activity')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors cursor-pointer ${
                 activeTab === 'activity' ? 'border-primary-500 text-primary-500' : 'border-transparent text-muted hover:text-app'
               }`}
             >
-              Активность ({userActivity?.items?.length || 0})
+              {t('dashboard.recentActivity', 'Активность')} ({userActivity?.items?.length || 0})
             </button>
             <button
               onClick={() => setActiveTab('history')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors cursor-pointer ${
                 activeTab === 'history' ? 'border-primary-500 text-primary-500' : 'border-transparent text-muted hover:text-app'
               }`}
             >
-              Админ-аудит ({auditLogs?.length || 0})
+              {t('auditLog.title', 'Админ-аудит')} ({auditLogs?.length || 0})
             </button>
           </nav>
         </div>
@@ -198,22 +208,22 @@ const UserProfilePage: React.FC = () => {
           <div className="card p-6">
             <h2 className="text-lg font-semibold text-app mb-4">Дополнительная информация</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="p-4 border border-app rounded-lg">
-                <div className="text-sm text-muted mb-1">Роль в системе</div>
-                <div className="font-medium">{getRoleBadge(user.role).label}</div>
+              <div className="p-4 border border-app rounded-xl bg-surface">
+                <div className="text-sm text-muted mb-1">{t('users.role', 'Роль в системе')}</div>
+                <div className="font-medium text-app">{getRoleBadge(user.role).label}</div>
               </div>
-              <div className="p-4 border border-app rounded-lg">
-                <div className="text-sm text-muted mb-1">Статус</div>
-                <div className="font-medium">{getStatusBadge(user.isBlocked).label}</div>
+              <div className="p-4 border border-app rounded-xl bg-surface">
+                <div className="text-sm text-muted mb-1">{t('common.status', 'Статус')}</div>
+                <div className="font-medium text-app">{getStatusBadge(user.isBlocked).label}</div>
               </div>
-              <div className="p-4 border border-app rounded-lg">
-                <div className="text-sm text-muted mb-1">Дата регистрации</div>
-                <div className="font-medium">{format(new Date(user.createdAt), 'd MMMM yyyy, HH:mm', { locale: ru })}</div>
+              <div className="p-4 border border-app rounded-xl bg-surface">
+                <div className="text-sm text-muted mb-1">{t('users.registeredAt', 'Дата регистрации')}</div>
+                <div className="font-medium text-app">{format(new Date(user.createdAt), 'd MMMM yyyy, HH:mm', { locale: currentLocale })}</div>
               </div>
               {user.lastLoginAt && (
-                <div className="p-4 border border-app rounded-lg">
-                  <div className="text-sm text-muted mb-1">Последний вход</div>
-                  <div className="font-medium">{format(new Date(user.lastLoginAt), 'd MMMM yyyy, HH:mm', { locale: ru })}</div>
+                <div className="p-4 border border-app rounded-xl bg-surface">
+                  <div className="text-sm text-muted mb-1">{t('users.lastActive', 'Последний вход')}</div>
+                  <div className="font-medium text-app">{format(new Date(user.lastLoginAt), 'd MMMM yyyy, HH:mm', { locale: currentLocale })}</div>
                 </div>
               )}
             </div>
@@ -223,13 +233,13 @@ const UserProfilePage: React.FC = () => {
         {activeTab === 'listings' && (
           <div className="card p-0 overflow-hidden">
             {user.listings?.length === 0 ? (
-              <div className="p-6 text-center text-muted">У пользователя нет объявлений</div>
+              <div className="p-6 text-center text-muted">{t('common.noData', 'У пользователя нет объявлений')}</div>
             ) : (
               <div className="divide-y divide-app">
                 {user.listings?.map((listing) => (
                   <div key={listing.id} className="p-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
                     <div className="flex gap-4">
-                      <div className="w-20 h-16 bg-gray-100 dark:bg-white/10 rounded-lg flex-shrink-0 overflow-hidden">
+                      <div className="w-20 h-16 bg-gray-100 dark:bg-white/10 rounded-xl flex-shrink-0 overflow-hidden">
                         {listing.images?.[0]?.url ? (
                           <img
                             src={listing.images[0].url}
@@ -237,7 +247,7 @@ const UserProfilePage: React.FC = () => {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-400">
+                          <div className="w-full h-full flex items-center justify-center text-muted">
                             <Home size={24} />
                           </div>
                         )}
@@ -246,7 +256,7 @@ const UserProfilePage: React.FC = () => {
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className="font-medium text-app truncate">{listing.title}</h3>
                           <Badge variant={listing.moderationStatus === 'APPROVED' ? 'success' : listing.moderationStatus === 'REJECTED' ? 'danger' : 'warning'} className="text-xs">
-                            {listing.moderationStatus === 'APPROVED' ? 'Одобрено' : listing.moderationStatus === 'REJECTED' ? 'Отклонено' : 'На модерации'}
+                            {listing.moderationStatus === 'APPROVED' ? t('common.approved', 'Одобрено') : listing.moderationStatus === 'REJECTED' ? t('common.rejected', 'Отклонено') : t('common.pending', 'На модерации')}
                           </Badge>
                         </div>
                         <div className="text-sm text-muted mb-1">
@@ -267,16 +277,16 @@ const UserProfilePage: React.FC = () => {
         {activeTab === 'activity' && (
           <div className="card p-0 overflow-hidden">
             {isActivityLoading ? (
-              <div className="p-6 text-center text-muted">Загрузка логов активности...</div>
+              <div className="p-6 text-center text-muted">{t('common.loading', 'Загрузка логов активности...')}</div>
             ) : !userActivity?.items || userActivity.items.length === 0 ? (
-              <div className="p-6 text-center text-muted">Активности пользователя не найдено</div>
+              <div className="p-6 text-center text-muted">{t('common.noData', 'Активности пользователя не найдено')}</div>
             ) : (
               <div className="divide-y divide-app">
                 {userActivity.items.map((act) => (
                   <div key={act.id} className="p-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
                     <div className="flex items-start gap-3">
                       <div className="flex-shrink-0 mt-0.5">
-                        <Activity size={18} className="text-teal-500" />
+                        <Activity size={18} className="text-primary-500" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2 mb-1">
@@ -295,11 +305,11 @@ const UserProfilePage: React.FC = () => {
                             )}
                           </div>
                           <span className="text-xs text-muted">
-                            {format(new Date(act.createdAt), 'd MMM yyyy, HH:mm:ss', { locale: ru })}
+                            {format(new Date(act.createdAt), 'd MMM yyyy, HH:mm:ss', { locale: currentLocale })}
                           </span>
                         </div>
                         {act.meta && Object.keys(act.meta).length > 0 && (
-                          <pre className="text-xs text-muted bg-gray-50 dark:bg-white/5 p-2 rounded mt-1 font-mono overflow-x-auto max-w-full">
+                          <pre className="text-xs text-emerald-400 bg-gray-900 dark:bg-black/90 p-2 rounded-xl mt-1 font-mono overflow-x-auto max-w-full border border-app">
                             {JSON.stringify(act.meta, null, 2)}
                           </pre>
                         )}
@@ -320,9 +330,9 @@ const UserProfilePage: React.FC = () => {
         {activeTab === 'history' && (
           <div className="card p-0 overflow-hidden">
             {isAuditLoading ? (
-              <div className="p-6 text-center text-muted">Загрузка...</div>
+              <div className="p-6 text-center text-muted">{t('common.loading', 'Загрузка...')}</div>
             ) : auditLogs?.length === 0 ? (
-              <div className="p-6 text-center text-muted">Нет действий</div>
+              <div className="p-6 text-center text-muted">{t('common.noData', 'Нет действий')}</div>
             ) : (
               <div className="divide-y divide-app">
                 {auditLogs?.map((log) => (
@@ -342,14 +352,14 @@ const UserProfilePage: React.FC = () => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-medium text-app">
-                            {log.action === 'USER_BLOCKED' ? 'Заблокирован'
-                              : log.action === 'USER_UNBLOCKED' ? 'Разблокирован'
+                            {log.action === 'USER_BLOCKED' ? t('users.block', 'Заблокирован')
+                              : log.action === 'USER_UNBLOCKED' ? t('users.unblock', 'Разблокирован')
                               : log.action === 'USER_ROLE_CHANGED' ? 'Изменена роль'
                               : log.action === 'USER_CREATED' ? 'Зарегистрирован'
                               : log.action}
                           </span>
                           <span className="text-xs text-muted">
-                            {format(new Date(log.timestamp), 'd MMM yyyy, HH:mm', { locale: ru })}
+                            {format(new Date(log.timestamp), 'd MMM yyyy, HH:mm', { locale: currentLocale })}
                           </span>
                         </div>
                         <div className="text-sm text-muted">
