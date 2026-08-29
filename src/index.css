@@ -14,20 +14,20 @@
   --color-text:        #111827;
   --color-text-muted:  #6b7280;
   --color-sidebar-bg:  #ffffff;
-  --color-sidebar-border: #f0f0f0;
+  --color-sidebar-border: #e5e7eb;
   --color-primary:     #2563eb;
   --color-primary-hover: #1d4ed8;
 }
 
 /* ─── Dark Mode CSS Variables ─────────────────────────────────────────────── */
 .dark {
-  --color-bg:          #0f0f0f;
-  --color-surface:     #1a1a1a;
-  --color-border:      #2a2a2a;
+  --color-bg:          #0c0e14;
+  --color-surface:     #141824;
+  --color-border:      rgba(255, 255, 255, 0.1);
   --color-text:        #f9fafb;
   --color-text-muted:  #9ca3af;
-  --color-sidebar-bg:  #111111;
-  --color-sidebar-border: #222222;
+  --color-sidebar-bg:  #0e111a;
+  --color-sidebar-border: rgba(255, 255, 255, 0.08);
   --color-primary:     #3b82f6;
   --color-primary-hover: #2563eb;
 }

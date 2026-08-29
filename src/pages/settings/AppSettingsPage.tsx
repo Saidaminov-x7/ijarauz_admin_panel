@@ -17,6 +17,7 @@ const AppSettingsPage: React.FC = () => {
   const [autoModerationEnabled, setAutoModerationEnabled] = useState(false);
   const [maxImagesPerListing, setMaxImagesPerListing] = useState(10);
   const [yandexMetrikaId, setYandexMetrikaId] = useState('112059980');
+  const [yandexMetrikaEnabled, setYandexMetrikaEnabled] = useState(true);
 
   // Feature Flags
   const [deviceIpBanEnabled, setDeviceIpBanEnabled] = useState(false);
@@ -46,6 +47,7 @@ const AppSettingsPage: React.FC = () => {
       setAutoModerationEnabled(settings.autoModerationEnabled ?? false);
       setMaxImagesPerListing(settings.maxImagesPerListing ?? 10);
       setYandexMetrikaId(settings.yandexMetrikaId ?? '112059980');
+      setYandexMetrikaEnabled((settings as any).yandexMetrikaEnabled ?? true);
 
       setDeviceIpBanEnabled(settings.deviceIpBanEnabled ?? false);
       setAdaptiveRateLimitEnabled(settings.adaptiveRateLimitEnabled ?? true);
@@ -90,6 +92,7 @@ const AppSettingsPage: React.FC = () => {
       autoModerationEnabled,
       maxImagesPerListing: Number(maxImagesPerListing),
       yandexMetrikaId,
+      yandexMetrikaEnabled,
       deviceIpBanEnabled,
       adaptiveRateLimitEnabled,
       twoFactorAuthEnabled,
@@ -170,6 +173,28 @@ const AppSettingsPage: React.FC = () => {
               <BarChart2 size={20} className="text-primary-500" />
               Яндекс.Метрика и Внешняя аналитика
             </h3>
+
+            {/* Переключатель */}
+            <div className="flex items-center justify-between py-3 border-b border-gray-200 dark:border-white/10">
+              <div>
+                <p className="text-sm font-semibold text-app">Включить Яндекс.Метрику</p>
+                <p className="text-xs text-muted mt-0.5">
+                  {yandexMetrikaEnabled
+                    ? 'Счётчик активен и собирает данные о посетителях'
+                    : 'Счётчик отключён — скрипт не загружается на сайте'}
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                <input
+                  type="checkbox"
+                  checked={yandexMetrikaEnabled}
+                  onChange={(e) => setYandexMetrikaEnabled(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500" />
+              </label>
+            </div>
+
             <div>
               <label className="block text-xs font-semibold text-muted mb-1">
                 ID счётчика Яндекс.Метрики
@@ -180,12 +205,16 @@ const AppSettingsPage: React.FC = () => {
                 onChange={(e) => setYandexMetrikaId(e.target.value)}
                 placeholder="112059980"
                 className="input font-mono max-w-xs"
+                disabled={!yandexMetrikaEnabled}
               />
               <p className="text-xs text-muted mt-1">
-                Счётчик автоматически инжектируется в клиентский бандл сайта и админ-панели с поддержкой SPA-хитов и Вебвизора.
+                {yandexMetrikaEnabled
+                  ? 'Счётчик инжектируется в клиентский бандл сайта с поддержкой SPA-хитов и Вебвизора.'
+                  : 'Включите Яндекс.Метрику чтобы активировать счётчик.'}
               </p>
             </div>
           </div>
+
 
           {/* 1. Безопасность и Защита */}
           <div className="card p-6 space-y-2">

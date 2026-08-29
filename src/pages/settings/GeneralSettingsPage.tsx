@@ -38,6 +38,8 @@ const GeneralSettingsPage: React.FC = () => {
   const [contactPhone, setContactPhone] = useState('+998 71 200-00-00');
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [maintenanceMessage, setMaintenanceMessage] = useState('');
+  const [maintenancePasswordEnabled, setMaintenancePasswordEnabled] = useState(false);
+
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [navLinks, setNavLinks] = useState<
@@ -56,6 +58,8 @@ const GeneralSettingsPage: React.FC = () => {
       setContactPhone(settings.contactPhone || '+998 71 200-00-00');
       setMaintenanceMode(settings.maintenanceMode ?? false);
       setMaintenanceMessage(settings.maintenanceMessage || '');
+      setMaintenanceBypassPassword((settings as any).maintenanceBypassPassword || '');
+      setMaintenancePasswordEnabled((settings as any).maintenancePasswordEnabled ?? false);
       setLogoPreview(settings.logoUrl || null);
       if (settings.navLinks && Array.isArray(settings.navLinks) && settings.navLinks.length > 0) {
         setNavLinks(settings.navLinks);
@@ -115,6 +119,8 @@ const GeneralSettingsPage: React.FC = () => {
       contactPhone,
       maintenanceMode,
       maintenanceMessage: maintenanceMessage.trim() || null,
+      maintenancePasswordEnabled,
+      maintenanceBypassPassword: maintenanceBypassPassword.trim() || null,
       navLinks,
     });
 
@@ -177,6 +183,23 @@ const GeneralSettingsPage: React.FC = () => {
                     rows={3}
                     placeholder="Сайт временно недоступен. Мы проводим плановые технические работы..."
                   />
+                  <div className="pt-3 border-t border-app mt-4 flex items-center justify-between">
+                    <span className="text-sm text-muted">Требовать пароль при техобслуживании</span>
+                    <Switch checked={maintenancePasswordEnabled} onChange={setMaintenancePasswordEnabled} />
+                  </div>
+                  {maintenancePasswordEnabled && (
+                    <div className="pt-3 border-t border-app mt-4">
+                      <label className="block text-xs font-semibold text-muted mb-1">Пароль для обхода техобслуживании</label>
+                      <input
+                        type="password"
+                        value={maintenanceBypassPassword}
+                        onChange={(e) => setMaintenanceBypassPassword(e.target.value)}
+                        placeholder="Введите пароль"
+                        className="input max-w-xs"
+                      />
+                      <p className="text-xs text-muted mt-1">Пароль позволит входить в сайт, когда включён режим обслуживания.</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

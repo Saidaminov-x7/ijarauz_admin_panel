@@ -79,7 +79,7 @@ const ModerationKanbanPage: React.FC = () => {
             {t('kanban.subtitle', 'Быстрая обработка входящих объявлений. Одобряйте, отклоняйте или запрашивайте правки в 1 клик.')}
           </p>
 
-          <div className="flex items-center gap-2 text-xs text-muted bg-surface px-3 py-1.5 rounded-xl border border-app shadow-xs select-none">
+          <div className="flex items-center gap-2 text-xs text-muted bg-surface px-3 py-1.5 rounded-xl border border-gray-200 dark:border-white/10 shadow-xs select-none">
             <Keyboard size={14} className="text-primary-500" />
             <span>Хоткеи: <kbd className="font-mono bg-gray-100 dark:bg-white/10 px-1 rounded">J</kbd>/<kbd className="font-mono bg-gray-100 dark:bg-white/10 px-1 rounded">K</kbd> карточки • <kbd className="font-mono bg-gray-100 dark:bg-white/10 px-1 rounded">A</kbd> Одобрить • <kbd className="font-mono bg-gray-100 dark:bg-white/10 px-1 rounded">R</kbd> Отклонить</span>
           </div>
@@ -92,7 +92,7 @@ const ModerationKanbanPage: React.FC = () => {
             {columns.map((col) => {
               const items = data ? (data as any)[col.key] || [] : [];
               return (
-                <div key={col.key} className="bg-gray-100/70 dark:bg-white/5 rounded-2xl p-3 flex flex-col gap-3 min-h-[500px]">
+                <div key={col.key} className="bg-gray-100/80 dark:bg-white/[0.03] border border-gray-200 dark:border-white/10 rounded-2xl p-3 flex flex-col gap-3 min-h-[500px]">
                   {/* Заголовок колонки */}
                   <div className="flex items-center justify-between px-1">
                     <span className="text-xs font-bold text-app uppercase tracking-wide">{col.title}</span>
@@ -119,10 +119,10 @@ const ModerationKanbanPage: React.FC = () => {
                               animate={{ opacity: 1, scale: 1 }}
                               exit={{ opacity: 0, scale: 0.95 }}
                               transition={{ duration: 0.2 }}
-                              className={`card p-3 shadow-xs hover:shadow-md transition-[box-shadow,border-color] flex flex-col gap-2 cursor-pointer border ${
+                              className={`p-3 rounded-xl bg-surface shadow-xs hover:shadow-md transition-all flex flex-col gap-2 cursor-pointer border ${
                                 isSelectedPending
                                   ? 'border-primary-500 ring-2 ring-primary-500/20'
-                                  : 'border-app'
+                                  : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20'
                               }`}
                               onClick={() => navigate(`/listings?highlight=${item.id}`)}
                             >
@@ -134,7 +134,7 @@ const ModerationKanbanPage: React.FC = () => {
                                     className="w-16 h-16 rounded-xl object-cover flex-shrink-0"
                                   />
                                 ) : (
-                                  <div className="w-16 h-16 rounded-xl bg-gray-200 dark:bg-white/10 flex items-center justify-center text-xs text-muted">
+                                  <div className="w-16 h-16 rounded-xl bg-gray-100 dark:bg-white/5 flex items-center justify-center text-xs text-muted">
                                     Нет фото
                                   </div>
                                 )}
