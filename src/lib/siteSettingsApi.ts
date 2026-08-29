@@ -36,6 +36,9 @@ export interface SiteSettings {
   yandexRealtyXmlEnabled?: boolean;
   openTelemetryEnabled?: boolean;
   yandexMetrikaId?: string;
+  yandexMetrikaEnabled?: boolean;
+  maintenancePasswordEnabled?: boolean;
+  maintenanceBypassPassword?: string;
 
   updatedAt: string;
   updatedBy: {

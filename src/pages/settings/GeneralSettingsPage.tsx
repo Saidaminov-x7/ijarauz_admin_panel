@@ -39,6 +39,7 @@ const GeneralSettingsPage: React.FC = () => {
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [maintenanceMessage, setMaintenanceMessage] = useState('');
   const [maintenancePasswordEnabled, setMaintenancePasswordEnabled] = useState(false);
+  const [maintenanceBypassPassword, setMaintenanceBypassPassword] = useState('');
 
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
