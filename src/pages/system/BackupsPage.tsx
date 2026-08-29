@@ -52,23 +52,28 @@ const BackupsPage: React.FC = () => {
           </button>
         </div>
 
-        {/* Карточка последнего бэкапа */}
+        {/* Карточка последнего бэкапа / проверки */}
         <div className="card p-5 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-2xl bg-teal-100 dark:bg-teal-950/50 text-teal-600 flex items-center justify-center">
               <CheckCircle2 size={28} />
             </div>
             <div>
-              <div className="text-sm text-muted">Последнее автоматическое резервирование</div>
+              <div className="text-sm text-muted">
+                {data?.lastBackupType === 'MANUAL' ? 'Последний ручной экспорт' : 'Последняя проверка целостности'}
+              </div>
               <div className="text-xl font-bold text-app">
                 {data?.lastAutomaticBackup
                   ? format(new Date(data.lastAutomaticBackup), 'd MMMM yyyy, HH:mm', { locale: ru })
-                  : 'Загрузка...'}
+                  : 'Снапшоты пока не создавались'}
+              </div>
+              <div className="text-xs text-muted mt-0.5">
+                Полноценное резервное копирование и Point-in-Time Recovery обеспечиваются инфраструктурой Railway Postgres
               </div>
             </div>
           </div>
           <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40">
-            Хранилище защищено
+            {data?.lastAutomaticBackup ? 'Снимок готов' : 'Ожидание первого снимка'}
           </span>
         </div>
 

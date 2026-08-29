@@ -14,30 +14,45 @@ const RevenueAnalyticsPage: React.FC = () => {
   });
 
   return (
-    <Layout title="Финансовая аналитика и выручка (MRR)">
+    <Layout title="Финансовая аналитика и выручка">
       <div className="space-y-6">
+        {/* Баннер отсутствия интеграции онлайн-оплаты */}
+        {!data?.hasPaymentIntegration && (
+          <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm dark:bg-amber-950/30 dark:border-amber-900 dark:text-amber-300 flex items-center gap-3">
+            <span className="text-xl">⚠️</span>
+            <div>
+              <div className="font-semibold">Онлайн-оплата (Payme / Click) находится в разработке</div>
+              <div className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
+                Показанные ниже метрики разделяют подтверждённую выручку по транзакциям от расчётной потенциальной стоимости текущих активных Boost-объявлений.
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* KPI карточки */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="card p-5">
             <div className="flex items-center justify-between text-muted mb-2">
-              <span className="text-xs font-semibold uppercase">Суммарная выручка</span>
+              <span className="text-xs font-semibold uppercase">Подтверждённая выручка</span>
               <DollarSign size={18} className="text-emerald-500" />
             </div>
             <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-              {(data?.totalRevenue ?? 0).toLocaleString()} сум
+              {(data?.actualRevenue ?? 0).toLocaleString()} сум
             </div>
-            <div className="text-xs text-muted mt-1">Доход от платных продвижений (TOP, VIP, Срочно)</div>
+            <div className="text-xs text-muted mt-1">
+              За 30 дней: {(data?.last30DaysRevenue ?? 0).toLocaleString()} сум
+            </div>
           </div>
 
           <div className="card p-5">
             <div className="flex items-center justify-between text-muted mb-2">
-              <span className="text-xs font-semibold uppercase">Прогнозный MRR</span>
+              <span className="text-xs font-semibold uppercase">Потенциальная стоимость промо</span>
               <TrendingUp size={18} className="text-primary-500" />
             </div>
             <div className="text-2xl font-bold text-app">
-              {(data?.estimatedMRR ?? 0).toLocaleString()} сум
+              {(data?.potentialValueOfActivePromotions ?? 0).toLocaleString()} сум
             </div>
-            <div className="text-xs text-muted mt-1">Ориентировочный месячный доход</div>
+            <div className="text-xs text-muted mt-1">Оценка номинальной стоимости активных тарифов</div>
           </div>
 
           <div className="card p-5">

@@ -113,10 +113,12 @@ export const deletePromoCodeApi = async (id: string): Promise<{ success: boolean
 
 // [Фича 20] Revenue & Finances
 export interface RevenueStatsData {
-  totalRevenue: number;
+  actualRevenue: number;
+  last30DaysRevenue: number;
+  hasPaymentIntegration: boolean;
   activePromotionsCount: number;
+  potentialValueOfActivePromotions: number;
   tierCounts: Record<string, number>;
-  estimatedMRR: number;
   promotedListings: Array<{
     id: string;
     title: string;
@@ -184,7 +186,8 @@ export const deleteWebhookApi = async (id: string): Promise<{ success: boolean }
 
 // [Фича 29] Backups
 export interface BackupsInfoData {
-  lastAutomaticBackup: string;
+  lastAutomaticBackup: string | null;
+  lastBackupType?: 'MANUAL' | 'SCHEDULED' | null;
   snapshotStats: {
     listings: number;
     users: number;

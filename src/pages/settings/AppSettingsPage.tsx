@@ -115,20 +115,34 @@ const AppSettingsPage: React.FC = () => {
     desc: string,
     checked: boolean,
     onChange: (val: boolean) => void,
+    inDevelopment = false,
   ) => (
-    <div className="flex items-center justify-between gap-4 py-3 border-b border-app">
+    <div className={`flex items-center justify-between gap-4 py-3 border-b border-app ${inDevelopment ? 'opacity-60' : ''}`}>
       <div>
-        <h4 className="text-sm font-semibold text-app">{title}</h4>
+        <div className="flex items-center gap-2">
+          <h4 className="text-sm font-semibold text-app">{title}</h4>
+          {inDevelopment && (
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
+              🚧 В разработке
+            </span>
+          )}
+        </div>
         <p className="text-xs text-muted mt-0.5">{desc}</p>
       </div>
-      <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+      <label
+        className={`relative inline-flex items-center flex-shrink-0 ${
+          inDevelopment ? 'cursor-not-allowed' : 'cursor-pointer'
+        }`}
+        title={inDevelopment ? 'Функция находится в разработке на бэкенде' : undefined}
+      >
         <input
           type="checkbox"
-          checked={checked}
+          checked={inDevelopment ? false : checked}
+          disabled={inDevelopment}
           onChange={(e) => onChange(e.target.checked)}
           className="sr-only peer"
         />
-        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500" />
+        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500 peer-disabled:opacity-50" />
       </label>
     </div>
   );
@@ -177,49 +191,56 @@ const AppSettingsPage: React.FC = () => {
           <div className="card p-6 space-y-2">
             <h3 className="text-base font-semibold text-app flex items-center gap-2 mb-4">
               <Shield size={20} className="text-teal-500" />
-              Безопасность и Антифрод (1, 2, 3, 4, 6, 7, 8)
+              Безопасность и Защита
             </h3>
             {renderToggle(
               '1. Автоматический бан по Device & IP',
               'Блокировка мошенников по связке цифрового отпечатка браузера и IP-подсети',
               deviceIpBanEnabled,
               setDeviceIpBanEnabled,
+              true, // 🚧 В разработке
             )}
             {renderToggle(
               '2. Адаптивный Rate Limiting / DDoS защита',
-              'Динамическое ограничение RPS через Redis Token Bucket при сканировании каталога',
+              'Динамическое ограничение RPS через Redis Token Bucket для публичных каталогов и поиска',
               adaptiveRateLimitEnabled,
               setAdaptiveRateLimitEnabled,
+              false, // Активно
             )}
             {renderToggle(
-              '3. Двухфакторная аутентификация (2FA / TOTP)',
-              'Обязательное подтверждение кодом из Google Authenticator для персонала',
+              '3. Двухфакторная аутентификация (2FA / Telegram Bot)',
+              'Обязательное подтверждение одноразовым кодом из Telegram для входа персонала',
               twoFactorAuthEnabled,
               setTwoFactorAuthEnabled,
+              false, // Активно
             )}
             {renderToggle(
               '4. Валидация геолокации по IP (GeoIP)',
               'Проверка соответствия IP-адреса региону Узбекистана при публикации объявления',
               geoIpValidationEnabled,
               setGeoIpValidationEnabled,
+              true, // 🚧 В разработке
             )}
             {renderToggle(
               '6. Ротация Refresh токенов & Revocation',
               'Инвалидация всей цепочки сессий при попытке повторного использования refresh-токена',
               tokenRotationEnabled,
               setTokenRotationEnabled,
+              true, // 🚧 В разработке
             )}
             {renderToggle(
               '7. Field-Level Encryption (AES-256)',
               'Шифрование паспортных данных и договоров аренды в базе данных',
               fieldEncryptionEnabled,
               setFieldEncryptionEnabled,
+              true, // 🚧 В разработке
             )}
             {renderToggle(
               '8. Авто-карантин подозрительных сессий',
               'Блокировка сессии при внезапной смене страны с требованием подтверждения по SMS',
               sessionQuarantineEnabled,
               setSessionQuarantineEnabled,
+              true, // 🚧 В разработке
             )}
           </div>
 
@@ -227,37 +248,42 @@ const AppSettingsPage: React.FC = () => {
           <div className="card p-6 space-y-2">
             <h3 className="text-base font-semibold text-app flex items-center gap-2 mb-4">
               <Zap size={20} className="text-amber-500" />
-              Производительность и Поиск (9, 10, 26, 41, 47)
+              Производительность и Поиск
             </h3>
             {renderToggle(
               '9. Защита кэша от лавины (Thundering Herd)',
               'Single-flight мьютексы в Redis для предотвращения перегрузки БД при сбросе кэша',
               thunderingHerdEnabled,
               setThunderingHerdEnabled,
+              true, // 🚧 В разработке
             )}
             {renderToggle(
-              '10. Полнотекстовый поиск с морфологией',
-              'Поиск с опечатками, транслитерацией латиница/кириллица и синонимами',
+              '10. Полнотекстовый комбинированный поиск',
+              'Полнотекстовый поиск по названию, описанию и адресу объявлений',
               fullTextSearchEnabled,
               setFullTextSearchEnabled,
+              false, // Активно
             )}
             {renderToggle(
               '26. Детектор водяных знаков на фото',
               'Автоматическое выявление и отклонение чужих фото со сторонними логотипами',
               watermarkDetectorEnabled,
               setWatermarkDetectorEnabled,
+              true, // 🚧 В разработке
             )}
             {renderToggle(
               '41. Генератор Yandex Realty XML фида',
               'Автоматическая генерация фида объявлений по стандарту Яндекс.Недвижимости',
               yandexRealtyXmlEnabled,
               setYandexRealtyXmlEnabled,
+              true, // 🚧 В разработке
             )}
             {renderToggle(
               '47. Сквозная трассировка OpenTelemetry',
               'Correlation ID для трекинга пути каждого HTTP-запроса через сервисы',
               openTelemetryEnabled,
               setOpenTelemetryEnabled,
+              true, // 🚧 В разработке
             )}
           </div>
 
@@ -265,37 +291,42 @@ const AppSettingsPage: React.FC = () => {
           <div className="card p-6 space-y-2">
             <h3 className="text-base font-semibold text-app flex items-center gap-2 mb-4">
               <CreditCard size={20} className="text-blue-500" />
-              Платежи и Узбекистан-сервисы (16, 18, 31, 35, 37)
+              Платежи и Узбекистан-сервисы
             </h3>
             {renderToggle(
               '16. Платежные шлюзы Payme / Click',
               'Приём оплат за продвижение (TOP/VIP) картами UzCard и Humo',
               paymeClickEnabled,
               setPaymeClickEnabled,
+              true, // 🚧 В разработке
             )}
             {renderToggle(
               '18. Авто-фискализация чеков (Soliq OFD)',
               'Автоматическая регистрация чеков в налоговой службе ГНК Узбекистана',
               autoFiscalizationEnabled,
               setAutoFiscalizationEnabled,
+              true, // 🚧 В разработке
             )}
             {renderToggle(
               '31. SMS-шлюз Узбекистана (Eskiz / PlayMobile)',
               'Отправка сервисных SMS и кодов верификации телефонных номеров',
               smsGatewayEnabled,
               setSmsGatewayEnabled,
+              true, // 🚧 В разработке
             )}
             {renderToggle(
               '35. Web Push уведомления',
               'Отправка браузерных уведомлений о снижении цен и новых сообщениях в чате',
               webPushEnabled,
               setWebPushEnabled,
+              true, // 🚧 В разработке (PWA push)
             )}
             {renderToggle(
               '37. Интеграция с OneID / E-Imzo',
               'Официальная государственная верификация арендодателей через OneID',
               oneIdAuthEnabled,
               setOneIdAuthEnabled,
+              true, // 🚧 В разработке
             )}
           </div>
 
