@@ -107,6 +107,16 @@ const AppearanceSettingsPage: React.FC = () => {
     },
   });
 
+  const handleColorChange = (key: keyof ThemeSettingsData, value: string) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+    // Мгновенное живое превью на самом интерфейсе админки
+    if (key === 'primaryColor') {
+      document.documentElement.style.setProperty('--color-primary', value);
+    } else if (key === 'secondaryColor') {
+      document.documentElement.style.setProperty('--color-primary-hover', value);
+    }
+  };
+
   const handleSave = () => {
     setSuccessMsg('');
     setErrorMsg('');
@@ -115,6 +125,12 @@ const AppearanceSettingsPage: React.FC = () => {
 
   const applyPreset = (preset: Partial<ThemeSettingsData>) => {
     setForm((prev) => ({ ...prev, ...preset }));
+    if (preset.primaryColor) {
+      document.documentElement.style.setProperty('--color-primary', preset.primaryColor);
+    }
+    if (preset.secondaryColor) {
+      document.documentElement.style.setProperty('--color-primary-hover', preset.secondaryColor);
+    }
   };
 
   return (
@@ -146,11 +162,12 @@ const AppearanceSettingsPage: React.FC = () => {
                 {PRESET_THEMES.map((preset) => (
                   <button
                     key={preset.name}
+                    type="button"
                     onClick={() => applyPreset(preset.tokens)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg border border-app text-sm text-app hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg border border-app text-sm text-app hover:bg-gray-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
                   >
                     <div
-                      className="w-5 h-5 rounded-full border border-app"
+                      className="w-5 h-5 rounded-full border border-app shadow-xs"
                       style={{ backgroundColor: preset.tokens.primaryColor }}
                     />
                     {preset.name}
@@ -173,8 +190,8 @@ const AppearanceSettingsPage: React.FC = () => {
                     <input
                       type="color"
                       value={form[item.key]}
-                      onChange={(e) => setForm((prev) => ({ ...prev, [item.key]: e.target.value }))}
-                      className="w-10 h-10 rounded-lg border border-app cursor-pointer p-0.5"
+                      onChange={(e) => handleColorChange(item.key, e.target.value)}
+                      className="w-10 h-10 rounded-lg border border-app cursor-pointer p-0.5 bg-transparent"
                     />
                     <div className="flex-1 min-w-0">
                       <label className="text-sm font-medium text-app">{item.label}</label>
@@ -182,8 +199,8 @@ const AppearanceSettingsPage: React.FC = () => {
                       <input
                         type="text"
                         value={form[item.key]}
-                        onChange={(e) => setForm((prev) => ({ ...prev, [item.key]: e.target.value }))}
-                        className="w-full text-xs text-muted bg-transparent border-b border-app outline-none mt-1 font-mono"
+                        onChange={(e) => handleColorChange(item.key, e.target.value)}
+                        className="w-full text-xs text-app bg-transparent border-b border-app outline-none mt-1 font-mono"
                       />
                     </div>
                   </div>

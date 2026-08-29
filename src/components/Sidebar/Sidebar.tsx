@@ -1,5 +1,5 @@
 // src/components/Sidebar/Sidebar.tsx
-// Боковое меню с аккордеон-выпадающими списками (dropdown) и профилем администратора
+// Боковое меню с аккордеон-выпадающими списками, сворачиванием (collapsed) и профилем администратора
 
 import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
@@ -8,90 +8,28 @@ import { logoutApi } from '../../lib/authApi';
 import { useAuthStore } from '../../store/authStore';
 import { useQuery } from '@tanstack/react-query';
 import { getSiteSettingsApi } from '../../lib/siteSettingsApi';
+import { getOverviewStatsApi } from '../../lib/dashboardApi';
 import { useTranslation } from 'react-i18next';
 import { ROUTES } from '../../routes';
-
-// ─── Иконки ─────────────────────────────────────────────────────────────────
-
-const HomeIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-    <polyline points="9 22 9 12 15 12 15 22" />
-  </svg>
-);
-
-const ListIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-    <line x1="3" y1="9" x2="21" y2="9" />
-    <line x1="3" y1="15" x2="21" y2="15" />
-    <line x1="9" y1="3" x2="9" y2="21" />
-  </svg>
-);
-
-const UsersIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-    <circle cx="9" cy="7" r="4" />
-    <path d="M23 21v-2a4 4 0 00-3-3.87" />
-    <path d="M16 3.13a4 4 0 010 7.75" />
-  </svg>
-);
-
-const PagesIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-    <polyline points="14 2 14 8 20 8" />
-    <line x1="16" y1="13" x2="8" y2="13" />
-    <line x1="16" y1="17" x2="8" y2="17" />
-    <polyline points="10 9 9 9 8 9" />
-  </svg>
-);
-
-const AnalyticsIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <line x1="18" y1="20" x2="18" y2="10" />
-    <line x1="12" y1="20" x2="12" y2="4" />
-    <line x1="6" y1="20" x2="6" y2="14" />
-  </svg>
-);
-
-const SettingsIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <circle cx="12" cy="12" r="3" />
-    <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
-  </svg>
-);
-
-const MediaIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-    <circle cx="8.5" cy="8.5" r="1.5" />
-    <polyline points="21 15 16 10 5 21" />
-  </svg>
-);
-
-const ChevronDownIcon = ({ isOpen }: { isOpen: boolean }) => (
-  <svg
-    width="14"
-    height="14"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    className={`ml-auto transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-  >
-    <polyline points="6 9 12 15 18 9" />
-  </svg>
-);
-
-const LogoutIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
-    <polyline points="16 17 21 12 16 7" />
-    <line x1="21" y1="12" x2="9" y2="12" />
-  </svg>
-);
+import {
+  ChevronLeft,
+  ChevronRight,
+  Home,
+  List,
+  Kanban,
+  AlertTriangle,
+  AlertCircle,
+  Calendar,
+  Users,
+  Image,
+  FileText,
+  BarChart2,
+  Settings,
+  DollarSign,
+  Server,
+  LogOut,
+  ChevronDown,
+} from 'lucide-react';
 
 const roleTitles: Record<string, string> = {
   SUPER_ADMIN: 'Супер Администратор',
@@ -123,11 +61,33 @@ const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  // Состояние сворачивания (collapsed), сохраняется в localStorage
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem('sidebar-collapsed') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('sidebar-collapsed', String(collapsed));
+    } catch {}
+  }, [collapsed]);
 
   const { data: settings } = useQuery({
     queryKey: ['admin', 'site-settings'],
     queryFn: getSiteSettingsApi,
+  });
+
+  // Получаем статистику для счетчиков/бейджей в реальном времени (polling раз в 30 секунд)
+  const { data: overviewStats } = useQuery({
+    queryKey: ['admin', 'overview-stats-sidebar'],
+    queryFn: getOverviewStatsApi,
+    refetchInterval: 30000,
   });
 
   const isSuperAdmin = user?.adminRole === 'SUPER_ADMIN';
@@ -152,6 +112,9 @@ const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
   }, [location.pathname]);
 
   const toggleSection = (key: string) => {
+    if (collapsed) {
+      setCollapsed(false);
+    }
     setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
@@ -167,25 +130,44 @@ const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
     }
   };
 
+  const pendingModerationCount = overviewStats?.pendingModeration?.value || 0;
+
   return (
     <aside
-      className="
-        flex flex-col h-screen w-64 flex-shrink-0
+      className={`
+        flex flex-col h-screen flex-shrink-0
         sidebar-bg sidebar-border border-r
-        transition-colors duration-200 select-none
-      "
+        transition-all duration-300 ease-in-out select-none relative
+        ${collapsed ? 'w-[72px]' : 'w-64'}
+      `}
     >
       {/* ─── Логотип и кнопка закрытия на мобилке ─── */}
-      <div className="flex items-center justify-between px-5 h-16 border-b sidebar-border flex-shrink-0">
-        <img
-          src={settings?.logoUrl || '/logotip.png'}
-          alt="Ijarauz Admin"
-          className="h-8 w-auto object-contain"
-          onError={(e) => {
-            e.currentTarget.onerror = null;
-            e.currentTarget.src = '/logotip.png';
-          }}
-        />
+      <div
+        className={`flex items-center ${
+          collapsed ? 'justify-center px-2' : 'justify-between px-5'
+        } h-16 border-b sidebar-border flex-shrink-0 overflow-hidden`}
+      >
+        <div
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2 cursor-pointer min-w-0"
+          title="Ijarauz Admin"
+        >
+          <img
+            src={settings?.logoUrl || '/logotip.png'}
+            alt="Ijarauz Admin"
+            className="h-7 w-auto object-contain shrink-0"
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = '/logotip.png';
+            }}
+          />
+          {!collapsed && (
+            <span className="font-bold text-base tracking-tight text-app truncate">
+              ijarauz <span className="text-[10px] text-primary-500 font-extrabold uppercase">admin</span>
+            </span>
+          )}
+        </div>
+
         {onCloseMobile && (
           <button
             type="button"
@@ -202,194 +184,203 @@ const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
       </div>
 
       {/* ─── Навигация ─── */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+      <nav className="flex-1 overflow-y-auto px-2.5 py-3 space-y-1 scrollbar-thin">
         {/* Главная */}
         <NavLink
           to="/"
           end
+          title={collapsed ? t('nav.dashboard', 'Главная') : undefined}
           className={({ isActive }) => `
-            flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+            flex items-center ${collapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-xl text-sm font-medium
             transition-all duration-150 cursor-pointer
             ${
               isActive
-                ? 'bg-primary-500 text-white shadow-sm'
+                ? 'bg-primary-500 text-white shadow-sm font-semibold'
                 : 'text-muted hover:bg-gray-100 dark:hover:bg-white/5 hover:text-app'
             }
           `}
         >
-          <span className="flex-shrink-0"><HomeIcon /></span>
-          <span>Главная</span>
+          <span className="shrink-0"><Home size={18} /></span>
+          {!collapsed && <span className="truncate">{t('nav.dashboard', 'Главная')}</span>}
         </NavLink>
 
         {/* Объявления */}
         <NavLink
           to="/listings"
+          title={collapsed ? t('nav.listings', 'Объявления') : undefined}
           className={({ isActive }) => `
-            flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+            flex items-center ${collapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-xl text-sm font-medium
             transition-all duration-150 cursor-pointer
             ${
               isActive
-                ? 'bg-primary-500 text-white shadow-sm'
+                ? 'bg-primary-500 text-white shadow-sm font-semibold'
                 : 'text-muted hover:bg-gray-100 dark:hover:bg-white/5 hover:text-app'
             }
           `}
         >
-          <span className="flex-shrink-0"><ListIcon /></span>
-          <span>Объявления</span>
+          <span className="shrink-0"><List size={18} /></span>
+          {!collapsed && <span className="truncate">{t('nav.listings', 'Объявления')}</span>}
         </NavLink>
 
         {/* Канбан модерации */}
         <NavLink
           to="/moderation/kanban"
+          title={collapsed ? `${t('nav.kanban', 'Канбан модерации')} ${pendingModerationCount > 0 ? `(${pendingModerationCount})` : ''}` : undefined}
           className={({ isActive }) => `
-            flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
-            transition-all duration-150 cursor-pointer
+            flex items-center ${collapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-xl text-sm font-medium
+            transition-all duration-150 cursor-pointer relative
             ${
               isActive
-                ? 'bg-primary-500 text-white shadow-sm'
+                ? 'bg-primary-500 text-white shadow-sm font-semibold'
                 : 'text-muted hover:bg-gray-100 dark:hover:bg-white/5 hover:text-app'
             }
           `}
         >
-          <span className="flex-shrink-0">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="3" width="5" height="18" rx="1" />
-              <rect x="10" y="3" width="5" height="12" rx="1" />
-              <rect x="17" y="3" width="5" height="15" rx="1" />
-            </svg>
+          <span className="shrink-0 relative">
+            <Kanban size={18} />
+            {collapsed && pendingModerationCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-500" />
+            )}
           </span>
-          <span>Канбан модерации</span>
+          {!collapsed && (
+            <>
+              <span className="truncate">{t('nav.kanban', 'Канбан модерации')}</span>
+              {pendingModerationCount > 0 && (
+                <span className="ml-auto px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-500 text-white">
+                  {pendingModerationCount}
+                </span>
+              )}
+            </>
+          )}
         </NavLink>
 
         {/* Жалобы */}
         <NavLink
           to="/reports"
+          title={collapsed ? t('nav.reports', 'Жалобы') : undefined}
           className={({ isActive }) => `
-            flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+            flex items-center ${collapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-xl text-sm font-medium
             transition-all duration-150 cursor-pointer
             ${
               isActive
-                ? 'bg-primary-500 text-white shadow-sm'
+                ? 'bg-primary-500 text-white shadow-sm font-semibold'
                 : 'text-muted hover:bg-gray-100 dark:hover:bg-white/5 hover:text-app'
             }
           `}
         >
-          <span className="flex-shrink-0">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-              <line x1="12" y1="9" x2="12" y2="13" />
-              <line x1="12" y1="17" x2="12.01" y2="17" />
-            </svg>
-          </span>
-          <span>Жалобы</span>
+          <span className="shrink-0"><AlertTriangle size={18} /></span>
+          {!collapsed && <span className="truncate">{t('nav.reports', 'Жалобы')}</span>}
         </NavLink>
 
         {/* Ошибки сайта */}
         <NavLink
           to="/errors"
+          title={collapsed ? t('nav.errors', 'Ошибки сайта') : undefined}
           className={({ isActive }) => `
-            flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+            flex items-center ${collapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-xl text-sm font-medium
             transition-all duration-150 cursor-pointer
             ${
               isActive
-                ? 'bg-primary-500 text-white shadow-sm'
+                ? 'bg-primary-500 text-white shadow-sm font-semibold'
                 : 'text-muted hover:bg-gray-100 dark:hover:bg-white/5 hover:text-app'
             }
           `}
         >
-          <span className="flex-shrink-0">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-          </span>
-          <span>Ошибки сайта</span>
+          <span className="shrink-0"><AlertCircle size={18} /></span>
+          {!collapsed && <span className="truncate">{t('nav.errors', 'Ошибки сайта')}</span>}
         </NavLink>
 
         {/* Заявки на просмотр */}
         <NavLink
           to="/viewing-requests"
+          title={collapsed ? t('nav.viewingRequests', 'Заявки на просмотр') : undefined}
           className={({ isActive }) => `
-            flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+            flex items-center ${collapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-xl text-sm font-medium
             transition-all duration-150 cursor-pointer
             ${
               isActive
-                ? 'bg-primary-500 text-white shadow-sm'
+                ? 'bg-primary-500 text-white shadow-sm font-semibold'
                 : 'text-muted hover:bg-gray-100 dark:hover:bg-white/5 hover:text-app'
             }
           `}
         >
-          <span className="flex-shrink-0">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-              <line x1="16" y1="2" x2="16" y2="6" />
-              <line x1="8" y1="2" x2="8" y2="6" />
-              <line x1="3" y1="10" x2="21" y2="10" />
-            </svg>
-          </span>
-          <span>Заявки на просмотр</span>
+          <span className="shrink-0"><Calendar size={18} /></span>
+          {!collapsed && <span className="truncate">{t('nav.viewingRequests', 'Заявки на просмотр')}</span>}
         </NavLink>
 
         {/* Пользователи */}
         <NavLink
           to="/users"
+          title={collapsed ? t('nav.users', 'Пользователи') : undefined}
           className={({ isActive }) => `
-            flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+            flex items-center ${collapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-xl text-sm font-medium
             transition-all duration-150 cursor-pointer
             ${
               isActive
-                ? 'bg-primary-500 text-white shadow-sm'
+                ? 'bg-primary-500 text-white shadow-sm font-semibold'
                 : 'text-muted hover:bg-gray-100 dark:hover:bg-white/5 hover:text-app'
             }
           `}
         >
-          <span className="flex-shrink-0"><UsersIcon /></span>
-          <span>Пользователи</span>
+          <span className="shrink-0"><Users size={18} /></span>
+          {!collapsed && <span className="truncate">{t('nav.users', 'Пользователи')}</span>}
         </NavLink>
 
         {/* Медиа-библиотека */}
         <NavLink
           to={ROUTES.MEDIA}
+          title={collapsed ? t('nav.media', 'Медиа-библиотека') : undefined}
           className={({ isActive }) => `
-            flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+            flex items-center ${collapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-xl text-sm font-medium
             transition-all duration-150 cursor-pointer
             ${
               isActive
-                ? 'bg-primary-500 text-white shadow-sm'
+                ? 'bg-primary-500 text-white shadow-sm font-semibold'
                 : 'text-muted hover:bg-gray-100 dark:hover:bg-white/5 hover:text-app'
             }
           `}
         >
-          <span className="flex-shrink-0"><MediaIcon /></span>
-          <span>Медиа-библиотека</span>
+          <span className="shrink-0"><Image size={18} /></span>
+          {!collapsed && <span className="truncate">{t('nav.media', 'Медиа-библиотека')}</span>}
         </NavLink>
 
-        {/* ─── Страницы сайта (Dropdown) ─── */}
+        {/* ─── [ГРУППА F] Страницы сайта и Управление контентом ─── */}
         <div>
           <button
             type="button"
             onClick={() => toggleSection('pages')}
+            title={collapsed ? t('nav.pages', 'Страницы сайта') : undefined}
             className={`
-              w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+              w-full flex items-center ${collapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-xl text-sm font-medium
               transition-all duration-150 cursor-pointer
               ${
                 location.pathname.startsWith('/pages')
-                  ? 'text-primary-600 dark:text-primary-400 bg-primary-50/50 dark:bg-primary-900/10'
+                  ? 'text-primary-600 dark:text-primary-400 bg-primary-50/60 dark:bg-primary-950/30 font-semibold'
                   : 'text-muted hover:bg-gray-100 dark:hover:bg-white/5 hover:text-app'
               }
             `}
           >
-            <span className="flex-shrink-0"><PagesIcon /></span>
-            <span>Страницы сайта</span>
-            <ChevronDownIcon isOpen={openSections.pages} />
+            <span className="shrink-0"><FileText size={18} /></span>
+            {!collapsed && (
+              <>
+                <span className="truncate">{t('nav.pages', 'Страницы сайта')}</span>
+                <ChevronDown
+                  size={15}
+                  className={`ml-auto transition-transform duration-200 ${
+                    openSections.pages ? 'rotate-180' : ''
+                  }`}
+                />
+              </>
+            )}
           </button>
 
-          {openSections.pages && (
-            <div className="pl-9 pr-2 py-1 space-y-1">
+          {!collapsed && openSections.pages && (
+            <div className="pl-9 pr-2 py-1 space-y-1 animate-in fade-in-50 duration-150">
               <NavLink
                 to="/pages"
                 end
                 className={({ isActive }) => `
-                  block px-3 py-1.5 rounded-md text-xs font-medium transition-colors
+                  block px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
                   ${
                     isActive
                       ? 'text-primary-600 dark:text-primary-400 bg-primary-100/50 dark:bg-primary-900/20 font-semibold'
@@ -397,12 +388,12 @@ const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
                   }
                 `}
               >
-                Все страницы сайта
+                Все страницы (CMS)
               </NavLink>
               <NavLink
                 to="/pages/home/builder"
                 className={({ isActive }) => `
-                  block px-3 py-1.5 rounded-md text-xs font-medium transition-colors
+                  block px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
                   ${
                     isActive
                       ? 'text-primary-600 dark:text-primary-400 bg-primary-100/50 dark:bg-primary-900/20 font-semibold'
@@ -410,12 +401,12 @@ const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
                   }
                 `}
               >
-                Главная (/home)
+                Конструктор главной (/home)
               </NavLink>
               <NavLink
                 to="/pages/catalog/builder"
                 className={({ isActive }) => `
-                  block px-3 py-1.5 rounded-md text-xs font-medium transition-colors
+                  block px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
                   ${
                     isActive
                       ? 'text-primary-600 dark:text-primary-400 bg-primary-100/50 dark:bg-primary-900/20 font-semibold'
@@ -423,12 +414,12 @@ const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
                   }
                 `}
               >
-                Каталог (/catalog)
+                Секции каталога (/catalog)
               </NavLink>
               <NavLink
-                to="/pages/about/builder"
+                to="/settings/general#navigation"
                 className={({ isActive }) => `
-                  block px-3 py-1.5 rounded-md text-xs font-medium transition-colors
+                  block px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
                   ${
                     isActive
                       ? 'text-primary-600 dark:text-primary-400 bg-primary-100/50 dark:bg-primary-900/20 font-semibold'
@@ -436,12 +427,12 @@ const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
                   }
                 `}
               >
-                О нас (/about)
+                Навигационное меню
               </NavLink>
               <NavLink
-                to="/pages/maintenance/builder"
+                to="/settings/general#footer"
                 className={({ isActive }) => `
-                  block px-3 py-1.5 rounded-md text-xs font-medium transition-colors
+                  block px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
                   ${
                     isActive
                       ? 'text-primary-600 dark:text-primary-400 bg-primary-100/50 dark:bg-primary-900/20 font-semibold'
@@ -449,7 +440,20 @@ const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
                   }
                 `}
               >
-                Техобслуживание (/maintenance)
+                Футер и контакты
+              </NavLink>
+              <NavLink
+                to="/settings/general#seo"
+                className={({ isActive }) => `
+                  block px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
+                  ${
+                    isActive
+                      ? 'text-primary-600 dark:text-primary-400 bg-primary-100/50 dark:bg-primary-900/20 font-semibold'
+                      : 'text-muted hover:text-app hover:bg-gray-100 dark:hover:bg-white/5'
+                  }
+                `}
+              >
+                SEO-настройки по умолчанию
               </NavLink>
             </div>
           )}
@@ -460,28 +464,38 @@ const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
           <button
             type="button"
             onClick={() => toggleSection('analytics')}
+            title={collapsed ? t('nav.analytics', 'Аналитика') : undefined}
             className={`
-              w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+              w-full flex items-center ${collapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-xl text-sm font-medium
               transition-all duration-150 cursor-pointer
               ${
                 location.pathname.startsWith('/analytics')
-                  ? 'text-primary-600 dark:text-primary-400 bg-primary-50/50 dark:bg-primary-900/10'
+                  ? 'text-primary-600 dark:text-primary-400 bg-primary-50/60 dark:bg-primary-950/30 font-semibold'
                   : 'text-muted hover:bg-gray-100 dark:hover:bg-white/5 hover:text-app'
               }
             `}
           >
-            <span className="flex-shrink-0"><AnalyticsIcon /></span>
-            <span>Аналитика</span>
-            <ChevronDownIcon isOpen={openSections.analytics} />
+            <span className="shrink-0"><BarChart2 size={18} /></span>
+            {!collapsed && (
+              <>
+                <span className="truncate">{t('nav.analytics', 'Аналитика')}</span>
+                <ChevronDown
+                  size={15}
+                  className={`ml-auto transition-transform duration-200 ${
+                    openSections.analytics ? 'rotate-180' : ''
+                  }`}
+                />
+              </>
+            )}
           </button>
 
-          {openSections.analytics && (
-            <div className="pl-9 pr-2 py-1 space-y-1">
+          {!collapsed && openSections.analytics && (
+            <div className="pl-9 pr-2 py-1 space-y-1 animate-in fade-in-50 duration-150">
               <NavLink
                 to="/analytics"
                 end
                 className={({ isActive }) => `
-                  block px-3 py-1.5 rounded-md text-xs font-medium transition-colors
+                  block px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
                   ${
                     isActive
                       ? 'text-primary-600 dark:text-primary-400 bg-primary-100/50 dark:bg-primary-900/20 font-semibold'
@@ -489,12 +503,12 @@ const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
                   }
                 `}
               >
-                Обзор
+                Общий обзор
               </NavLink>
               <NavLink
                 to="/analytics/traffic"
                 className={({ isActive }) => `
-                  block px-3 py-1.5 rounded-md text-xs font-medium transition-colors
+                  block px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
                   ${
                     isActive
                       ? 'text-primary-600 dark:text-primary-400 bg-primary-100/50 dark:bg-primary-900/20 font-semibold'
@@ -507,7 +521,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
               <NavLink
                 to="/analytics/cities"
                 className={({ isActive }) => `
-                  block px-3 py-1.5 rounded-md text-xs font-medium transition-colors
+                  block px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
                   ${
                     isActive
                       ? 'text-primary-600 dark:text-primary-400 bg-primary-100/50 dark:bg-primary-900/20 font-semibold'
@@ -520,7 +534,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
               <NavLink
                 to="/analytics/heatmap"
                 className={({ isActive }) => `
-                  block px-3 py-1.5 rounded-md text-xs font-medium transition-colors
+                  block px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
                   ${
                     isActive
                       ? 'text-primary-600 dark:text-primary-400 bg-primary-100/50 dark:bg-primary-900/20 font-semibold'
@@ -533,7 +547,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
               <NavLink
                 to="/analytics/search-queries"
                 className={({ isActive }) => `
-                  block px-3 py-1.5 rounded-md text-xs font-medium transition-colors
+                  block px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
                   ${
                     isActive
                       ? 'text-primary-600 dark:text-primary-400 bg-primary-100/50 dark:bg-primary-900/20 font-semibold'
@@ -546,7 +560,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
               <NavLink
                 to="/analytics/export"
                 className={({ isActive }) => `
-                  block px-3 py-1.5 rounded-md text-xs font-medium transition-colors
+                  block px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
                   ${
                     isActive
                       ? 'text-primary-600 dark:text-primary-400 bg-primary-100/50 dark:bg-primary-900/20 font-semibold'
@@ -563,23 +577,24 @@ const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
         {/* ─── Журнал действий (Audit Log) ─── */}
         <NavLink
           to="/audit-log"
+          title={collapsed ? t('nav.audit', 'Журнал действий') : undefined}
           className={({ isActive }) => `
-            flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+            flex items-center ${collapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-xl text-sm font-medium
             transition-all duration-150 cursor-pointer
             ${
               isActive
-                ? 'bg-primary-500 text-white shadow-sm'
+                ? 'bg-primary-500 text-white shadow-sm font-semibold'
                 : 'text-muted hover:bg-gray-100 dark:hover:bg-white/5 hover:text-app'
             }
           `}
         >
-          <span className="flex-shrink-0">
+          <span className="shrink-0">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               <path d="M9 12l2 2 4-4" />
             </svg>
           </span>
-          <span>Журнал действий</span>
+          {!collapsed && <span className="truncate">{t('nav.audit', 'Журнал действий')}</span>}
         </NavLink>
 
         {/* ─── Настройки (Dropdown) ─── */}
@@ -587,27 +602,37 @@ const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
           <button
             type="button"
             onClick={() => toggleSection('settings')}
+            title={collapsed ? t('nav.settings', 'Настройки') : undefined}
             className={`
-              w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+              w-full flex items-center ${collapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-xl text-sm font-medium
               transition-all duration-150 cursor-pointer
               ${
                 location.pathname.startsWith('/settings')
-                  ? 'text-primary-600 dark:text-primary-400 bg-primary-50/50 dark:bg-primary-900/10'
+                  ? 'text-primary-600 dark:text-primary-400 bg-primary-50/60 dark:bg-primary-950/30 font-semibold'
                   : 'text-muted hover:bg-gray-100 dark:hover:bg-white/5 hover:text-app'
               }
             `}
           >
-            <span className="flex-shrink-0"><SettingsIcon /></span>
-            <span>Настройки</span>
-            <ChevronDownIcon isOpen={openSections.settings} />
+            <span className="shrink-0"><Settings size={18} /></span>
+            {!collapsed && (
+              <>
+                <span className="truncate">{t('nav.settings', 'Настройки')}</span>
+                <ChevronDown
+                  size={15}
+                  className={`ml-auto transition-transform duration-200 ${
+                    openSections.settings ? 'rotate-180' : ''
+                  }`}
+                />
+              </>
+            )}
           </button>
 
-          {openSections.settings && (
-            <div className="pl-9 pr-2 py-1 space-y-1">
+          {!collapsed && openSections.settings && (
+            <div className="pl-9 pr-2 py-1 space-y-1 animate-in fade-in-50 duration-150">
               <NavLink
                 to="/settings/general"
                 className={({ isActive }) => `
-                  block px-3 py-1.5 rounded-md text-xs font-medium transition-colors
+                  block px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
                   ${
                     isActive
                       ? 'text-primary-600 dark:text-primary-400 bg-primary-100/50 dark:bg-primary-900/20 font-semibold'
@@ -620,7 +645,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
               <NavLink
                 to="/settings/app"
                 className={({ isActive }) => `
-                  block px-3 py-1.5 rounded-md text-xs font-medium transition-colors
+                  block px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
                   ${
                     isActive
                       ? 'text-primary-600 dark:text-primary-400 bg-primary-100/50 dark:bg-primary-900/20 font-semibold'
@@ -628,14 +653,13 @@ const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
                   }
                 `}
               >
-                Настройки приложения
+                Параметры и Feature Flags
               </NavLink>
-              {/* Пункт "Внешний вид" виден ТОЛЬКО для SUPER_ADMIN */}
               {isSuperAdmin && (
                 <NavLink
                   to="/settings/appearance"
                   className={({ isActive }) => `
-                    block px-3 py-1.5 rounded-md text-xs font-medium transition-colors
+                    block px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
                     ${
                       isActive
                         ? 'text-primary-600 dark:text-primary-400 bg-primary-100/50 dark:bg-primary-900/20 font-semibold'
@@ -643,15 +667,14 @@ const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
                     }
                   `}
                 >
-                  Внешний вид
+                  Внешний вид и тема
                 </NavLink>
               )}
-              {/* Пункт "Сотрудники и роли" виден ТОЛЬКО для SUPER_ADMIN */}
               {isSuperAdmin && (
                 <NavLink
                   to={ROUTES.STAFF}
                   className={({ isActive }) => `
-                    block px-3 py-1.5 rounded-md text-xs font-medium transition-colors
+                    block px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
                     ${
                       isActive
                         ? 'text-primary-600 dark:text-primary-400 bg-primary-100/50 dark:bg-primary-900/20 font-semibold'
@@ -659,7 +682,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
                     }
                   `}
                 >
-                  Сотрудники и роли
+                  Сотрудники и роли (RBAC)
                 </NavLink>
               )}
             </div>
@@ -671,32 +694,37 @@ const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
           <button
             type="button"
             onClick={() => toggleSection('monetization')}
+            title={collapsed ? t('nav.monetization', 'Монетизация') : undefined}
             className={`
-              w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+              w-full flex items-center ${collapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-xl text-sm font-medium
               transition-all duration-150 cursor-pointer
               ${
                 location.pathname.startsWith('/monetization')
-                  ? 'text-primary-600 dark:text-primary-400 bg-primary-50/50 dark:bg-primary-900/10'
+                  ? 'text-primary-600 dark:text-primary-400 bg-primary-50/60 dark:bg-primary-950/30 font-semibold'
                   : 'text-muted hover:bg-gray-100 dark:hover:bg-white/5 hover:text-app'
               }
             `}
           >
-            <span className="flex-shrink-0">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="12" y1="1" x2="12" y2="23" />
-                <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
-              </svg>
-            </span>
-            <span>Монетизация</span>
-            <ChevronDownIcon isOpen={openSections.monetization} />
+            <span className="shrink-0"><DollarSign size={18} /></span>
+            {!collapsed && (
+              <>
+                <span className="truncate">{t('nav.monetization', 'Монетизация')}</span>
+                <ChevronDown
+                  size={15}
+                  className={`ml-auto transition-transform duration-200 ${
+                    openSections.monetization ? 'rotate-180' : ''
+                  }`}
+                />
+              </>
+            )}
           </button>
 
-          {openSections.monetization && (
-            <div className="pl-9 pr-2 py-1 space-y-1">
+          {!collapsed && openSections.monetization && (
+            <div className="pl-9 pr-2 py-1 space-y-1 animate-in fade-in-50 duration-150">
               <NavLink
                 to="/monetization/revenue"
                 className={({ isActive }) => `
-                  block px-3 py-1.5 rounded-md text-xs font-medium transition-colors
+                  block px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
                   ${
                     isActive
                       ? 'text-primary-600 dark:text-primary-400 bg-primary-100/50 dark:bg-primary-900/20 font-semibold'
@@ -704,12 +732,12 @@ const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
                   }
                 `}
               >
-                Выручка (MRR)
+                Выручка и финансы
               </NavLink>
               <NavLink
                 to="/monetization/promo-codes"
                 className={({ isActive }) => `
-                  block px-3 py-1.5 rounded-md text-xs font-medium transition-colors
+                  block px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
                   ${
                     isActive
                       ? 'text-primary-600 dark:text-primary-400 bg-primary-100/50 dark:bg-primary-900/20 font-semibold'
@@ -717,7 +745,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
                   }
                 `}
               >
-                Промокоды
+                Промокоды и скидки
               </NavLink>
             </div>
           )}
@@ -728,34 +756,37 @@ const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
           <button
             type="button"
             onClick={() => toggleSection('system')}
+            title={collapsed ? t('nav.system', 'Инфраструктура') : undefined}
             className={`
-              w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+              w-full flex items-center ${collapsed ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-xl text-sm font-medium
               transition-all duration-150 cursor-pointer
               ${
                 location.pathname.startsWith('/system')
-                  ? 'text-primary-600 dark:text-primary-400 bg-primary-50/50 dark:bg-primary-900/10'
+                  ? 'text-primary-600 dark:text-primary-400 bg-primary-50/60 dark:bg-primary-950/30 font-semibold'
                   : 'text-muted hover:bg-gray-100 dark:hover:bg-white/5 hover:text-app'
               }
             `}
           >
-            <span className="flex-shrink-0">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="2" y="2" width="20" height="8" rx="2" ry="2" />
-                <rect x="2" y="14" width="20" height="8" rx="2" ry="2" />
-                <line x1="6" y1="6" x2="6.01" y2="6" />
-                <line x1="6" y1="18" x2="6.01" y2="18" />
-              </svg>
-            </span>
-            <span>Инфраструктура</span>
-            <ChevronDownIcon isOpen={openSections.system} />
+            <span className="shrink-0"><Server size={18} /></span>
+            {!collapsed && (
+              <>
+                <span className="truncate">{t('nav.system', 'Инфраструктура')}</span>
+                <ChevronDown
+                  size={15}
+                  className={`ml-auto transition-transform duration-200 ${
+                    openSections.system ? 'rotate-180' : ''
+                  }`}
+                />
+              </>
+            )}
           </button>
 
-          {openSections.system && (
-            <div className="pl-9 pr-2 py-1 space-y-1">
+          {!collapsed && openSections.system && (
+            <div className="pl-9 pr-2 py-1 space-y-1 animate-in fade-in-50 duration-150">
               <NavLink
                 to="/system/health"
                 className={({ isActive }) => `
-                  block px-3 py-1.5 rounded-md text-xs font-medium transition-colors
+                  block px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
                   ${
                     isActive
                       ? 'text-primary-600 dark:text-primary-400 bg-primary-100/50 dark:bg-primary-900/20 font-semibold'
@@ -763,12 +794,12 @@ const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
                   }
                 `}
               >
-                Здоровье серверов
+                Здоровье системы (Health)
               </NavLink>
               <NavLink
                 to="/system/webhooks"
                 className={({ isActive }) => `
-                  block px-3 py-1.5 rounded-md text-xs font-medium transition-colors
+                  block px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
                   ${
                     isActive
                       ? 'text-primary-600 dark:text-primary-400 bg-primary-100/50 dark:bg-primary-900/20 font-semibold'
@@ -776,12 +807,12 @@ const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
                   }
                 `}
               >
-                Webhooks / Telegram
+                Вебхуки (Webhooks)
               </NavLink>
               <NavLink
                 to="/system/backups"
                 className={({ isActive }) => `
-                  block px-3 py-1.5 rounded-md text-xs font-medium transition-colors
+                  block px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
                   ${
                     isActive
                       ? 'text-primary-600 dark:text-primary-400 bg-primary-100/50 dark:bg-primary-900/20 font-semibold'
@@ -789,17 +820,38 @@ const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
                   }
                 `}
               >
-                Бэкапы и дампы
+                Бэкапы и Snapshot
               </NavLink>
             </div>
           )}
         </div>
       </nav>
 
+      {/* ─── Кнопка Свернуть / Развернуть (Group E) ─── */}
+      <div className="px-3 py-2 border-t sidebar-border hidden lg:flex items-center justify-between flex-shrink-0">
+        <button
+          type="button"
+          onClick={() => setCollapsed(!collapsed)}
+          className={`
+            w-full flex items-center ${collapsed ? 'justify-center' : 'justify-between'} px-2 py-1.5 rounded-lg
+            text-muted hover:text-app hover:bg-gray-100 dark:hover:bg-white/5
+            transition-colors cursor-pointer text-xs
+          `}
+          title={collapsed ? 'Развернуть меню' : 'Свернуть меню'}
+        >
+          {!collapsed && <span className="font-medium text-xs">Свернуть меню</span>}
+          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+        </button>
+      </div>
+
       {/* ─── Переключатель языка (RU/UZ/EN) ─── */}
-      <div className="px-3 py-2 border-t sidebar-border flex items-center justify-between gap-1 flex-shrink-0">
-        <span className="text-[11px] font-semibold text-muted">Язык / Til:</span>
-        <div className="flex items-center gap-1">
+      <div
+        className={`px-3 py-2 border-t sidebar-border flex items-center ${
+          collapsed ? 'justify-center flex-col gap-1.5' : 'justify-between gap-1'
+        } flex-shrink-0`}
+      >
+        {!collapsed && <span className="text-[11px] font-semibold text-muted">Язык / Til:</span>}
+        <div className={`flex items-center ${collapsed ? 'flex-col gap-1' : 'gap-1'}`}>
           {(['ru', 'uz', 'en'] as const).map((lng) => {
             const active = i18n.language === lng;
             return (
@@ -807,7 +859,8 @@ const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
                 key={lng}
                 type="button"
                 onClick={() => i18n.changeLanguage(lng)}
-                className={`px-2 py-0.5 text-[10px] font-bold rounded-md uppercase transition-colors ${
+                title={lng.toUpperCase()}
+                className={`px-2 py-0.5 text-[10px] font-bold rounded-md uppercase transition-colors cursor-pointer ${
                   active
                     ? 'bg-primary-600 text-white'
                     : 'bg-gray-100 dark:bg-white/5 text-muted hover:text-app'
@@ -821,11 +874,11 @@ const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
       </div>
 
       {/* ─── Профиль администратора (клик открывает /profile) ─── */}
-      <div className="px-3 pb-4 pt-2 flex-shrink-0">
+      <div className="px-2.5 pb-3 pt-1.5 flex-shrink-0">
         <div
           onClick={() => navigate('/profile')}
           className={`
-            flex items-center gap-2.5 p-2 rounded-xl cursor-pointer
+            flex items-center ${collapsed ? 'justify-center p-1.5' : 'gap-2.5 p-2'} rounded-xl cursor-pointer
             transition-all duration-150
             ${
               location.pathname === '/profile'
@@ -833,30 +886,36 @@ const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
                 : 'hover:bg-gray-100 dark:hover:bg-white/5 border border-transparent'
             }
           `}
-          title="Открыть профиль"
+          title={`Профиль: ${user?.name || 'Администратор'}`}
         >
           {user?.avatar ? (
             <img
               src={user.avatar}
               alt={user.name}
-              className="w-9 h-9 rounded-full object-cover flex-shrink-0 ring-2 ring-primary-500/30"
+              className="w-8 h-8 rounded-full object-cover flex-shrink-0 ring-2 ring-primary-500/30"
             />
           ) : (
             <DefaultAvatar name={user?.name || 'Админ'} />
           )}
-          <div className="flex-1 min-w-0">
-            <div className="text-xs font-semibold text-app truncate">{user?.name || 'Администратор'}</div>
-            <div className="text-[10px] text-muted truncate">
-              {roleTitles[user?.adminRole || 'SUPER_ADMIN'] || 'Администратор'}
-            </div>
-          </div>
-          <button
-            onClick={handleLogout}
-            title="Выйти"
-            className="p-1.5 text-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-150 flex-shrink-0 cursor-pointer"
-          >
-            <LogoutIcon />
-          </button>
+
+          {!collapsed && (
+            <>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-semibold text-app truncate">{user?.name || 'Администратор'}</div>
+                <div className="text-[10px] text-muted truncate">
+                  {roleTitles[user?.adminRole || 'SUPER_ADMIN'] || 'Администратор'}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleLogout}
+                title="Выйти"
+                className="p-1.5 text-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-150 flex-shrink-0 cursor-pointer"
+              >
+                <LogOut size={16} />
+              </button>
+            </>
+          )}
         </div>
       </div>
     </aside>
