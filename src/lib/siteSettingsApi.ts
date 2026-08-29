@@ -16,6 +16,27 @@ export interface SiteSettings {
   listingsPerPage: number;
   logoUrl: string | null;
   navLinks?: Array<{ label: string; href: string; position: 'header' | 'footer' }>;
+
+  // Feature Flags & Integrations
+  deviceIpBanEnabled?: boolean;
+  adaptiveRateLimitEnabled?: boolean;
+  twoFactorAuthEnabled?: boolean;
+  geoIpValidationEnabled?: boolean;
+  tokenRotationEnabled?: boolean;
+  fieldEncryptionEnabled?: boolean;
+  sessionQuarantineEnabled?: boolean;
+  thunderingHerdEnabled?: boolean;
+  fullTextSearchEnabled?: boolean;
+  paymeClickEnabled?: boolean;
+  autoFiscalizationEnabled?: boolean;
+  smsGatewayEnabled?: boolean;
+  watermarkDetectorEnabled?: boolean;
+  webPushEnabled?: boolean;
+  oneIdAuthEnabled?: boolean;
+  yandexRealtyXmlEnabled?: boolean;
+  openTelemetryEnabled?: boolean;
+  yandexMetrikaId?: string;
+
   updatedAt: string;
   updatedBy: {
     id: string;
