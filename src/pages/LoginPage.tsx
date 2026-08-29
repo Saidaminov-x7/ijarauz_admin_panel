@@ -98,9 +98,11 @@ const LoginPage: React.FC = () => {
         setError('Неверный email или пароль');
       } else if (errorObj.response?.status === 403) {
         setError('Аккаунт заблокирован или доступ запрещён');
-      } else if (errorObj.response?.status === 429) {
-        setError('Слишком много попыток входа. Попробуйте через несколько минут.');
-      } else if (errorObj.message?.includes('Слишком много')) {
+      } else if (errorObj.response?.status === 429 || errorObj.message?.includes('Слишком много') || errorObj.message?.includes('Rate limit')) {
+        setError('Слишком много попыток входа. Попробуйте через 1-2 минуты.');
+      } else if (errorObj.response?.data?.message) {
+        setError(errorObj.response.data.message);
+      } else if (errorObj.message) {
         setError(errorObj.message);
       } else {
         setError('Ошибка соединения с сервером. Проверьте подключение.');
