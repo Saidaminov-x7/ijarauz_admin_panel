@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { useDebounce } from '../hooks/useDebounce';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
   Download,
@@ -408,124 +409,131 @@ export const UsersPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-app">
-                  {users.map((user) => {
-                    const isSelected = selectedIds.includes(user.id);
-                    const isBlocked = user.isBlocked;
+                  <AnimatePresence mode="popLayout">
+                    {users.map((user) => {
+                      const isSelected = selectedIds.includes(user.id);
+                      const isBlocked = user.isBlocked;
 
-                    return (
-                      <tr
-                        key={user.id}
-                        className={`hover:bg-gray-50 dark:hover:bg-white/5 transition-colors ${
-                          isSelected ? 'bg-primary-50/30 dark:bg-primary-950/20' : ''
-                        }`}
-                      >
-                        <td className="p-3.5">
-                          <button
-                            type="button"
-                            onClick={() => handleToggleSelect(user.id)}
-                            className="text-muted hover:text-primary-500"
-                          >
-                            {isSelected ? (
-                              <CheckSquare size={16} className="text-primary-500" />
-                            ) : (
-                              <Square size={16} />
-                            )}
-                          </button>
-                        </td>
-
-                        <td className="p-3.5">
-                          <div className="flex items-center gap-3">
-                            <div className="h-9 w-9 rounded-full bg-primary-50 dark:bg-primary-950/40 text-primary-600 font-bold flex items-center justify-center shrink-0">
-                              {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
-                            </div>
-                            <div>
-                              <div
-                                onClick={() => navigate(`/users/${user.id}`)}
-                                className="font-bold text-app cursor-pointer hover:text-primary-600 truncate max-w-[180px]"
-                              >
-                                {user.name || 'Без имени'}
-                              </div>
-                              <span className="text-[10px] text-muted font-mono block">
-                                ID: {user.id.slice(-6).toUpperCase()}
-                              </span>
-                            </div>
-                          </div>
-                        </td>
-
-                        <td className="p-3.5 text-muted">
-                          <div className="space-y-0.5">
-                            <div className="flex items-center gap-1.5 text-app">
-                              <Mail size={12} className="text-muted shrink-0" />
-                              <span className="truncate max-w-[160px]">{user.email}</span>
-                            </div>
-                            {user.phone && (
-                              <div className="flex items-center gap-1.5 text-[11px]">
-                                <Phone size={12} className="text-muted shrink-0" />
-                                <span>{user.phone}</span>
-                              </div>
-                            )}
-                          </div>
-                        </td>
-
-                        <td className="p-3.5">{getRoleBadge(user.role)}</td>
-
-                        <td className="p-3.5">
-                          {isBlocked ? (
-                            <Badge variant="danger" dot>
-                              {t('users.block', 'Заблокирован')}
-                            </Badge>
-                          ) : (
-                            <Badge variant="success" dot>
-                              {t('common.active', 'Активен')}
-                            </Badge>
-                          )}
-                        </td>
-
-                        <td className="p-3.5 font-semibold text-app">
-                          {user._count?.listings ?? 0}
-                        </td>
-
-                        <td className="p-3.5 text-muted font-mono text-[11px]">
-                          {new Date(user.createdAt).toLocaleDateString()}
-                        </td>
-
-                        <td className="p-3.5 text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => navigate(`/users/${user.id}`)}
-                              title={t('users.profile', 'Профиль пользователя')}
+                      return (
+                        <motion.tr
+                          layout
+                          key={user.id}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className={`hover:bg-gray-50 dark:hover:bg-white/5 transition-colors ${
+                            isSelected ? 'bg-primary-50/30 dark:bg-primary-950/20' : ''
+                          }`}
+                        >
+                          <td className="p-3.5">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleSelect(user.id)}
+                              className="text-muted hover:text-primary-500"
                             >
-                              <Eye size={15} />
-                            </Button>
+                              {isSelected ? (
+                                <CheckSquare size={16} className="text-primary-500" />
+                              ) : (
+                                <Square size={16} />
+                              )}
+                            </button>
+                          </td>
 
+                          <td className="p-3.5">
+                            <div className="flex items-center gap-3">
+                              <div className="h-9 w-9 rounded-full bg-primary-50 dark:bg-primary-950/40 text-primary-600 font-bold flex items-center justify-center shrink-0">
+                                {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                              </div>
+                              <div>
+                                <div
+                                  onClick={() => navigate(`/users/${user.id}`)}
+                                  className="font-bold text-app cursor-pointer hover:text-primary-600 truncate max-w-[180px]"
+                                >
+                                  {user.name || 'Без имени'}
+                                </div>
+                                <span className="text-[10px] text-muted font-mono block">
+                                  ID: {user.id.slice(-6).toUpperCase()}
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+
+                          <td className="p-3.5 text-muted">
+                            <div className="space-y-0.5">
+                              <div className="flex items-center gap-1.5 text-app">
+                                <Mail size={12} className="text-muted shrink-0" />
+                                <span className="truncate max-w-[160px]">{user.email}</span>
+                              </div>
+                              {user.phone && (
+                                <div className="flex items-center gap-1.5 text-[11px]">
+                                  <Phone size={12} className="text-muted shrink-0" />
+                                  <span>{user.phone}</span>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+
+                          <td className="p-3.5">{getRoleBadge(user.role)}</td>
+
+                          <td className="p-3.5">
                             {isBlocked ? (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => unblockMutation.mutate(user.id)}
-                                className="text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
-                                title={t('users.unblock', 'Разблокировать')}
-                              >
-                                <Unlock size={15} />
-                              </Button>
+                              <Badge variant="danger" dot>
+                                {t('users.block', 'Заблокирован')}
+                              </Badge>
                             ) : (
+                              <Badge variant="success" dot>
+                                {t('common.active', 'Активен')}
+                              </Badge>
+                            )}
+                          </td>
+
+                          <td className="p-3.5 font-semibold text-app">
+                            {user._count?.listings ?? 0}
+                          </td>
+
+                          <td className="p-3.5 text-muted font-mono text-[11px]">
+                            {new Date(user.createdAt).toLocaleDateString()}
+                          </td>
+
+                          <td className="p-3.5 text-right">
+                            <div className="flex items-center justify-end gap-1">
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => setBlockUser(user)}
-                                className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40"
-                                title={t('users.block', 'Заблокировать')}
+                                onClick={() => navigate(`/users/${user.id}`)}
+                                title={t('users.profile', 'Профиль пользователя')}
                               >
-                                <Lock size={15} />
+                                <Eye size={15} />
                               </Button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
+
+                              {isBlocked ? (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => unblockMutation.mutate(user.id)}
+                                  className="text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+                                  title={t('users.unblock', 'Разблокировать')}
+                                >
+                                  <Unlock size={15} />
+                                </Button>
+                              ) : (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setBlockUser(user)}
+                                  className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40"
+                                  title={t('users.block', 'Заблокировать')}
+                                >
+                                  <Lock size={15} />
+                                </Button>
+                              )}
+                            </div>
+                          </td>
+                        </motion.tr>
+                      );
+                    })}
+                  </AnimatePresence>
                 </tbody>
               </table>
             </div>

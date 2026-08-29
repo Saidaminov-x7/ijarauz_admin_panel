@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { useDebounce } from '../hooks/useDebounce';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
   CheckCircle2,
@@ -493,20 +494,28 @@ export const ListingsPage: React.FC = () => {
           />
         ) : (
           <div className="space-y-3">
-            {filteredItems.map((item) => {
-              const isSelected = selectedIds.includes(item.id);
-              const priceNum = parseFloat(item.price || '0');
-              const priceUsd = Math.round(priceNum / 12500);
-              const firstImage = item.images?.[0]?.url;
+            <AnimatePresence mode="popLayout">
+              {filteredItems.map((item) => {
+                const isSelected = selectedIds.includes(item.id);
+                const priceNum = parseFloat(item.price || '0');
+                const priceUsd = Math.round(priceNum / 12500);
+                const firstImage = item.images?.[0]?.url;
 
-              return (
-                <Card
-                  key={item.id}
-                  padding="sm"
-                  className={`flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-all duration-150 ${
-                    isSelected ? 'ring-2 ring-primary-500 border-primary-500' : ''
-                  }`}
-                >
+                return (
+                  <motion.div
+                    layout
+                    key={item.id}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, height: 0, overflow: 'hidden', marginBottom: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Card
+                      padding="sm"
+                      className={`flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-all duration-150 ${
+                        isSelected ? 'ring-2 ring-primary-500 border-primary-500' : ''
+                      }`}
+                    >
                   <div className="flex items-start gap-3.5 min-w-0 w-full md:w-auto flex-1">
                     {/* Checkbox */}
                     <button
@@ -653,8 +662,10 @@ export const ListingsPage: React.FC = () => {
                     </div>
                   </div>
                 </Card>
+              </motion.div>
               );
             })}
+            </AnimatePresence>
           </div>
         )}
 

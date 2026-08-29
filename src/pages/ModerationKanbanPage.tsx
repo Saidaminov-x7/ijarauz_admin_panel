@@ -7,6 +7,7 @@ import Layout from '../components/Layout';
 import { getKanbanBoardApi } from '../lib/extendedAdminApi';
 import { api } from '../lib/axios';
 import { Check, X, Edit3, MapPin, User, Keyboard } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 
 const ModerationKanbanPage: React.FC = () => {
@@ -107,87 +108,94 @@ const ModerationKanbanPage: React.FC = () => {
                         {t('kanban.empty', 'Нет объявлений')}
                       </div>
                     ) : (
-                      items.map((item: any, idx: number) => {
-                        const isSelectedPending = col.key === 'PENDING' && idx === selectedListingIndex;
-                        return (
-                          <div
-                            key={item.id}
-                            className={`card p-3 shadow-xs hover:shadow-md transition-all flex flex-col gap-2 cursor-pointer border ${
-                              isSelectedPending
-                                ? 'border-primary-500 ring-2 ring-primary-500/20'
-                                : 'border-app'
-                            }`}
-                            onClick={() => navigate(`/listings?highlight=${item.id}`)}
-                          >
-                            <div className="flex gap-2">
-                              {item.images?.[0] ? (
-                                <img
-                                  src={item.images[0].url || item.images[0].secure_url}
-                                  alt={item.title}
-                                  className="w-16 h-16 rounded-xl object-cover flex-shrink-0"
-                                />
-                              ) : (
-                                <div className="w-16 h-16 rounded-xl bg-gray-200 dark:bg-white/10 flex items-center justify-center text-xs text-muted">
-                                  Нет фото
-                                </div>
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <h4 className="text-xs font-bold text-app truncate">{item.title}</h4>
-                                <div className="text-xs font-semibold text-primary-600 dark:text-primary-400 mt-0.5">
-                                  {Number(item.price).toLocaleString()} сум
-                                </div>
-                                <div className="text-[11px] text-muted flex items-center gap-1 mt-1 truncate">
-                                  <MapPin size={10} /> {item.city}, {item.district || ''}
+                      <AnimatePresence mode="popLayout">
+                        {items.map((item: any, idx: number) => {
+                          const isSelectedPending = col.key === 'PENDING' && idx === selectedListingIndex;
+                          return (
+                            <motion.div
+                              layout
+                              key={item.id}
+                              initial={{ opacity: 0, scale: 0.95 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.95 }}
+                              transition={{ duration: 0.2 }}
+                              className={`card p-3 shadow-xs hover:shadow-md transition-[box-shadow,border-color] flex flex-col gap-2 cursor-pointer border ${
+                                isSelectedPending
+                                  ? 'border-primary-500 ring-2 ring-primary-500/20'
+                                  : 'border-app'
+                              }`}
+                              onClick={() => navigate(`/listings?highlight=${item.id}`)}
+                            >
+                              <div className="flex gap-2">
+                                {item.images?.[0] ? (
+                                  <img
+                                    src={item.images[0].url || item.images[0].secure_url}
+                                    alt={item.title}
+                                    className="w-16 h-16 rounded-xl object-cover flex-shrink-0"
+                                  />
+                                ) : (
+                                  <div className="w-16 h-16 rounded-xl bg-gray-200 dark:bg-white/10 flex items-center justify-center text-xs text-muted">
+                                    Нет фото
+                                  </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="text-xs font-bold text-app truncate">{item.title}</h4>
+                                  <div className="text-xs font-semibold text-primary-600 dark:text-primary-400 mt-0.5">
+                                    {Number(item.price).toLocaleString()} сум
+                                  </div>
+                                  <div className="text-[11px] text-muted flex items-center gap-1 mt-1 truncate">
+                                    <MapPin size={10} /> {item.city}, {item.district || ''}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
 
-                            {/* Автор */}
-                            <div className="pt-2 border-t border-app flex items-center justify-between text-[11px] text-muted">
-                              <span className="truncate flex items-center gap-1">
-                                <User size={10} /> {item.owner?.name || 'Пользователь'}
-                              </span>
-                              {item.owner?.verified && (
-                                <span className="text-emerald-500 font-medium text-[10px]">Verified</span>
-                              )}
-                            </div>
+                              {/* Автор */}
+                              <div className="pt-2 border-t border-app flex items-center justify-between text-[11px] text-muted">
+                                <span className="truncate flex items-center gap-1">
+                                  <User size={10} /> {item.owner?.name || 'Пользователь'}
+                                </span>
+                                {item.owner?.verified && (
+                                  <span className="text-emerald-500 font-medium text-[10px]">Verified</span>
+                                )}
+                              </div>
 
-                            {/* Кнопки быстрых действий */}
-                            <div className="flex gap-1 pt-1 justify-end" onClick={(e) => e.stopPropagation()}>
-                              {col.key !== 'APPROVED_VERIFIED' && (
-                                <button
-                                  type="button"
-                                  title={t('kanban.approve', 'Одобрить')}
-                                  onClick={() => moderateMutation.mutate({ id: item.id, status: 'APPROVED' })}
-                                  className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/50 cursor-pointer"
-                                >
-                                  <Check size={14} />
-                                </button>
-                              )}
-                              {col.key !== 'CHANGES_REQUESTED' && (
-                                <button
-                                  type="button"
-                                  title={t('kanban.requestChanges', 'Запросить правки')}
-                                  onClick={() => moderateMutation.mutate({ id: item.id, status: 'CHANGES_REQUESTED', note: 'Требуется исправить описание или фото' })}
-                                  className="p-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/50 cursor-pointer"
-                                >
-                                  <Edit3 size={14} />
-                                </button>
-                              )}
-                              {col.key !== 'REJECTED' && (
-                                <button
-                                  type="button"
-                                  title={t('kanban.reject', 'Отклонить')}
-                                  onClick={() => moderateMutation.mutate({ id: item.id, status: 'REJECTED', note: 'Нарушение правил платформы' })}
-                                  className="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 cursor-pointer"
-                                >
-                                  <X size={14} />
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })
+                              {/* Кнопки быстрых действий */}
+                              <div className="flex gap-1 pt-1 justify-end" onClick={(e) => e.stopPropagation()}>
+                                {col.key !== 'APPROVED_VERIFIED' && (
+                                  <button
+                                    type="button"
+                                    title={t('kanban.approve', 'Одобрить')}
+                                    onClick={() => moderateMutation.mutate({ id: item.id, status: 'APPROVED' })}
+                                    className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/50 cursor-pointer"
+                                  >
+                                    <Check size={14} />
+                                  </button>
+                                )}
+                                {col.key !== 'CHANGES_REQUESTED' && (
+                                  <button
+                                    type="button"
+                                    title={t('kanban.requestChanges', 'Запросить правки')}
+                                    onClick={() => moderateMutation.mutate({ id: item.id, status: 'CHANGES_REQUESTED', note: 'Требуется исправить описание или фото' })}
+                                    className="p-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/50 cursor-pointer"
+                                  >
+                                    <Edit3 size={14} />
+                                  </button>
+                                )}
+                                {col.key !== 'REJECTED' && (
+                                  <button
+                                    type="button"
+                                    title={t('kanban.reject', 'Отклонить')}
+                                    onClick={() => moderateMutation.mutate({ id: item.id, status: 'REJECTED', note: 'Нарушение правил платформы' })}
+                                    className="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 cursor-pointer"
+                                  >
+                                    <X size={14} />
+                                  </button>
+                                )}
+                              </div>
+                            </motion.div>
+                          );
+                        })}
+                      </AnimatePresence>
                     )}
                   </div>
                 </div>
