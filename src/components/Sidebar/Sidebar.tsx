@@ -115,7 +115,11 @@ const DefaultAvatar: React.FC<{ name: string }> = ({ name }) => {
   );
 };
 
-const Sidebar: React.FC = () => {
+interface SidebarProps {
+  onCloseMobile?: () => void;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -171,8 +175,8 @@ const Sidebar: React.FC = () => {
         transition-colors duration-200 select-none
       "
     >
-      {/* ─── Логотип ─── */}
-      <div className="flex items-center gap-2.5 px-5 h-16 border-b sidebar-border flex-shrink-0">
+      {/* ─── Логотип и кнопка закрытия на мобилке ─── */}
+      <div className="flex items-center justify-between px-5 h-16 border-b sidebar-border flex-shrink-0">
         <img
           src={settings?.logoUrl || '/logotip.png'}
           alt="Ijarauz Admin"
@@ -182,6 +186,19 @@ const Sidebar: React.FC = () => {
             e.currentTarget.src = '/logotip.png';
           }}
         />
+        {onCloseMobile && (
+          <button
+            type="button"
+            onClick={onCloseMobile}
+            className="lg:hidden p-1.5 rounded-lg text-muted hover:text-app hover:bg-gray-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
+            aria-label="Закрыть меню"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* ─── Навигация ─── */}

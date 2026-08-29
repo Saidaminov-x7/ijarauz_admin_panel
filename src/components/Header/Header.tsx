@@ -59,9 +59,10 @@ const CheckAllIcon = () => (
 
 interface HeaderProps {
   title?: string;
+  onToggleMobileMenu?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ title }) => {
+const Header: React.FC<HeaderProps> = ({ title, onToggleMobileMenu }) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
@@ -145,9 +146,23 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
         flex-shrink-0 transition-colors duration-200 relative z-30
       "
     >
-      {/* Заголовок страницы */}
+      {/* Заголовок страницы + Гамбургер на мобилке */}
       <div className="flex items-center gap-3">
-        {title && <h1 className="text-xl font-bold text-app">{title}</h1>}
+        {onToggleMobileMenu && (
+          <button
+            type="button"
+            onClick={onToggleMobileMenu}
+            aria-label="Открыть боковое меню"
+            className="lg:hidden p-2 rounded-lg text-muted hover:text-app hover:bg-gray-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </button>
+        )}
+        {title && <h1 className="text-lg sm:text-xl font-bold text-app truncate">{title}</h1>}
         <div
           className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 dark:bg-white/5 border border-app"
           title={
