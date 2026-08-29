@@ -2,6 +2,7 @@
 // Страница управления жалобами на объявления
 
 import React, { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
@@ -42,9 +43,23 @@ const REASON_LABELS: Record<string, string> = {
 
 export const ReportsPage: React.FC = () => {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<TabKey>('OPEN');
-  const [page, setPage] = useState(1);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const activeTab = (searchParams.get('tab') as TabKey) || 'OPEN';
+  const page = Number(searchParams.get('page')) || 1;
   const [pageSize, setPageSize] = useState(10);
+
+  const updateParam = (key: string, value: string | number) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (value !== undefined && value !== '' && value !== null) {
+        next.set(key, String(value));
+      } else {
+        next.delete(key);
+      }
+      return next;
+    });
+  };
 
   const currentStatus = activeTab === 'ALL' ? undefined : (activeTab as ReportStatus);
 
@@ -62,19 +77,42 @@ export const ReportsPage: React.FC = () => {
     queryClient.invalidateQueries({ queryKey: ['admin', 'reports'] });
   };
 
+  // C1: Optimistic update для смены статуса жалоб
   const statusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: ReportStatus }) =>
       updateReportStatusApi(id, status),
+    onMutate: async ({ id, status }) => {
+      await queryClient.cancelQueries({ queryKey: ['admin', 'reports'] });
+      const previousData = queryClient.getQueriesData({ queryKey: ['admin', 'reports'] });
+      queryClient.setQueriesData({ queryKey: ['admin', 'reports'] }, (old: any) => {
+        if (!old) return old;
+        if (old.items && Array.isArray(old.items)) {
+          return {
+            ...old,
+            items: old.items.map((r: any) => (r.id === id ? { ...r, status } : r)),
+          };
+        }
+        return old;
+      });
+      return { previousData };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousData) {
+        for (const [key, val] of context.previousData) {
+          queryClient.setQueryData(key, val);
+        }
+      }
+      toast.error('Не удалось обновить статус жалобы');
+    },
     onSuccess: (_, variables) => {
-      invalidateReports();
       toast.success(
         variables.status === 'RESOLVED'
           ? 'Жалоба отмечена как решённая'
           : 'Жалоба отклонена',
       );
     },
-    onError: () => {
-      toast.error('Не удалось обновить статус жалобы');
+    onSettled: () => {
+      invalidateReports();
     },
   });
 
@@ -121,8 +159,8 @@ export const ReportsPage: React.FC = () => {
           tabs={TABS}
           activeTab={activeTab}
           onChange={(tab) => {
-            setActiveTab(tab as TabKey);
-            setPage(1);
+            updateParam('tab', tab);
+            updateParam('page', 1);
           }}
         />
 
@@ -240,10 +278,10 @@ export const ReportsPage: React.FC = () => {
           totalPages={totalPages}
           totalItems={total}
           pageSize={pageSize}
-          onPageChange={setPage}
+          onPageChange={(p) => updateParam('page', p)}
           onPageSizeChange={(s) => {
             setPageSize(s);
-            setPage(1);
+            updateParam('page', 1);
           }}
         />
       </div>

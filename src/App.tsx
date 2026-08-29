@@ -5,6 +5,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useInitAuth } from './hooks/useAuth';
 import ProtectedRoute from './components/ProtectedRoute';
+import { ROUTES } from './routes';
 
 // Страницы
 import LoginPage from './pages/LoginPage';
@@ -26,6 +27,7 @@ import AppSettingsPage from './pages/settings/AppSettingsPage';
 import StaffPage from './pages/settings/StaffPage';
 import AppearanceSettingsPage from './pages/settings/AppearanceSettingsPage';
 import ProfilePage from './pages/ProfilePage';
+import AuditLogPage from './pages/AuditLogPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 // Инициализация темы (применяем до рендера UI)
@@ -103,7 +105,7 @@ const App: React.FC = () => {
 
         {/* Медиа-библиотека */}
         <Route
-          path="/media"
+          path={ROUTES.MEDIA}
           element={
             <ProtectedRoute>
               <MediaLibraryPage />
@@ -201,7 +203,7 @@ const App: React.FC = () => {
 
         {/* Роут сотрудников: только для SUPER_ADMIN, для остальных — реальный 404 */}
         <Route
-          path="/settings/staff"
+          path={ROUTES.STAFF}
           element={
             <ProtectedRoute requiredAdminRole="SUPER_ADMIN">
               <StaffPage />
@@ -215,6 +217,16 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Журнал действий (Audit Log) */}
+        <Route
+          path="/audit-log"
+          element={
+            <ProtectedRoute>
+              <AuditLogPage />
             </ProtectedRoute>
           }
         />

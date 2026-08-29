@@ -9,6 +9,7 @@ import { useAuthStore } from '../../store/authStore';
 import { useQuery } from '@tanstack/react-query';
 import { getSiteSettingsApi } from '../../lib/siteSettingsApi';
 import { useTranslation } from 'react-i18next';
+import { ROUTES } from '../../routes';
 
 // ─── Иконки ─────────────────────────────────────────────────────────────────
 
@@ -284,7 +285,7 @@ const Sidebar: React.FC = () => {
 
         {/* Медиа-библиотека */}
         <NavLink
-          to="/media"
+          to={ROUTES.MEDIA}
           className={({ isActive }) => `
             flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
             transition-all duration-150 cursor-pointer
@@ -470,6 +471,28 @@ const Sidebar: React.FC = () => {
           )}
         </div>
 
+        {/* ─── Журнал действий (Audit Log) ─── */}
+        <NavLink
+          to="/audit-log"
+          className={({ isActive }) => `
+            flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+            transition-all duration-150 cursor-pointer
+            ${
+              isActive
+                ? 'bg-primary-500 text-white shadow-sm'
+                : 'text-muted hover:bg-gray-100 dark:hover:bg-white/5 hover:text-app'
+            }
+          `}
+        >
+          <span className="flex-shrink-0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              <path d="M9 12l2 2 4-4" />
+            </svg>
+          </span>
+          <span>Журнал действий</span>
+        </NavLink>
+
         {/* ─── Настройки (Dropdown) ─── */}
         <div>
           <button
@@ -537,7 +560,7 @@ const Sidebar: React.FC = () => {
               {/* Пункт "Сотрудники и роли" виден ТОЛЬКО для SUPER_ADMIN */}
               {isSuperAdmin && (
                 <NavLink
-                  to="/settings/staff"
+                  to={ROUTES.STAFF}
                   className={({ isActive }) => `
                     block px-3 py-1.5 rounded-md text-xs font-medium transition-colors
                     ${

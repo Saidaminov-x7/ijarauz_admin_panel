@@ -1,9 +1,11 @@
 // src/pages/ListingsPage.tsx
 // Страница модерации и управления объявлениями с массовыми действиями и фильтрами
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { useDebounce } from '../hooks/useDebounce';
 import {
   Search,
   CheckCircle2,
@@ -61,11 +63,41 @@ const SORT_OPTIONS = [
 
 export const ListingsPage: React.FC = () => {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<TabKey>('PENDING');
-  const [page, setPage] = useState(1);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const activeTab = (searchParams.get('tab') as TabKey) || 'PENDING';
+  const page = Number(searchParams.get('page')) || 1;
+  const sortOption = searchParams.get('sort') || 'createdAt-desc';
+  const urlSearch = searchParams.get('search') || '';
+
   const [pageSize, setPageSize] = useState(10);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortOption, setSortOption] = useState('createdAt-desc');
+  const [searchInput, setSearchInput] = useState(urlSearch);
+  const debouncedSearch = useDebounce(searchInput, 300);
+
+  // Синхронизация debouncedSearch с URL query params
+  useEffect(() => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (debouncedSearch) {
+        next.set('search', debouncedSearch);
+      } else {
+        next.delete('search');
+      }
+      return next;
+    }, { replace: true });
+  }, [debouncedSearch, setSearchParams]);
+
+  const updateParam = (key: string, value: string | number) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (value !== undefined && value !== '' && value !== null) {
+        next.set(key, String(value));
+      } else {
+        next.delete(key);
+      }
+      return next;
+    });
+  };
 
   // Bulk actions state
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -145,12 +177,40 @@ export const ListingsPage: React.FC = () => {
     },
   });
 
+  // C1: Optimistic update для верификации объявлений
   const verifyMutation = useMutation({
     mutationFn: ({ id, isVerified }: { id: string; isVerified: boolean }) =>
       verifyListingApi(id, isVerified),
+    onMutate: async ({ id, isVerified }) => {
+      await queryClient.cancelQueries({ queryKey: ['admin', 'listings'] });
+      const previousData = queryClient.getQueriesData({ queryKey: ['admin', 'listings'] });
+      queryClient.setQueriesData({ queryKey: ['admin', 'listings'] }, (old: any) => {
+        if (!old) return old;
+        if (old.items && Array.isArray(old.items)) {
+          return {
+            ...old,
+            items: old.items.map((item: any) =>
+              item.id === id ? { ...item, isVerified } : item
+            ),
+          };
+        }
+        return old;
+      });
+      return { previousData };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousData) {
+        for (const [key, val] of context.previousData) {
+          queryClient.setQueryData(key, val);
+        }
+      }
+      toast.error('Не удалось обновить статус верификации');
+    },
     onSuccess: (_, variables) => {
-      invalidateListings();
       toast.success(variables.isVerified ? 'Объявление верифицировано ("Проверено Ijarauz")' : 'Верификация снята');
+    },
+    onSettled: () => {
+      invalidateListings();
     },
   });
 
@@ -207,8 +267,8 @@ export const ListingsPage: React.FC = () => {
   const pendingCount = pendingCountData?.meta?.total || 0;
 
   const filteredItems = items.filter((item) => {
-    if (!searchQuery.trim()) return true;
-    const q = searchQuery.toLowerCase();
+    if (!debouncedSearch.trim()) return true;
+    const q = debouncedSearch.toLowerCase();
     return (
       item.title?.toLowerCase().includes(q) ||
       item.city?.toLowerCase().includes(q) ||
@@ -270,8 +330,8 @@ export const ListingsPage: React.FC = () => {
             tabs={TABS}
             activeTab={activeTab}
             onChange={(tab) => {
-              setActiveTab(tab);
-              setPage(1);
+              updateParam('tab', tab);
+              updateParam('page', 1);
               setSelectedIds([]);
             }}
             variant="underline"
@@ -283,15 +343,21 @@ export const ListingsPage: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 rounded-2xl bg-surface border border-app shadow-xs">
           <Input
             placeholder="Поиск по названию, городу, ID или автору..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={searchInput}
+            onChange={(e) => {
+              setSearchInput(e.target.value);
+              updateParam('page', 1);
+            }}
             leftIcon={<Search size={16} />}
           />
 
           <Select
             options={SORT_OPTIONS}
             value={sortOption}
-            onChange={(val) => setSortOption(val)}
+            onChange={(val) => {
+              updateParam('sort', val);
+              updateParam('page', 1);
+            }}
           />
 
           <div className="flex items-center justify-end gap-2 text-xs text-muted">
@@ -527,10 +593,10 @@ export const ListingsPage: React.FC = () => {
           totalPages={totalPages}
           totalItems={total}
           pageSize={pageSize}
-          onPageChange={(p) => setPage(p)}
+          onPageChange={(p) => updateParam('page', p)}
           onPageSizeChange={(s) => {
             setPageSize(s);
-            setPage(1);
+            updateParam('page', 1);
           }}
         />
 

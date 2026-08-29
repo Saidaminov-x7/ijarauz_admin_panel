@@ -1,10 +1,11 @@
 // src/pages/UsersPage.tsx
 // Управление пользователями платформы с расширенными фильтрами, массовыми действиями и экспортом
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { useDebounce } from '../hooks/useDebounce';
 import {
   Search,
   Download,
@@ -56,12 +57,41 @@ const SORT_OPTIONS = [
 export const UsersPage: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [search, setSearch] = useState('');
-  const [roleFilter, setRoleFilter] = useState<UserRole | ''>('');
-  const [sortOption, setSortOption] = useState('createdAt-desc');
-  const [page, setPage] = useState(1);
+  const roleFilter = (searchParams.get('role') as UserRole) || '';
+  const sortOption = searchParams.get('sort') || 'createdAt-desc';
+  const page = Number(searchParams.get('page')) || 1;
+  const urlSearch = searchParams.get('search') || '';
+
   const [pageSize, setPageSize] = useState(15);
+  const [searchInput, setSearchInput] = useState(urlSearch);
+  const debouncedSearch = useDebounce(searchInput, 300);
+
+  // Синхронизация debouncedSearch с URL query params
+  useEffect(() => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (debouncedSearch) {
+        next.set('search', debouncedSearch);
+      } else {
+        next.delete('search');
+      }
+      return next;
+    }, { replace: true });
+  }, [debouncedSearch, setSearchParams]);
+
+  const updateParam = (key: string, value: string | number) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (value !== undefined && value !== '' && value !== null) {
+        next.set(key, String(value));
+      } else {
+        next.delete(key);
+      }
+      return next;
+    });
+  };
 
   // Bulk state
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -76,10 +106,10 @@ export const UsersPage: React.FC = () => {
   ];
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['admin', 'users', search, roleFilter, sortByField, sortDirection, page, pageSize],
+    queryKey: ['admin', 'users', debouncedSearch, roleFilter, sortByField, sortDirection, page, pageSize],
     queryFn: () =>
       getAdminUsersApi({
-        search: search || undefined,
+        search: debouncedSearch || undefined,
         role: (roleFilter as UserRole) || undefined,
         sortBy: sortByField,
         sortOrder: sortDirection,
@@ -92,25 +122,78 @@ export const UsersPage: React.FC = () => {
     queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
   };
 
+  // C1: Optimistic update для блокировки
   const blockMutation = useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string }) =>
       blockUserApi(id, reason),
+    onMutate: async ({ id, reason }) => {
+      await queryClient.cancelQueries({ queryKey: ['admin', 'users'] });
+      const previousData = queryClient.getQueriesData({ queryKey: ['admin', 'users'] });
+      queryClient.setQueriesData({ queryKey: ['admin', 'users'] }, (old: any) => {
+        if (!old) return old;
+        if (old.items && Array.isArray(old.items)) {
+          return {
+            ...old,
+            items: old.items.map((u: any) =>
+              u.id === id ? { ...u, isBlocked: true, blockedReason: reason } : u
+            ),
+          };
+        }
+        return old;
+      });
+      return { previousData };
+    },
+    onError: (err: any, _vars, context) => {
+      if (context?.previousData) {
+        for (const [key, val] of context.previousData) {
+          queryClient.setQueryData(key, val);
+        }
+      }
+      toast.error(err.response?.data?.message || 'Ошибка блокировки пользователя');
+    },
     onSuccess: () => {
-      invalidateUsers();
       setBlockUser(null);
       setBlockReason('');
       toast.success('Пользователь заблокирован');
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || 'Ошибка блокировки пользователя');
+    onSettled: () => {
+      invalidateUsers();
     },
   });
 
+  // C1: Optimistic update для разблокировки
   const unblockMutation = useMutation({
     mutationFn: unblockUserApi,
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: ['admin', 'users'] });
+      const previousData = queryClient.getQueriesData({ queryKey: ['admin', 'users'] });
+      queryClient.setQueriesData({ queryKey: ['admin', 'users'] }, (old: any) => {
+        if (!old) return old;
+        if (old.items && Array.isArray(old.items)) {
+          return {
+            ...old,
+            items: old.items.map((u: any) =>
+              u.id === id ? { ...u, isBlocked: false, blockedReason: null } : u
+            ),
+          };
+        }
+        return old;
+      });
+      return { previousData };
+    },
+    onError: (err: any, _vars, context) => {
+      if (context?.previousData) {
+        for (const [key, val] of context.previousData) {
+          queryClient.setQueryData(key, val);
+        }
+      }
+      toast.error(err.response?.data?.message || 'Ошибка разблокировки пользователя');
+    },
     onSuccess: () => {
+      toast.success('Пользователь разблокирован');
+    },
+    onSettled: () => {
       invalidateUsers();
-      toast.success('Пользователь успешно разблокирован');
     },
   });
 
@@ -227,10 +310,10 @@ export const UsersPage: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 rounded-2xl bg-surface border border-app shadow-xs">
           <Input
             placeholder="Поиск по имени, email, телефону или ID..."
-            value={search}
+            value={searchInput}
             onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
+              setSearchInput(e.target.value);
+              updateParam('page', 1);
             }}
             leftIcon={<Search size={16} />}
           />
@@ -239,15 +322,18 @@ export const UsersPage: React.FC = () => {
             options={ROLE_OPTIONS}
             value={roleFilter}
             onChange={(val) => {
-              setRoleFilter(val as UserRole | '');
-              setPage(1);
+              updateParam('role', val);
+              updateParam('page', 1);
             }}
           />
 
           <Select
             options={SORT_OPTIONS}
             value={sortOption}
-            onChange={(val) => setSortOption(val)}
+            onChange={(val) => {
+              updateParam('sort', val);
+              updateParam('page', 1);
+            }}
           />
         </div>
 
@@ -450,10 +536,10 @@ export const UsersPage: React.FC = () => {
           totalPages={totalPages}
           totalItems={total}
           pageSize={pageSize}
-          onPageChange={(p) => setPage(p)}
+          onPageChange={(p) => updateParam('page', p)}
           onPageSizeChange={(s) => {
             setPageSize(s);
-            setPage(1);
+            updateParam('page', 1);
           }}
         />
 

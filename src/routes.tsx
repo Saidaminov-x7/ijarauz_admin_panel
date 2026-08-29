@@ -6,7 +6,9 @@ export const ROUTES = {
   DASHBOARD: '/',
   LISTINGS:  '/listings',
   USERS:     '/users',
+  MEDIA:     '/media',
   PAGES:     '/pages',
   ANALYTICS: '/analytics',
   SETTINGS:  '/settings',
+  STAFF:     '/settings/staff',
 } as const;

@@ -18,8 +18,23 @@ const ViewingRequestsPage: React.FC = () => {
   const updateMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: ViewingStatus }) =>
       updateViewingStatusApi(id, status),
+    onMutate: async ({ id, status }) => {
+      await queryClient.cancelQueries({ queryKey: ['admin', 'viewing-requests'] });
+      const previous = queryClient.getQueryData<ViewingRequestItem[]>(['admin', 'viewing-requests']);
+      if (previous) {
+        queryClient.setQueryData<ViewingRequestItem[]>(['admin', 'viewing-requests'], (old) =>
+          old ? old.map((item) => (item.id === id ? { ...item, status } : item)) : [],
+        );
+      }
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['admin', 'viewing-requests'], context.previous);
+      }
+      toast.error('Не удалось обновить статус заявки');
+    },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'viewing-requests'] });
       toast.success(
         variables.status === 'CONFIRMED'
           ? 'Заявка подтверждена'
@@ -28,8 +43,8 @@ const ViewingRequestsPage: React.FC = () => {
           : 'Статус заявки обновлён',
       );
     },
-    onError: () => {
-      toast.error('Не удалось обновить статус заявки');
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'viewing-requests'] });
     },
   });
 
