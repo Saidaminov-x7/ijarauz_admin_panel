@@ -40,6 +40,7 @@ const GeneralSettingsPage: React.FC = () => {
   const [maintenanceMessage, setMaintenanceMessage] = useState('');
   const [maintenancePasswordEnabled, setMaintenancePasswordEnabled] = useState(false);
   const [maintenanceBypassPassword, setMaintenanceBypassPassword] = useState('');
+  const [mobilePinchZoomEnabled, setMobilePinchZoomEnabled] = useState(true);
 
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -61,6 +62,7 @@ const GeneralSettingsPage: React.FC = () => {
       setMaintenanceMessage(settings.maintenanceMessage || '');
       setMaintenanceBypassPassword((settings as any).maintenanceBypassPassword || '');
       setMaintenancePasswordEnabled((settings as any).maintenancePasswordEnabled ?? false);
+      setMobilePinchZoomEnabled((settings as any).mobilePinchZoomEnabled ?? true);
       setLogoPreview(settings.logoUrl || null);
       if (settings.navLinks && Array.isArray(settings.navLinks) && settings.navLinks.length > 0) {
         setNavLinks(settings.navLinks);
@@ -122,6 +124,7 @@ const GeneralSettingsPage: React.FC = () => {
       maintenanceMessage: maintenanceMessage.trim() || null,
       maintenancePasswordEnabled,
       maintenanceBypassPassword: maintenanceBypassPassword.trim() || null,
+      mobilePinchZoomEnabled,
       navLinks,
     });
 
@@ -153,6 +156,23 @@ const GeneralSettingsPage: React.FC = () => {
     <Layout title="Основные настройки">
       <div className="max-w-4xl mx-auto space-y-6">
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Масштабирование двумя пальцами (Pinch-to-zoom) */}
+          <Card
+            title="Масштабирование на смартфонах (Pinch-to-zoom)"
+            description="Управление возможностью увеличивать и уменьшать масштаб сайта жестом двумя пальцами на мобильных устройствах"
+          >
+            <div className="flex items-center justify-between pt-2">
+              <div className="space-y-1">
+                <p className="font-semibold text-app">Увеличение двумя пальцами (Zoom)</p>
+                <p className="text-xs text-muted">
+                  {mobilePinchZoomEnabled
+                    ? 'Включено: пользователи могут свободно приближать текст и фотографии щипком двумя пальцами'
+                    : 'Отключено: масштаб зафиксирован 1:1 без возможности ручного приближения'}
+                </p>
+              </div>
+              <Switch checked={mobilePinchZoomEnabled} onChange={setMobilePinchZoomEnabled} />
+            </div>
+          </Card>
           {/* Режим обслуживания */}
           <Card
             title="Режим технического обслуживания"

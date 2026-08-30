@@ -39,6 +39,7 @@ export interface SiteSettings {
   yandexMetrikaEnabled?: boolean;
   maintenancePasswordEnabled?: boolean;
   maintenanceBypassPassword?: string | null;
+  mobilePinchZoomEnabled?: boolean;
 
   updatedAt: string;
   updatedBy: {
