@@ -7,6 +7,7 @@ import { getWebhooksApi, createWebhookApi, deleteWebhookApi } from '../../lib/ex
 import { Webhook, Plus, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ru, enUS } from 'date-fns/locale';
+import { toast } from 'sonner';
 
 const WebhooksPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -35,8 +36,28 @@ const WebhooksPage: React.FC = () => {
     mutationFn: deleteWebhookApi,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'webhooks'] });
+      toast.success('Вебхук удален');
     },
   });
+
+  const [testingId, setTestingId] = useState<string | null>(null);
+
+  const handleTestWebhook = async (id: string) => {
+    setTestingId(id);
+    try {
+      const { testWebhookApi } = await import('../../lib/extendedAdminApi');
+      const res = await testWebhookApi(id);
+      if (res.success) {
+        toast.success(`Тестовый вебхук успешно доставлен (HTTP ${res.statusCode || 200})`);
+      } else {
+        toast.error(`Ошибка доставки тестового вебхука: ${res.error || 'Статус ' + res.statusCode}`);
+      }
+    } catch (err: any) {
+      toast.error('Сбой отправки тестового вебхука: ' + (err.message || 'Ошибка сети'));
+    } finally {
+      setTestingId(null);
+    }
+  };
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,14 +132,25 @@ const WebhooksPage: React.FC = () => {
                         {format(new Date(w.createdAt), 'd MMM yyyy', { locale: currentLocale })}
                       </td>
                       <td className="p-3 text-right">
-                        <button
-                          type="button"
-                          onClick={() => deleteMutation.mutate(w.id)}
-                          className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
-                          title={t('common.delete', 'Удалить')}
-                        >
-                          <Trash2 size={15} />
-                        </button>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleTestWebhook(w.id)}
+                            disabled={testingId === w.id}
+                            className="px-2.5 py-1 rounded-lg text-xs font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/40 transition-colors cursor-pointer disabled:opacity-50"
+                            title="Тестовая отправка пинга"
+                          >
+                            {testingId === w.id ? 'Отправка...' : 'Тест'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => deleteMutation.mutate(w.id)}
+                            className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                            title={t('common.delete', 'Удалить')}
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

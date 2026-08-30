@@ -1,6 +1,3 @@
-// src/pages/ReportsPage.tsx
-// Страница управления жалобами на объявления
-
 import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -16,6 +13,8 @@ import {
   Building,
   Calendar,
   Download,
+  ShieldAlert,
+  X,
 } from 'lucide-react';
 import Layout from '../components/Layout';
 import {
@@ -24,6 +23,10 @@ import {
   type ReportItem,
   type ReportStatus,
 } from '../lib/listingsApi';
+import {
+  getReportAiAnalysisApi,
+  type ReportAiAnalysisResult,
+} from '../lib/extendedAdminApi';
 import { Button, Tabs, Pagination, Badge, Card, EmptyState } from '../components/ui';
 
 type TabKey = 'ALL' | 'OPEN' | 'RESOLVED' | 'DISMISSED';
@@ -86,6 +89,24 @@ export const ReportsPage: React.FC = () => {
 
   const invalidateReports = () => {
     queryClient.invalidateQueries({ queryKey: ['admin', 'reports'] });
+  };
+
+  const [selectedDetailReport, setSelectedDetailReport] = useState<any | null>(null);
+  const [aiReportId, setAiReportId] = useState<string | null>(null);
+  const [aiData, setAiData] = useState<ReportAiAnalysisResult | null>(null);
+  const [isAiLoading, setIsAiLoading] = useState(false);
+
+  const handleOpenAiAnalysis = async (reportId: string) => {
+    setAiReportId(reportId);
+    setIsAiLoading(true);
+    try {
+      const result = await getReportAiAnalysisApi(reportId);
+      setAiData(result);
+    } catch {
+      toast.error('Не удалось выполнить AI-анализ переписки');
+    } finally {
+      setIsAiLoading(false);
+    }
   };
 
   // C1: Optimistic update для смены статуса жалоб
@@ -283,7 +304,23 @@ export const ReportsPage: React.FC = () => {
                         </div>
 
                         {/* Actions */}
-                        <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
+                        <div className="flex items-center gap-2 shrink-0 self-end md:self-center flex-wrap">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenAiAnalysis(report.id)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-xl bg-purple-50 dark:bg-purple-950/40 border border-purple-500/20 text-purple-600 dark:text-purple-400 font-bold hover:bg-purple-100 transition-colors cursor-pointer"
+                          >
+                            ✨ AI Анализ жалобы и чатов
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setSelectedDetailReport(report)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-xl border border-app bg-surface hover:bg-gray-50 dark:hover:bg-white/5 text-app font-medium transition-colors cursor-pointer"
+                          >
+                            Подробнее об объекте
+                          </button>
+
                           {report.status === 'OPEN' && (
                             <>
                               <Button
@@ -316,7 +353,7 @@ export const ReportsPage: React.FC = () => {
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-xl border border-app bg-surface hover:bg-gray-50 dark:hover:bg-white/5 text-muted hover:text-app transition-colors"
                           >
                             <ExternalLink size={12} />
-                            Открыть объект
+                            На сайте
                           </a>
                         </div>
                       </div>
@@ -340,6 +377,235 @@ export const ReportsPage: React.FC = () => {
             updateParam('page', 1);
           }}
         />
+
+        {/* ─── МОДАЛКА: ПОДРОБНАЯ ИНФОРМАЦИЯ ОБ ОБЪЕКТЕ ИЗ ЖАЛОБЫ ─── */}
+        {selectedDetailReport && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+            <div className="bg-surface border border-app rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl space-y-4 animate-in zoom-in-95">
+              <div className="flex items-center justify-between border-b border-app pb-3">
+                <h3 className="text-lg font-bold text-app flex items-center gap-2">
+                  <Building size={20} className="text-primary-500" />
+                  Информация об объекте из жалобы
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setSelectedDetailReport(null)}
+                  className="p-1.5 rounded-lg text-muted hover:text-app hover:bg-gray-100 dark:hover:bg-white/10"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Фото галерея */}
+              {selectedDetailReport.listing?.images && selectedDetailReport.listing.images.length > 0 && (
+                <div className="grid grid-cols-3 gap-2">
+                  {selectedDetailReport.listing.images.map((img: any, idx: number) => (
+                    <img
+                      key={idx}
+                      src={img.url}
+                      alt=""
+                      className="h-28 w-full object-cover rounded-xl border border-app"
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Параметры */}
+              <div className="grid grid-cols-2 gap-3 text-xs bg-gray-50 dark:bg-white/5 p-4 rounded-xl border border-app">
+                <div>
+                  <span className="text-muted block">Название:</span>
+                  <span className="font-bold text-app">{selectedDetailReport.listing?.title || '—'}</span>
+                </div>
+                <div>
+                  <span className="text-muted block">Цена:</span>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                    {selectedDetailReport.listing?.price} сум/мес
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted block">Город / Район:</span>
+                  <span className="font-medium text-app">
+                    {selectedDetailReport.listing?.city}, {selectedDetailReport.listing?.district || ''}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted block">Адрес / GPS:</span>
+                  <span className="font-medium text-app">{selectedDetailReport.listing?.address || 'Не указан'}</span>
+                </div>
+                <div>
+                  <span className="text-muted block">Комнат / Площадь:</span>
+                  <span className="font-medium text-app">
+                    {selectedDetailReport.listing?.rooms} комн., {selectedDetailReport.listing?.area} м²
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted block">Этаж:</span>
+                  <span className="font-medium text-app">
+                    {selectedDetailReport.listing?.floor || '—'} / {selectedDetailReport.listing?.totalFloors || '—'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Описание */}
+              {selectedDetailReport.listing?.description && (
+                <div>
+                  <h4 className="text-xs font-bold text-muted uppercase tracking-wider mb-1">Описание объекта:</h4>
+                  <p className="text-xs text-app whitespace-pre-line bg-surface p-3 rounded-xl border border-app">
+                    {selectedDetailReport.listing.description}
+                  </p>
+                </div>
+              )}
+
+              {/* Контакты сторон */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                <div className="p-3 rounded-xl border border-app bg-surface">
+                  <span className="text-[11px] font-bold text-muted uppercase block mb-1">Автор объявления (Собственник):</span>
+                  <p className="text-xs font-semibold text-app">{selectedDetailReport.listing?.owner?.name || '—'}</p>
+                  <p className="text-xs text-muted">{selectedDetailReport.listing?.owner?.email}</p>
+                  <p className="text-xs text-primary-500">{selectedDetailReport.listing?.owner?.phone || 'Телефон скрыт'}</p>
+                </div>
+                <div className="p-3 rounded-xl border border-app bg-surface">
+                  <span className="text-[11px] font-bold text-rose-500 uppercase block mb-1">Заявитель жалобы:</span>
+                  <p className="text-xs font-semibold text-app">{selectedDetailReport.reporter?.name || 'Анонимный'}</p>
+                  <p className="text-xs text-muted">{selectedDetailReport.reporter?.email || '—'}</p>
+                  <p className="text-xs text-primary-500">{selectedDetailReport.reporter?.phone || '—'}</p>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedDetailReport(null)}
+                  className="px-4 py-2 rounded-xl bg-gray-100 dark:bg-white/10 text-xs font-bold text-app hover:bg-gray-200"
+                >
+                  Закрыть
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── МОДАЛКА: AI-АНАЛИЗ ЖАЛОБЫ И ИСТОРИИ ПЕРЕПИСКИ ─── */}
+        {aiReportId && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+            <div className="bg-surface border border-app rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl space-y-4 animate-in zoom-in-95">
+              <div className="flex items-center justify-between border-b border-app pb-3">
+                <h3 className="text-lg font-bold text-app flex items-center gap-2">
+                  <ShieldAlert size={20} className="text-purple-500" />
+                  ✨ AI Скоринг мошенничества и проверка чата
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAiReportId(null);
+                    setAiData(null);
+                  }}
+                  className="p-1.5 rounded-lg text-muted hover:text-app hover:bg-gray-100 dark:hover:bg-white/10"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {isAiLoading ? (
+                <div className="p-8 text-center space-y-3">
+                  <div className="inline-block w-8 h-8 border-3 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                  <p className="text-xs text-muted">ИИ читает историю чатов и проводит скоринг рисков...</p>
+                </div>
+              ) : aiData ? (
+                <div className="space-y-4">
+                  {/* Оценка риска */}
+                  <div className="flex items-center justify-between p-4 rounded-xl border border-app bg-purple-50/50 dark:bg-purple-950/20">
+                    <div>
+                      <span className="text-xs text-muted block">Уровень риска мошенничества</span>
+                      <span
+                        className={`text-lg font-bold ${
+                          aiData.riskScore >= 70
+                            ? 'text-rose-500'
+                            : aiData.riskScore >= 40
+                            ? 'text-amber-500'
+                            : 'text-emerald-500'
+                        }`}
+                      >
+                        {aiData.riskScore}% — {aiData.verdict}
+                      </span>
+                    </div>
+                    <div className="text-right text-xs text-muted">
+                      Проанализировано сообщений: <span className="font-bold text-app">{aiData.chatMessagesAnalyzed}</span>
+                    </div>
+                  </div>
+
+                  {/* Рекомендация */}
+                  <div className="p-3.5 rounded-xl border border-app bg-surface space-y-1">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 block">
+                      Вердикт и рекомендация для модератора:
+                    </span>
+                    <p className="text-xs font-medium text-app leading-relaxed">
+                      {aiData.recommendation}
+                    </p>
+                  </div>
+
+                  {/* Обнаруженные триггеры */}
+                  {aiData.flags && aiData.flags.length > 0 && (
+                    <div>
+                      <span className="text-xs font-bold text-muted block mb-1.5">Обнаруженные триггеры / Факторы:</span>
+                      <ul className="space-y-1">
+                        {aiData.flags.map((flag, i) => (
+                          <li key={i} className="text-xs text-app flex items-start gap-2 bg-gray-50 dark:bg-white/5 p-2 rounded-lg border border-app">
+                            <span className="text-rose-500 shrink-0">•</span>
+                            <span>{flag}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* История переписки между сторонами */}
+                  {aiData.chatHistory && aiData.chatHistory.length > 0 ? (
+                    <div>
+                      <span className="text-xs font-bold text-muted block mb-1.5">
+                        История переписки (Заявитель ↔ Собственник):
+                      </span>
+                      <div className="max-h-48 overflow-y-auto space-y-2 p-3 bg-gray-50 dark:bg-white/5 rounded-xl border border-app text-xs">
+                        {aiData.chatHistory.map((m) => (
+                          <div
+                            key={m.id}
+                            className={`p-2 rounded-lg max-w-[80%] ${
+                              m.isFromOwner
+                                ? 'ml-auto bg-primary-500 text-white'
+                                : 'mr-auto bg-surface border border-app text-app'
+                            }`}
+                          >
+                            <span className="text-[10px] opacity-75 block mb-0.5">
+                              {m.isFromOwner ? 'Собственник' : 'Заявитель'}:
+                            </span>
+                            <p>{m.text}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-xl text-center text-xs text-muted">
+                      Стороны не вели переписку во встроенном чате платформы (контакт мог быть через прямой звонок).
+                    </div>
+                  )}
+
+                  <div className="flex justify-end pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAiReportId(null);
+                        setAiData(null);
+                      }}
+                      className="px-4 py-2 rounded-xl bg-gray-100 dark:bg-white/10 text-xs font-bold text-app hover:bg-gray-200"
+                    >
+                      Понятно
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   );

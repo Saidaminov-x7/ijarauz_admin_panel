@@ -184,6 +184,11 @@ export const deleteWebhookApi = async (id: string): Promise<{ success: boolean }
   return data;
 };
 
+export const testWebhookApi = async (id: string): Promise<{ success: boolean; statusCode?: number; error?: string }> => {
+  const { data } = await api.post<{ success: boolean; statusCode?: number; error?: string }>(`/admin/webhooks/${id}/test`);
+  return data;
+};
+
 // [Фича 29] Backups
 export interface BackupsInfoData {
   lastAutomaticBackup: string | null;
@@ -210,5 +215,46 @@ export interface KanbanBoardData {
 
 export const getKanbanBoardApi = async (): Promise<KanbanBoardData> => {
   const { data } = await api.get<KanbanBoardData>('/admin/moderation/kanban');
+  return data;
+};
+
+// [AI-Анализ Жалобы и Чатов]
+export interface ReportAiAnalysisResult {
+  reportId: string;
+  reason: string;
+  reporterComment: string | null;
+  riskScore: number;
+  verdict: 'HIGH_RISK_FRAUD' | 'SUSPICIOUS' | 'LOW_RISK';
+  flags: string[];
+  recommendation: string;
+  chatMessagesAnalyzed: number;
+  chatHistory: Array<{
+    id: string;
+    isFromOwner: boolean;
+    text: string;
+    time: string;
+  }>;
+  listingSummary: {
+    id?: string;
+    title?: string;
+    price?: string;
+    city?: string;
+    owner?: any;
+    images?: string[];
+  };
+}
+
+export const getReportAiAnalysisApi = async (reportId: string): Promise<ReportAiAnalysisResult> => {
+  const { data } = await api.get<ReportAiAnalysisResult>(`/admin/reports/${reportId}/ai-analyze`);
+  return data;
+};
+
+export const getUserAllListingsApi = async (userId: string): Promise<{ listings: any[] }> => {
+  const { data } = await api.get<{ listings: any[] }>(`/admin/users/${userId}/all-listings`);
+  return data;
+};
+
+export const getUserAllChatsApi = async (userId: string): Promise<{ messages: any[] }> => {
+  const { data } = await api.get<{ messages: any[] }>(`/admin/users/${userId}/all-chats`);
   return data;
 };

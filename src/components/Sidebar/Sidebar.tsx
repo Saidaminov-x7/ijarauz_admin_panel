@@ -114,6 +114,8 @@ const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
   const toggleSection = (key: string) => {
     if (collapsed) {
       setCollapsed(false);
+      setOpenSections((prev) => ({ ...prev, [key]: true }));
+      return;
     }
     setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
   };

@@ -64,7 +64,7 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ title, onToggleMobileMenu }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
@@ -213,6 +213,29 @@ const Header: React.FC<HeaderProps> = ({ title, onToggleMobileMenu }) => {
             ⌘K
           </kbd>
         </button>
+
+        {/* Языковой переключатель (RU / UZ / EN) */}
+        <div className="relative group">
+          <select
+            value={i18n.language?.slice(0, 2) || 'ru'}
+            onChange={(e) => {
+              const newLang = e.target.value;
+              i18n.changeLanguage(newLang);
+              localStorage.setItem('i18nextLng', newLang);
+            }}
+            aria-label="Сменить язык"
+            className="
+              h-9 px-2.5 rounded-lg text-xs font-semibold
+              bg-gray-50 dark:bg-white/5 border border-app
+              text-app outline-none cursor-pointer
+              hover:border-primary-500 transition-colors
+            "
+          >
+            <option value="ru" className="bg-surface text-app">🇷🇺 RU</option>
+            <option value="uz" className="bg-surface text-app">🇺🇿 UZ</option>
+            <option value="en" className="bg-surface text-app">🇬🇧 EN</option>
+          </select>
+        </div>
 
         {/* Переключатель темы */}
         <ThemeToggle />

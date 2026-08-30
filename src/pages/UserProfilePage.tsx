@@ -8,8 +8,9 @@ import { useTranslation } from 'react-i18next';
 import Layout from '../components/Layout';
 import { getAdminUserByIdApi, blockUserApi, unblockUserApi, getUserActivityApi } from '../lib/usersApi';
 import { getUserAuditLogsApi } from '../lib/auditLogApi';
+import { getUserAllChatsApi, getUserAllListingsApi } from '../lib/extendedAdminApi';
 import Badge from '../components/Badge/Badge';
-import { ArrowLeft, Shield, Lock, Unlock, Mail, Phone, Calendar, Home, Clock, Activity } from 'lucide-react';
+import { ArrowLeft, Shield, Lock, Unlock, Mail, Phone, Calendar, Home, Clock, Activity, MessageSquare } from 'lucide-react';
 import { format } from 'date-fns';
 import { ru, enUS } from 'date-fns/locale';
 
@@ -17,11 +18,21 @@ const UserProfilePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
-  const [activeTab, setActiveTab] = useState<'info' | 'listings' | 'activity' | 'history'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'listings' | 'chats' | 'activity' | 'history'>('info');
 
   const { data: user, isLoading: isUserLoading } = useQuery({
     queryKey: ['admin', 'user', id],
     queryFn: () => getAdminUserByIdApi(id!),
+  });
+
+  const { data: userChatsData } = useQuery({
+    queryKey: ['admin', 'user', id, 'all-chats'],
+    queryFn: () => getUserAllChatsApi(id!),
+  });
+
+  const { data: userAllListingsData } = useQuery({
+    queryKey: ['admin', 'user', id, 'all-listings'],
+    queryFn: () => getUserAllListingsApi(id!),
   });
 
   const { data: userActivity, isLoading: isActivityLoading } = useQuery({
@@ -182,7 +193,15 @@ const UserProfilePage: React.FC = () => {
                 activeTab === 'listings' ? 'border-primary-500 text-primary-500' : 'border-transparent text-muted hover:text-app'
               }`}
             >
-              {t('nav.listings', 'Объявления')} ({user.listings?.length || 0})
+              {t('nav.listings', 'Все объявления')} ({userAllListingsData?.listings?.length || user.listings?.length || 0})
+            </button>
+            <button
+              onClick={() => setActiveTab('chats')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors cursor-pointer flex items-center gap-1.5 ${
+                activeTab === 'chats' ? 'border-primary-500 text-primary-500' : 'border-transparent text-muted hover:text-app'
+              }`}
+            >
+              <MessageSquare size={14} /> Все чаты ({userChatsData?.messages?.length || 0})
             </button>
             <button
               onClick={() => setActiveTab('activity')}
@@ -230,13 +249,44 @@ const UserProfilePage: React.FC = () => {
           </div>
         )}
 
+        {/* Все чаты пользователя */}
+        {activeTab === 'chats' && (
+          <div className="card p-0 overflow-hidden">
+            {!userChatsData?.messages || userChatsData.messages.length === 0 ? (
+              <div className="p-8 text-center text-muted">У пользователя нет истории переписок</div>
+            ) : (
+              <div className="divide-y divide-app">
+                {userChatsData.messages.map((m: any) => (
+                  <div key={m.id} className="p-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                    <div className="flex items-center justify-between text-xs text-muted mb-1">
+                      <span className="font-bold text-app">
+                        {m.sender?.name || 'Пользователь'} ➔ {m.recipient?.name || 'Собеседник'}
+                      </span>
+                      <span>{format(new Date(m.createdAt), 'd MMM yyyy, HH:mm', { locale: currentLocale })}</span>
+                    </div>
+                    {m.listing && (
+                      <p className="text-xs text-primary-500 font-semibold mb-1">
+                        Объект: {m.listing.title} ({m.listing.price} сум, {m.listing.city})
+                      </p>
+                    )}
+                    <p className="text-xs text-app bg-surface p-2.5 rounded-xl border border-app">
+                      {m.message}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Все объявления пользователя (включая удаленные и архивные) */}
         {activeTab === 'listings' && (
           <div className="card p-0 overflow-hidden">
-            {user.listings?.length === 0 ? (
+            {(!userAllListingsData?.listings || userAllListingsData.listings.length === 0) && user.listings?.length === 0 ? (
               <div className="p-6 text-center text-muted">{t('common.noData', 'У пользователя нет объявлений')}</div>
             ) : (
               <div className="divide-y divide-app">
-                {user.listings?.map((listing) => (
+                {(userAllListingsData?.listings || user.listings)?.map((listing: any) => (
                   <div key={listing.id} className="p-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
                     <div className="flex gap-4">
                       <div className="w-20 h-16 bg-gray-100 dark:bg-white/10 rounded-xl flex-shrink-0 overflow-hidden">
