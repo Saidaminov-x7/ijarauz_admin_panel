@@ -155,12 +155,12 @@ const Header: React.FC<HeaderProps> = ({ title, onToggleMobileMenu }) => {
             type="button"
             onClick={onToggleMobileMenu}
             aria-label="Открыть боковое меню"
-            className="lg:hidden p-2 rounded-lg text-muted hover:text-app hover:bg-gray-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
+            className="lg:hidden inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-stone-200 bg-white text-stone-600 transition-all duration-200 hover:border-stone-300 hover:bg-stone-50 hover:text-stone-900 dark:border-white/10 dark:bg-stone-900 dark:text-stone-300 dark:hover:border-white/20 dark:hover:bg-stone-800 dark:hover:text-white cursor-pointer shadow-xs"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="3" y1="12" x2="21" y2="12" />
-              <line x1="3" y1="6" x2="21" y2="6" />
-              <line x1="3" y1="18" x2="21" y2="18" />
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="4" x2="20" y1="12" y2="12" />
+              <line x1="4" x2="20" y1="6" y2="6" />
+              <line x1="4" x2="20" y1="18" y2="18" />
             </svg>
           </button>
         )}
