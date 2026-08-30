@@ -39,7 +39,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     },
     primary: {
       icon: <Info size={24} className="text-primary-500" />,
-      bg: 'bg-teal-50 dark:bg-teal-950/40',
+      bg: 'bg-primary-50 dark:bg-primary-950/40',
       btnVariant: 'primary' as const,
     },
   }[variant];

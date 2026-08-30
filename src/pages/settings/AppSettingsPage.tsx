@@ -219,7 +219,7 @@ const AppSettingsPage: React.FC = () => {
           {/* 1. Безопасность и Защита */}
           <div className="card p-6 space-y-2">
             <h3 className="text-base font-semibold text-app flex items-center gap-2 mb-4">
-              <Shield size={20} className="text-teal-500" />
+              <Shield size={20} className="text-primary-500" />
               Безопасность и Защита
             </h3>
             {renderToggle(

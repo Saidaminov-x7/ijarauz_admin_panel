@@ -9,20 +9,20 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Высококонтрастный синий акцентный цвет (Blue / Indigo)
+        // Акцентный primary — динамический через CSS-переменные (AdminThemeInjector)
         primary: {
-          DEFAULT: '#2563eb',
-          50:  '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
-          950: '#172554',
+          DEFAULT: 'var(--color-primary)',
+          50:  'color-mix(in srgb, var(--color-primary) 5%, white)',
+          100: 'color-mix(in srgb, var(--color-primary) 10%, white)',
+          200: 'color-mix(in srgb, var(--color-primary) 20%, white)',
+          300: 'color-mix(in srgb, var(--color-primary) 40%, white)',
+          400: 'color-mix(in srgb, var(--color-primary) 60%, white)',
+          500: 'var(--color-primary)',
+          600: 'var(--color-primary)',
+          700: 'var(--color-primary-hover)',
+          800: 'color-mix(in srgb, var(--color-primary-hover) 90%, black)',
+          900: 'color-mix(in srgb, var(--color-primary-hover) 80%, black)',
+          950: 'color-mix(in srgb, var(--color-primary-hover) 70%, black)',
         },
         // Тёмный фон (dark mode)
         dark: {

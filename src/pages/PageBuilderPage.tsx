@@ -50,7 +50,7 @@ const PageBuilderPage: React.FC = () => {
             href={`${SITE_URL}/${pageKey === 'home' ? '' : pageKey}`}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-950/40 rounded-xl transition-colors whitespace-nowrap"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-950/40 rounded-xl transition-colors whitespace-nowrap"
           >
             Посмотреть на сайте <ExternalLink size={14} />
           </a>

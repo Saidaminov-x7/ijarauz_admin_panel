@@ -40,7 +40,7 @@ export const PopularListingsFields: React.FC<{
         />
       </div>
 
-      <div className="p-3 rounded-xl bg-teal-50/50 dark:bg-teal-950/20 border border-teal-200 dark:border-teal-800/30 text-xs text-teal-800 dark:text-teal-300">
+      <div className="p-3 rounded-xl bg-primary-50/50 dark:bg-primary-950/20 border border-primary-200 dark:border-primary-800/30 text-xs text-primary-800 dark:text-primary-300">
         💡 <strong>Примечание:</strong> Секция автоматически подтягивает актуальные активные объявления из базы данных платформы, отсортированные по популярности и просмотрам.
       </div>
     </div>

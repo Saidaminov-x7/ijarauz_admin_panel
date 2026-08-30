@@ -158,7 +158,7 @@ const SortableSectionCard: React.FC<SortableSectionCardProps> = ({
             size="icon"
             onClick={() => onToggleVisibility(section)}
             title={section.isVisible ? 'Скрыть секцию' : 'Показать секцию'}
-            className={section.isVisible ? 'text-teal-600' : 'text-muted'}
+            className={section.isVisible ? 'text-primary-600' : 'text-muted'}
           >
             {section.isVisible ? <Eye size={16} /> : <EyeOff size={16} />}
           </Button>

@@ -114,7 +114,7 @@ const CityAnalyticsPage: React.FC = () => {
                   return (
                     <tr key={c.city} className="hover:bg-gray-50/50 dark:hover:bg-white/5">
                       <td className="px-6 py-3.5 font-bold text-app">{c.city}</td>
-                      <td className="px-6 py-3.5 font-semibold text-teal-600 dark:text-teal-400">
+                      <td className="px-6 py-3.5 font-semibold text-primary-600 dark:text-primary-400">
                         {c.count}
                       </td>
                       <td className="px-6 py-3.5 text-right font-mono text-muted text-xs">

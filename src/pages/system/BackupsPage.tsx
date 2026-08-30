@@ -59,7 +59,7 @@ const BackupsPage: React.FC = () => {
         {/* Карточка последнего бэкапа / проверки */}
         <div className="card p-5 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-teal-100 dark:bg-teal-950/50 text-teal-600 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-2xl bg-primary-100 dark:bg-primary-950/50 text-primary-600 flex items-center justify-center">
               <CheckCircle2 size={28} />
             </div>
             <div>

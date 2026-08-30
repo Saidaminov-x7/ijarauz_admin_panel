@@ -34,6 +34,7 @@ import GeneralSettingsPage from './pages/settings/GeneralSettingsPage';
 import AppSettingsPage from './pages/settings/AppSettingsPage';
 import StaffPage from './pages/settings/StaffPage';
 import AppearanceSettingsPage from './pages/settings/AppearanceSettingsPage';
+import AdminPanelThemePage from './pages/settings/AdminPanelThemePage';
 import ProfilePage from './pages/ProfilePage';
 import AuditLogPage from './pages/AuditLogPage';
 import ErrorLogsPage from './pages/ErrorLogsPage';
@@ -41,6 +42,7 @@ import NotFoundPage from './pages/NotFoundPage';
 
 // Инициализация темы (применяем до рендера UI)
 import { useTheme } from './hooks/useTheme';
+import AdminThemeInjector from './components/AdminThemeInjector';
 
 const App: React.FC = () => {
   // Инициализируем тему (добавляет/убирает класс 'dark' на <html>)
@@ -50,6 +52,8 @@ const App: React.FC = () => {
 
   return (
     <BrowserRouter>
+      {/* Применяет CSS-переменные темы ПАНЕЛИ АДМИНИСТРАТОРА при загрузке */}
+      <AdminThemeInjector />
       <Routes>
         {/* Публичный маршрут — страница входа */}
         <Route path="/login" element={<LoginPage />} />
@@ -200,12 +204,22 @@ const App: React.FC = () => {
             </ProtectedRoute>
           }
         />
-        {/* Внешний вид — дизайн-токены, доступно SUPER_ADMIN */}
+        {/* Тема сайта — дизайн-токены сайта, доступно SUPER_ADMIN */}
         <Route
           path="/settings/appearance"
           element={
             <ProtectedRoute requiredAdminRole="SUPER_ADMIN">
               <AppearanceSettingsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Тема панели администратора — независимые токены для UI самой панели, доступно SUPER_ADMIN */}
+        <Route
+          path="/settings/admin-theme"
+          element={
+            <ProtectedRoute requiredAdminRole="SUPER_ADMIN">
+              <AdminPanelThemePage />
             </ProtectedRoute>
           }
         />

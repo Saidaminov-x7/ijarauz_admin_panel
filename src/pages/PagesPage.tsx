@@ -39,7 +39,7 @@ const SITE_ROUTES: SitePageRoute[] = [
 ];
 
 const CATEGORY_LABELS: Record<string, { label: string; color: string }> = {
-  main:     { label: 'Основные',     color: 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400' },
+  main:     { label: 'Основные',     color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400' },
   catalog:  { label: 'Каталог',      color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
   user:     { label: 'Пользователи', color: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400' },
   content:  { label: 'Контент',      color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },

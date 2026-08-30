@@ -40,16 +40,16 @@ export const PagePreview: React.FC<PagePreviewProps> = ({
     switch (type) {
       case 'HERO_SEARCH':
         return (
-          <div className="bg-gradient-to-br from-teal-900 via-teal-800 to-emerald-900 text-white p-8 rounded-2xl my-3 shadow-sm text-center">
+          <div className="bg-gradient-to-br from-primary-900 via-primary-800 to-emerald-900 text-white p-8 rounded-2xl my-3 shadow-sm text-center">
             {content.badgeText && (
-              <span className="inline-block px-3 py-1 bg-white/10 text-teal-200 text-xs rounded-full mb-3">
+              <span className="inline-block px-3 py-1 bg-white/10 text-primary-200 text-xs rounded-full mb-3">
                 {content.badgeText}
               </span>
             )}
             <h1 className="text-xl sm:text-2xl font-black mb-2">
               {content.title || 'Главный баннер с поиском'}
             </h1>
-            <p className="text-xs text-teal-100/80 max-w-lg mx-auto mb-5">
+            <p className="text-xs text-primary-100/80 max-w-lg mx-auto mb-5">
               {content.subtitle || 'Поиск жилья без посредников'}
             </p>
             {content.showSearch !== false && (
@@ -58,7 +58,7 @@ export const PagePreview: React.FC<PagePreviewProps> = ({
                 <span className="text-xs text-stone-400 flex-1 text-left">
                   {content.searchPlaceholder || 'Район, метро, улица...'}
                 </span>
-                <button className="px-4 py-1.5 bg-teal-600 text-white rounded-lg text-xs font-semibold">
+                <button className="px-4 py-1.5 bg-primary-600 text-white rounded-lg text-xs font-semibold">
                   Найти
                 </button>
               </div>
@@ -75,7 +75,7 @@ export const PagePreview: React.FC<PagePreviewProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {(content.items || []).map((item: any, idx: number) => (
                 <div key={idx} className="p-3.5 rounded-xl bg-gray-50 dark:bg-white/5 border border-app">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-500/10 text-teal-600 mb-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-500/10 text-primary-600 mb-2">
                     <ShieldCheck size={18} />
                   </div>
                   <h4 className="text-xs font-bold text-app mb-1">{item.title}</h4>
@@ -94,7 +94,7 @@ export const PagePreview: React.FC<PagePreviewProps> = ({
                 <h3 className="text-base font-bold text-app">{content.title || 'Популярные объявления'}</h3>
                 {content.subtitle && <p className="text-xs text-muted">{content.subtitle}</p>}
               </div>
-              <span className="text-xs font-semibold text-teal-600">{content.viewAllText || 'Смотреть все'} →</span>
+              <span className="text-xs font-semibold text-primary-600">{content.viewAllText || 'Смотреть все'} →</span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {[1, 2, 3].map((i) => (
@@ -103,7 +103,7 @@ export const PagePreview: React.FC<PagePreviewProps> = ({
                     Фото объекта #{i}
                   </div>
                   <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
-                  <div className="h-3 bg-teal-500/20 rounded w-1/2" />
+                  <div className="h-3 bg-primary-500/20 rounded w-1/2" />
                 </div>
               ))}
             </div>
@@ -112,12 +112,12 @@ export const PagePreview: React.FC<PagePreviewProps> = ({
 
       case 'CTA_BANNER':
         return (
-          <div className="bg-gradient-to-r from-emerald-600 to-teal-700 text-white p-6 rounded-2xl my-3 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="bg-gradient-to-r from-emerald-600 to-primary-700 text-white p-6 rounded-2xl my-3 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div>
               <h3 className="text-base font-bold mb-1">{content.title || 'Сдайте жильё выгодно'}</h3>
               <p className="text-xs text-emerald-100 max-w-md">{content.text}</p>
             </div>
-            <button className="px-5 py-2.5 bg-white text-teal-800 rounded-xl text-xs font-bold shrink-0 shadow-md">
+            <button className="px-5 py-2.5 bg-white text-primary-800 rounded-xl text-xs font-bold shrink-0 shadow-md">
               {content.buttonText || 'Разместить объявление'}
             </button>
           </div>
@@ -130,7 +130,7 @@ export const PagePreview: React.FC<PagePreviewProps> = ({
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               {(content.categories || []).map((cat: any, idx: number) => (
                 <div key={idx} className="p-3 rounded-xl border border-app bg-gray-50 dark:bg-white/5 flex items-center gap-2.5">
-                  <Building size={16} className="text-teal-600" />
+                  <Building size={16} className="text-primary-600" />
                   <span className="text-xs font-semibold text-app truncate">{cat.name}</span>
                 </div>
               ))}
@@ -145,7 +145,7 @@ export const PagePreview: React.FC<PagePreviewProps> = ({
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {(content.members || []).map((m: any, idx: number) => (
                 <div key={idx} className="p-3 rounded-xl border border-app bg-gray-50 dark:bg-white/5 text-center">
-                  <div className="h-14 w-14 rounded-full bg-teal-500/10 text-teal-600 mx-auto mb-2 flex items-center justify-center font-bold">
+                  <div className="h-14 w-14 rounded-full bg-primary-500/10 text-primary-600 mx-auto mb-2 flex items-center justify-center font-bold">
                     {m.name ? m.name.charAt(0) : <Users size={20} />}
                   </div>
                   <h4 className="text-xs font-bold text-app truncate">{m.name}</h4>
@@ -160,7 +160,7 @@ export const PagePreview: React.FC<PagePreviewProps> = ({
         return (
           <div className="p-6 rounded-2xl bg-surface border border-app my-3">
             <h3 className="text-base font-bold text-app mb-3 flex items-center gap-2">
-              <HelpCircle size={18} className="text-teal-600" />
+              <HelpCircle size={18} className="text-primary-600" />
               {content.title || 'Часто задаваемые вопросы'}
             </h3>
             <div className="space-y-2">
@@ -181,12 +181,12 @@ export const PagePreview: React.FC<PagePreviewProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
               {content.phone && (
                 <div className="flex items-center gap-2 text-app">
-                  <Phone size={14} className="text-teal-600" /> {content.phone}
+                  <Phone size={14} className="text-primary-600" /> {content.phone}
                 </div>
               )}
               {content.email && (
                 <div className="flex items-center gap-2 text-app">
-                  <Mail size={14} className="text-teal-600" /> {content.email}
+                  <Mail size={14} className="text-primary-600" /> {content.email}
                 </div>
               )}
             </div>

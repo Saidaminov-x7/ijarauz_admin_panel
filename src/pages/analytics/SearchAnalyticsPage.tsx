@@ -56,7 +56,7 @@ const SearchAnalyticsPage: React.FC = () => {
         <div className="card p-0 overflow-hidden">
           <div className="p-4 border-b border-app flex items-center justify-between">
             <h3 className="font-bold text-app text-sm flex items-center gap-2">
-              <Filter size={16} className="text-teal-500" />
+              <Filter size={16} className="text-primary-500" />
               Журнал поисковых запросов в реальном времени
             </h3>
           </div>

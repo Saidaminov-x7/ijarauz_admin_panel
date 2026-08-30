@@ -139,7 +139,7 @@ const TrafficAnalyticsPage: React.FC = () => {
                             weekday: 'short',
                           })}
                         </td>
-                        <td className="px-6 py-3 font-bold text-teal-600 dark:text-teal-400">
+                        <td className="px-6 py-3 font-bold text-primary-600 dark:text-primary-400">
                           {item.visitors}
                         </td>
                         <td className="px-6 py-3 text-right text-xs text-muted font-mono">

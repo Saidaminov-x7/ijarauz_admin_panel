@@ -225,8 +225,8 @@ const AnalyticsPage: React.FC = () => {
           <div className="card">
             <h3 className="text-base font-semibold text-app mb-4">Воронка конверсии пользователей</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="p-4 rounded-xl bg-teal-500/10 border border-teal-500/20">
-                <div className="text-xs font-semibold text-teal-600 dark:text-teal-400">1. Просмотры страниц</div>
+              <div className="p-4 rounded-xl bg-primary-500/10 border border-primary-500/20">
+                <div className="text-xs font-semibold text-primary-600 dark:text-primary-400">1. Просмотры страниц</div>
                 <div className="text-2xl font-bold text-app mt-1">{funnel.views}</div>
                 <div className="text-[11px] text-muted mt-1">Визиты за период</div>
               </div>

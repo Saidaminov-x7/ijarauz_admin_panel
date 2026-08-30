@@ -1,12 +1,13 @@
-// src/pages/settings/AppearanceSettingsPage.tsx
-// Управление дизайн-токенами: цвета, шрифты, скругления, отступы
+// src/pages/settings/AdminPanelThemePage.tsx
+// Управление дизайн-токенами ПАНЕЛИ АДМИНИСТРАТОРА (не сайта!)
+// API: GET/PATCH /admin/admin-theme
 
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Layout from '../../components/Layout';
 import { api } from '../../lib/axios';
 
-interface ThemeSettingsData {
+interface AdminThemeData {
   primaryColor: string;
   secondaryColor: string;
   backgroundColor: string;
@@ -15,36 +16,36 @@ interface ThemeSettingsData {
   fontFamily: string;
 }
 
-const getThemeApi = async (): Promise<ThemeSettingsData> => {
-  const { data } = await api.get('/admin/theme');
+const getAdminThemeApi = async (): Promise<AdminThemeData> => {
+  const { data } = await api.get('/admin/admin-theme');
   return data;
 };
 
-const updateThemeApi = async (dto: Partial<ThemeSettingsData>): Promise<ThemeSettingsData> => {
-  const { data } = await api.patch('/admin/theme', dto);
+const updateAdminThemeApi = async (dto: Partial<AdminThemeData>): Promise<AdminThemeData> => {
+  const { data } = await api.patch('/admin/admin-theme', dto);
   return data;
 };
 
-const PRESET_THEMES: { name: string; tokens: Partial<ThemeSettingsData> }[] = [
+const PRESET_THEMES: { name: string; tokens: Partial<AdminThemeData> }[] = [
   {
-    name: 'Teal (по умолчанию)',
-    tokens: { primaryColor: '#14b8a6', secondaryColor: '#0f766e', backgroundColor: '#f9fafb', textColor: '#111827' },
+    name: 'Синий (по умолчанию)',
+    tokens: { primaryColor: '#2563eb', secondaryColor: '#1d4ed8', backgroundColor: '#0f0f0f', textColor: '#f1f5f9' },
   },
   {
-    name: 'Indigo',
-    tokens: { primaryColor: '#6366f1', secondaryColor: '#4338ca', backgroundColor: '#f8fafc', textColor: '#0f172a' },
+    name: 'Индиго',
+    tokens: { primaryColor: '#6366f1', secondaryColor: '#4338ca', backgroundColor: '#0f0f1a', textColor: '#f1f5f9' },
   },
   {
-    name: 'Rose',
-    tokens: { primaryColor: '#f43f5e', secondaryColor: '#e11d48', backgroundColor: '#fff1f2', textColor: '#1c1917' },
+    name: 'Изумрудный',
+    tokens: { primaryColor: '#10b981', secondaryColor: '#059669', backgroundColor: '#0a0f0d', textColor: '#f1f5f9' },
   },
   {
-    name: 'Amber',
-    tokens: { primaryColor: '#f59e0b', secondaryColor: '#d97706', backgroundColor: '#fffbeb', textColor: '#1c1917' },
+    name: 'Роза',
+    tokens: { primaryColor: '#f43f5e', secondaryColor: '#e11d48', backgroundColor: '#0f0a0c', textColor: '#f1f5f9' },
   },
   {
-    name: 'Тёмная',
-    tokens: { primaryColor: '#14b8a6', secondaryColor: '#0f766e', backgroundColor: '#0f172a', textColor: '#f1f5f9' },
+    name: 'Янтарный',
+    tokens: { primaryColor: '#f59e0b', secondaryColor: '#d97706', backgroundColor: '#0f0d08', textColor: '#f1f5f9' },
   },
 ];
 
@@ -66,20 +67,20 @@ const BORDER_RADIUS_OPTIONS = [
   { value: '9999px', label: 'Полный круг' },
 ];
 
-const AppearanceSettingsPage: React.FC = () => {
+const AdminPanelThemePage: React.FC = () => {
   const queryClient = useQueryClient();
 
   const { data: settings, isLoading } = useQuery({
-    queryKey: ['admin', 'theme-settings'],
-    queryFn: getThemeApi,
+    queryKey: ['admin', 'admin-theme'],
+    queryFn: getAdminThemeApi,
   });
 
-  const [form, setForm] = useState<ThemeSettingsData>({
-    primaryColor: '#14b8a6',
-    secondaryColor: '#0f766e',
-    backgroundColor: '#f9fafb',
-    textColor: '#111827',
-    borderRadius: '0.75rem',
+  const [form, setForm] = useState<AdminThemeData>({
+    primaryColor: '#2563eb',
+    secondaryColor: '#1d4ed8',
+    backgroundColor: '#0f0f0f',
+    textColor: '#f1f5f9',
+    borderRadius: '0.5rem',
     fontFamily: 'Inter, sans-serif',
   });
 
@@ -93,24 +94,31 @@ const AppearanceSettingsPage: React.FC = () => {
   }, [settings]);
 
   const mutation = useMutation({
-    mutationFn: updateThemeApi,
+    mutationFn: updateAdminThemeApi,
     onSuccess: (updated) => {
-      queryClient.setQueryData(['admin', 'theme-settings'], updated);
+      queryClient.setQueryData(['admin', 'admin-theme'], updated);
       setForm(updated);
-      setSuccessMsg('Дизайн-токены успешно обновлены');
+      setSuccessMsg('Тема панели успешно обновлена');
       setErrorMsg('');
       setTimeout(() => setSuccessMsg(''), 3000);
+
+      // Применяем тему сразу после сохранения — без ожидания перезагрузки
+      const root = document.documentElement;
+      root.style.setProperty('--color-primary', updated.primaryColor);
+      root.style.setProperty('--color-primary-hover', updated.secondaryColor);
+      root.style.setProperty('--radius', updated.borderRadius);
+      document.body.style.fontFamily = updated.fontFamily;
     },
     onError: (err: unknown) => {
       const error = err as { response?: { data?: { message?: string } } };
-      setErrorMsg(error.response?.data?.message || 'Ошибка сохранения настроек темы');
+      setErrorMsg(error.response?.data?.message || 'Ошибка сохранения темы панели');
     },
   });
 
-  const handleColorChange = (key: keyof ThemeSettingsData, value: string) => {
+  // Цвет изменяется только в form-состоянии (для preview). 
+  // Реальное применение происходит только после onSuccess (через AdminThemeInjector или mutation.onSuccess)
+  const handleColorChange = (key: keyof AdminThemeData, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
-    // Предпросмотр работает через form-состояние в Preview-блоке (inline styles)
-    // Реальное применение к панели — только через AdminThemeInjector
   };
 
   const handleSave = () => {
@@ -119,15 +127,27 @@ const AppearanceSettingsPage: React.FC = () => {
     mutation.mutate(form);
   };
 
-  const applyPreset = (preset: Partial<ThemeSettingsData>) => {
+  const applyPreset = (preset: Partial<AdminThemeData>) => {
     setForm((prev) => ({ ...prev, ...preset }));
-    // Предпросмотр работает через form-состояние в Preview-блоке (inline styles)
-    // Реальное применение к сайту происходит только после сохранения
   };
 
   return (
-    <Layout title="Тема сайта">
+    <Layout title="Тема панели администратора">
       <div className="max-w-6xl mx-auto space-y-6">
+        {/* Инфо-баннер */}
+        <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-sm flex items-start gap-3">
+          <svg className="shrink-0 mt-0.5" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <div>
+            <p className="font-semibold">Тема панели администратора</p>
+            <p className="text-xs mt-0.5 opacity-80">
+              Эти настройки управляют цветовой схемой <strong>самой административной панели</strong> — сайдбара, кнопок, акцентов.
+              Тема сайта настраивается отдельно в разделе «Тема сайта».
+            </p>
+          </div>
+        </div>
+
         {successMsg && (
           <div className="p-4 rounded-xl bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-sm border border-green-200 dark:border-green-800 flex items-center gap-2">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -173,10 +193,10 @@ const AppearanceSettingsPage: React.FC = () => {
               <h3 className="text-base font-semibold text-app mb-4">Цвета</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[
-                  { key: 'primaryColor' as const, label: 'Основной цвет', desc: 'Кнопки, ссылки, акценты' },
+                  { key: 'primaryColor' as const, label: 'Основной цвет', desc: 'Активные пункты меню, кнопки, акценты' },
                   { key: 'secondaryColor' as const, label: 'Вторичный цвет', desc: 'Hover-состояния, тёмные акценты' },
-                  { key: 'backgroundColor' as const, label: 'Цвет фона', desc: 'Основной фон страницы' },
-                  { key: 'textColor' as const, label: 'Цвет текста', desc: 'Основной текст' },
+                  { key: 'backgroundColor' as const, label: 'Цвет фона', desc: 'Только для предпросмотра (фактический фон задаётся CSS-темой)' },
+                  { key: 'textColor' as const, label: 'Цвет текста', desc: 'Только для предпросмотра' },
                 ].map((item) => (
                   <div key={item.key} className="flex items-center gap-3 p-3 rounded-lg border border-app">
                     <input
@@ -241,7 +261,7 @@ const AppearanceSettingsPage: React.FC = () => {
                 disabled={isLoading || mutation.isPending}
                 className="btn-primary px-6"
               >
-                {mutation.isPending ? 'Сохранение...' : 'Сохранить дизайн-токены'}
+                {mutation.isPending ? 'Сохранение...' : 'Сохранить тему панели'}
               </button>
             </div>
           </div>
@@ -250,84 +270,61 @@ const AppearanceSettingsPage: React.FC = () => {
           <div className="space-y-4">
             <div className="card">
               <h3 className="text-base font-semibold text-app mb-3">Предпросмотр</h3>
+              <p className="text-xs text-muted mb-3">Тема применяется ко всей панели после сохранения</p>
+              {/* Мини-превью сайдбара */}
               <div
                 className="rounded-xl border border-app overflow-hidden"
-                style={{
-                  backgroundColor: form.backgroundColor,
-                  color: form.textColor,
-                  fontFamily: form.fontFamily,
-                }}
+                style={{ fontFamily: form.fontFamily }}
               >
-                {/* Preview header */}
-                <div
-                  className="px-4 py-3 border-b"
-                  style={{ borderColor: `${form.primaryColor}33` }}
-                >
-                  <div className="flex items-center gap-2">
+                {/* Sidebar preview */}
+                <div className="flex h-48">
+                  <div
+                    className="w-14 flex flex-col items-center py-3 gap-2 border-r"
+                    style={{ backgroundColor: '#111111', borderColor: '#2a2a2a' }}
+                  >
                     <div
                       className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold"
                       style={{ backgroundColor: form.primaryColor }}
                     >
                       I
                     </div>
-                    <span className="font-bold text-sm">Ijarauz</span>
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="flex flex-col items-center gap-0.5">
+                        <div
+                          className="w-8 h-8 rounded-lg flex items-center justify-center"
+                          style={i === 1
+                            ? { backgroundColor: form.primaryColor }
+                            : { backgroundColor: 'transparent' }
+                          }
+                        >
+                          <div className="w-3.5 h-3.5 rounded-sm opacity-70" style={{ backgroundColor: i === 1 ? 'white' : '#666' }} />
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </div>
-
-                {/* Preview body */}
-                <div className="p-4 space-y-3">
-                  <h4 className="font-bold text-sm">Найдите жильё мечты</h4>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Поиск по городу..."
-                      readOnly
-                      className="flex-1 px-3 py-2 text-xs rounded-lg border bg-transparent outline-none"
-                      style={{ borderColor: `${form.primaryColor}44` }}
-                    />
+                  {/* Content preview */}
+                  <div className="flex-1 p-3" style={{ backgroundColor: '#141824' }}>
+                    <div className="text-white text-xs font-semibold mb-2">Дашборд</div>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {[1, 2, 3, 4].map((i) => (
+                        <div key={i} className="rounded-lg p-2" style={{ backgroundColor: '#1e1e1e' }}>
+                          <div className="text-[10px] text-gray-400">Метрика {i}</div>
+                          <div
+                            className="text-sm font-bold mt-0.5"
+                            style={{ color: i === 1 ? form.primaryColor : '#f9fafb' }}
+                          >
+                            {i * 124}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                     <button
-                      className="px-4 py-2 text-xs font-semibold text-white rounded-lg"
-                      style={{
-                        backgroundColor: form.primaryColor,
-                        borderRadius: form.borderRadius,
-                      }}
+                      className="mt-2 w-full py-1.5 text-[10px] font-semibold text-white rounded-lg"
+                      style={{ backgroundColor: form.primaryColor, borderRadius: form.borderRadius }}
                     >
-                      Найти
+                      Действие
                     </button>
                   </div>
-
-                  {/* Preview card */}
-                  <div
-                    className="border p-3 space-y-2"
-                    style={{
-                      borderColor: `${form.secondaryColor}33`,
-                      borderRadius: form.borderRadius,
-                    }}
-                  >
-                    <div className="w-full h-16 bg-stone-200 dark:bg-white/10 rounded-lg flex items-center justify-center text-xs opacity-50">
-                      📷 Фото
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-bold text-xs">2-комн. квартира</div>
-                        <div className="text-[10px] opacity-60">Ташкент, Юнусабад</div>
-                      </div>
-                      <div className="font-bold text-xs" style={{ color: form.primaryColor }}>
-                        $400/мес
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Preview button */}
-                  <button
-                    className="w-full py-2 text-xs font-semibold text-white"
-                    style={{
-                      backgroundColor: form.secondaryColor,
-                      borderRadius: form.borderRadius,
-                    }}
-                  >
-                    Смотреть все
-                  </button>
                 </div>
               </div>
             </div>
@@ -336,15 +333,13 @@ const AppearanceSettingsPage: React.FC = () => {
             <div className="card">
               <h3 className="text-sm font-semibold text-app mb-2">CSS-переменные</h3>
               <p className="text-xs text-muted mb-3">
-                Эти переменные применяются через <code className="bg-gray-100 dark:bg-white/10 px-1 rounded">:root</code> на сайте
+                Применяются через <code className="bg-gray-100 dark:bg-white/10 px-1 rounded">:root</code> на все компоненты панели
               </p>
               <pre className="text-[10px] text-muted font-mono bg-gray-50 dark:bg-white/5 rounded-lg p-3 overflow-x-auto whitespace-pre-wrap">
 {`:root {
   --color-primary: ${form.primaryColor};
-  --color-secondary: ${form.secondaryColor};
-  --color-bg: ${form.backgroundColor};
-  --color-text: ${form.textColor};
-  --border-radius: ${form.borderRadius};
+  --color-primary-hover: ${form.secondaryColor};
+  --radius: ${form.borderRadius};
   --font-family: ${form.fontFamily};
 }`}
               </pre>
@@ -356,4 +351,4 @@ const AppearanceSettingsPage: React.FC = () => {
   );
 };
 
-export default AppearanceSettingsPage;
+export default AdminPanelThemePage;

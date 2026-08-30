@@ -667,7 +667,22 @@ const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
                     }
                   `}
                 >
-                  Внешний вид и тема
+                  Тема сайта
+                </NavLink>
+              )}
+              {isSuperAdmin && (
+                <NavLink
+                  to="/settings/admin-theme"
+                  className={({ isActive }) => `
+                    block px-3 py-1.5 rounded-lg text-xs font-medium transition-colors
+                    ${
+                      isActive
+                        ? 'text-primary-600 dark:text-primary-400 bg-primary-100/50 dark:bg-primary-900/20 font-semibold'
+                        : 'text-muted hover:text-app hover:bg-gray-100 dark:hover:bg-white/5'
+                    }
+                  `}
+                >
+                  Тема панели
                 </NavLink>
               )}
               {isSuperAdmin && (

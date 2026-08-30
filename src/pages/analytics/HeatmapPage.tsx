@@ -54,7 +54,7 @@ const HeatmapPage: React.FC = () => {
         <div className="card p-0 overflow-hidden">
           <div className="p-4 border-b border-app flex items-center justify-between">
             <h3 className="font-bold text-app text-sm flex items-center gap-2">
-              <MapPin size={16} className="text-teal-500" />
+              <MapPin size={16} className="text-primary-500" />
               Статистика по районам (Тепловой рейтинг)
             </h3>
           </div>
@@ -95,7 +95,7 @@ const HeatmapPage: React.FC = () => {
                             <div className="w-24 h-2 rounded-full bg-gray-200 dark:bg-white/10 overflow-hidden">
                               <div
                                 className={`h-full ${
-                                  demandScore > 70 ? 'bg-rose-500' : demandScore > 40 ? 'bg-amber-500' : 'bg-teal-500'
+                                  demandScore > 70 ? 'bg-rose-500' : demandScore > 40 ? 'bg-amber-500' : 'bg-primary-500'
                                 }`}
                                 style={{ width: `${demandScore}%` }}
                               />

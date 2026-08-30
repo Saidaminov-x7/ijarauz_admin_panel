@@ -243,7 +243,7 @@ export const StaffPage: React.FC = () => {
                               {member.name || 'Без имени'}
                             </h4>
                             {isSelf && (
-                              <span className="text-[10px] bg-teal-500/10 text-teal-600 px-2 py-0.5 rounded-md font-semibold">
+                              <span className="text-[10px] bg-primary-500/10 text-primary-600 px-2 py-0.5 rounded-md font-semibold">
                                 Это вы
                               </span>
                             )}
