@@ -107,7 +107,11 @@ const AdminPanelThemePage: React.FC = () => {
       root.style.setProperty('--color-primary', updated.primaryColor);
       root.style.setProperty('--color-primary-hover', updated.secondaryColor);
       root.style.setProperty('--radius', updated.borderRadius);
-      document.body.style.fontFamily = updated.fontFamily;
+      root.style.setProperty('--border-radius', updated.borderRadius);
+      if (updated.fontFamily) {
+        root.style.setProperty('--font-family', updated.fontFamily);
+        document.body.style.fontFamily = updated.fontFamily;
+      }
     },
     onError: (err: unknown) => {
       const error = err as { response?: { data?: { message?: string } } };

@@ -42,9 +42,11 @@ module.exports = {
         },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-family, Inter)', 'Inter', 'system-ui', 'sans-serif'],
+        theme: ['var(--font-family, Inter)', 'Inter', 'system-ui', 'sans-serif'],
       },
       borderRadius: {
+        theme: 'var(--radius, var(--border-radius, 0.5rem))',
         xl: '0.75rem',
         '2xl': '1rem',
       },

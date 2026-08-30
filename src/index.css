@@ -17,6 +17,9 @@
   --color-sidebar-border: #e5e7eb;
   --color-primary:     #2563eb;
   --color-primary-hover: #1d4ed8;
+  --radius:            0.5rem;
+  --border-radius:     0.5rem;
+  --font-family:       'Inter', system-ui, sans-serif;
 }
 
 /* ─── Dark Mode CSS Variables ─────────────────────────────────────────────── */
@@ -30,6 +33,9 @@
   --color-sidebar-border: rgba(255, 255, 255, 0.08);
   --color-primary:     #3b82f6;
   --color-primary-hover: #2563eb;
+  --radius:            0.5rem;
+  --border-radius:     0.5rem;
+  --font-family:       'Inter', system-ui, sans-serif;
 }
 
 /* ─── Base Styles ─────────────────────────────────────────────────────────── */
@@ -39,7 +45,7 @@
 }
 
 body {
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: var(--font-family, 'Inter', system-ui, sans-serif);
   background-color: var(--color-bg);
   color: var(--color-text);
   transition: background-color 0.2s ease, color 0.2s ease;
@@ -56,6 +62,8 @@ body {
   .text-muted   { color: var(--color-text-muted); }
   .sidebar-bg   { background-color: var(--color-sidebar-bg); }
   .sidebar-border { border-color: var(--color-sidebar-border); }
+  .rounded-theme { border-radius: var(--radius, var(--border-radius, 0.5rem)) !important; }
+  .font-theme   { font-family: var(--font-family, 'Inter', system-ui, sans-serif) !important; }
 }
 
 /* ─── Компонент: карточка ─────────────────────────────────────────────────── */

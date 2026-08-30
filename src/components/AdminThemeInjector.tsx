@@ -45,8 +45,10 @@ export default function AdminThemeInjector() {
     root.style.setProperty('--color-primary', theme.primaryColor);
     root.style.setProperty('--color-primary-hover', theme.secondaryColor);
     root.style.setProperty('--radius', theme.borderRadius);
-    if (data?.fontFamily) {
-      document.body.style.fontFamily = data.fontFamily;
+    root.style.setProperty('--border-radius', theme.borderRadius);
+    if (theme.fontFamily) {
+      root.style.setProperty('--font-family', theme.fontFamily);
+      document.body.style.fontFamily = theme.fontFamily;
     }
   }, [data]);
 

@@ -47,7 +47,7 @@ export function Modal({ isOpen, onClose, title, subtitle, size = 'md', children,
             onClick={onClose}
           />
           <motion.div
-            className={`relative w-full ${sizeClasses[size]} rounded-2xl bg-surface shadow-2xl border border-app z-10 max-h-[90vh] flex flex-col`}
+            className={`relative w-full ${sizeClasses[size]} rounded-theme font-theme bg-surface shadow-2xl border border-app z-10 max-h-[90vh] flex flex-col`}
             initial={{ opacity: 0, scale: prefersReducedMotion ? 1 : 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: prefersReducedMotion ? 1 : 0.96 }}

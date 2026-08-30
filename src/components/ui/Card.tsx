@@ -37,7 +37,7 @@ export const Card: React.FC<CardProps> = ({
   return (
     <div
       className={twMerge(
-        clsx('rounded-2xl transition-colors', variantStyles, paddingStyles),
+        clsx('rounded-theme font-theme transition-colors', variantStyles, paddingStyles),
         className,
       )}
       {...props}
