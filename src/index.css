@@ -8,13 +8,13 @@
 
 /* ─── CSS Custom Properties (Light Mode) ─────────────────────────────────── */
 :root {
-  --color-bg:          #f4f6f9;
+  --color-bg:          #f8fafc;
   --color-surface:     #ffffff;
-  --color-border:      #e5e7eb;
-  --color-text:        #111827;
-  --color-text-muted:  #6b7280;
+  --color-border:      #e2e8f0;
+  --color-text:        #0f172a;
+  --color-text-muted:  #64748b;
   --color-sidebar-bg:  #ffffff;
-  --color-sidebar-border: #e5e7eb;
+  --color-sidebar-border: #e2e8f0;
   --color-primary:     #2563eb;
   --color-primary-hover: #1d4ed8;
   --radius:            0.5rem;
@@ -24,13 +24,13 @@
 
 /* ─── Dark Mode CSS Variables ─────────────────────────────────────────────── */
 .dark {
-  --color-bg:          #0c0e14;
-  --color-surface:     #141824;
-  --color-border:      rgba(255, 255, 255, 0.1);
-  --color-text:        #f9fafb;
-  --color-text-muted:  #9ca3af;
-  --color-sidebar-bg:  #0e111a;
-  --color-sidebar-border: rgba(255, 255, 255, 0.08);
+  --color-bg:          #0b0f19;
+  --color-surface:     #111827;
+  --color-border:      rgba(148, 163, 184, 0.18);
+  --color-text:        #f8fafc;
+  --color-text-muted:  #94a3b8;
+  --color-sidebar-bg:  #0e131f;
+  --color-sidebar-border: rgba(148, 163, 184, 0.16);
   --color-primary:     #3b82f6;
   --color-primary-hover: #2563eb;
   --radius:            0.5rem;

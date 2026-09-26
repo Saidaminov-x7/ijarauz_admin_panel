@@ -1,0 +1,67 @@
+{
+  "common": {
+    "brandName": "AUBRIN",
+    "tagline": "UK Import Admin Panel",
+    "themeLight": "Light Theme",
+    "themeDark": "Dark Theme",
+    "save": "Save",
+    "cancel": "Cancel",
+    "loading": "Loading...",
+    "search": "Search by SKU or title...",
+    "ukImportBadge": "🇬🇧 Direct Import from United Kingdom",
+    "originalBadge": "100% Authentic"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "products": "Products (UK)",
+    "orders": "Customer Orders",
+    "categories": "Categories",
+    "brands": "British Brands",
+    "users": "Customers",
+    "settings": "Store Settings"
+  },
+  "dashboard": {
+    "title": "AUBRIN Store Overview",
+    "subtitle": "Sales and delivery metrics from the United Kingdom to Uzbekistan",
+    "revenueMonth": "Monthly Revenue",
+    "totalOrders": "Total Orders",
+    "ukStock": "UK Stock Items",
+    "inTransitUK": "Parcels in Flight from London",
+    "recentOrders": "Recent Orders"
+  },
+  "orders": {
+    "orderNumber": "Order #",
+    "customer": "Customer",
+    "phone": "Phone",
+    "total": "Total Amount",
+    "status": "Order Status",
+    "payment": "Payment",
+    "date": "Date",
+    "actions": "Actions",
+    "statusPending": "Pending Approval",
+    "statusConfirmed": "Confirmed",
+    "statusShippedUK": "🇬🇧 In Transit from UK",
+    "statusInTransit": "🚚 In Transit in Uzbekistan",
+    "statusDelivered": "✅ Delivered",
+    "statusCancelled": "❌ Cancelled"
+  },
+  "products": {
+    "title": "UK Fashion Catalog",
+    "subtitle": "Product management with multi-locale tabs (RU / EN / UZ)",
+    "addNew": "Add New UK Product",
+    "sku": "SKU / Code",
+    "brand": "Brand (UK)",
+    "price": "Price (UZS)",
+    "stock": "Stock",
+    "originality": "Authenticity Guarantee",
+    "formTitle": "Product Editor",
+    "tabRu": "Russian (RU)",
+    "tabEn": "English (EN)",
+    "tabUz": "Uzbek (UZ)",
+    "productName": "Product Title",
+    "productDesc": "Description & British details",
+    "sourceUrl": "Original UK Store URL (ASOS/Zara UK)",
+    "images": "Product Photos",
+    "sizes": "Sizes (UK / EU)"
+  }
+}

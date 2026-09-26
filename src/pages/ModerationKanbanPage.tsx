@@ -1,202 +1,129 @@
 // src/pages/ModerationKanbanPage.tsx
-import React, { useState, useEffect } from 'react';
+// Orders Kanban Board for AUBRIN: PENDING -> CONFIRMED -> SHIPPED_FROM_UK -> IN_TRANSIT -> DELIVERED
+
+import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import Layout from '../components/Layout';
-import { getKanbanBoardApi } from '../lib/extendedAdminApi';
-import { api } from '../lib/axios';
-import { Check, X, Edit3, MapPin, User, Keyboard } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { getOrdersKanbanApi, updateOrderStatusApi, type OrderStatus, type AdminOrder } from '../lib/listingsApi';
+import { Package, Truck, CheckCircle2, Clock, Globe } from 'lucide-react';
 import { toast } from 'sonner';
 
 const ModerationKanbanPage: React.FC = () => {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
-  const { t } = useTranslation();
 
-  const [selectedListingIndex, setSelectedListingIndex] = useState<number>(0);
-
-  const { data, isLoading } = useQuery({
-    queryKey: ['admin', 'kanban-board'],
-    queryFn: getKanbanBoardApi,
+  const { data: orders = [], isLoading } = useQuery({
+    queryKey: ['admin', 'orders-kanban'],
+    queryFn: getOrdersKanbanApi,
+    refetchInterval: 15000,
   });
 
-  const moderateMutation = useMutation({
-    mutationFn: async ({ id, status, note }: { id: string; status: string; note?: string }) => {
-      await api.patch(`/admin/listings/${id}/moderation`, {
-        moderationStatus: status,
-        moderationNote: note,
-      });
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: OrderStatus }) => {
+      return updateOrderStatusApi(id, status);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'kanban-board'] });
-      toast.success('Статус модерации обновлен');
+      queryClient.invalidateQueries({ queryKey: ['admin', 'orders-kanban'] });
+      toast.success('Статус заказа успешно обновлен');
     },
   });
 
-  const columns = [
-    { key: 'PENDING', title: t('kanban.pendingCol', 'Ожидают проверки'), badge: 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400' },
-    { key: 'CHANGES_REQUESTED', title: t('kanban.changesRequestedCol', 'Запрошены правки'), badge: 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400' },
-    { key: 'REJECTED', title: t('kanban.rejectedCol', 'Отклоненные'), badge: 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400' },
-    { key: 'APPROVED_VERIFIED', title: t('kanban.approvedCol', 'Проверено Ijarauz'), badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400' },
+  const columns: Array<{ key: OrderStatus; title: string; icon: any; color: string }> = [
+    { key: 'PENDING', title: 'Новые заказы', icon: Clock, color: 'text-amber-500 bg-amber-500/10' },
+    { key: 'CONFIRMED', title: 'Подтверждены', icon: CheckCircle2, color: 'text-blue-500 bg-blue-500/10' },
+    { key: 'SHIPPED_FROM_UK', title: 'Отправлены из UK', icon: Globe, color: 'text-purple-500 bg-purple-500/10' },
+    { key: 'IN_TRANSIT', title: 'В пути (Таможня/Доставка)', icon: Truck, color: 'text-indigo-500 bg-indigo-500/10' },
+    { key: 'DELIVERED', title: 'Доставлены', icon: Package, color: 'text-emerald-500 bg-emerald-500/10' },
   ];
 
-  const pendingItems = data ? (data as any)['PENDING'] || [] : [];
-
-  // [ФИЧА: ХОТКЕИ В КАНБАНЕ] J/K — навигация, A — одобрить, R — отклонить
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Игнорируем ввод в текстовых полях
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) return;
-
-      if (e.key === 'j' || e.key === 'J' || e.key === 'о') {
-        setSelectedListingIndex((prev) => Math.min(prev + 1, Math.max(0, pendingItems.length - 1)));
-      } else if (e.key === 'k' || e.key === 'K' || e.key === 'л') {
-        setSelectedListingIndex((prev) => Math.max(0, prev - 1));
-      } else if (e.key === 'a' || e.key === 'A' || e.key === 'ф') {
-        const current = pendingItems[selectedListingIndex];
-        if (current) {
-          moderateMutation.mutate({ id: current.id, status: 'APPROVED' });
-        }
-      } else if (e.key === 'r' || e.key === 'R' || e.key === 'к') {
-        const current = pendingItems[selectedListingIndex];
-        if (current) {
-          moderateMutation.mutate({ id: current.id, status: 'REJECTED', note: 'Нарушение правил платформы' });
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [pendingItems, selectedListingIndex, moderateMutation]);
-
   return (
-    <Layout title={t('kanban.title', 'Канбан модерации')}>
+    <Layout title="Канбан заказов AUBRIN">
       <div className="space-y-4 max-w-7xl mx-auto pb-12">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center justify-between">
           <p className="text-xs sm:text-sm text-muted">
-            {t('kanban.subtitle', 'Быстрая обработка входящих объявлений. Одобряйте, отклоняйте или запрашивайте правки в 1 клик.')}
+            Управление доставкой заказов одежды из Великобритании в Узбекистан в реальном времени.
           </p>
-
-          <div className="flex items-center gap-2 text-xs text-muted bg-surface px-3 py-1.5 rounded-xl border border-gray-200 dark:border-white/10 shadow-xs select-none">
-            <Keyboard size={14} className="text-primary-500" />
-            <span>Хоткеи: <kbd className="font-mono bg-gray-100 dark:bg-white/10 px-1 rounded">J</kbd>/<kbd className="font-mono bg-gray-100 dark:bg-white/10 px-1 rounded">K</kbd> карточки • <kbd className="font-mono bg-gray-100 dark:bg-white/10 px-1 rounded">A</kbd> Одобрить • <kbd className="font-mono bg-gray-100 dark:bg-white/10 px-1 rounded">R</kbd> Отклонить</span>
-          </div>
         </div>
 
         {isLoading ? (
-          <div className="p-12 text-center text-muted">{t('kanban.loading', 'Загрузка доски модерации...')}</div>
+          <div className="p-12 text-center text-muted">Загрузка канбан-доски заказов...</div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 items-start">
             {columns.map((col) => {
-              const items = data ? (data as any)[col.key] || [] : [];
+              const colOrders = orders.filter((o) => o.status === col.key);
+              const Icon = col.icon;
               return (
-                <div key={col.key} className="bg-gray-100/80 dark:bg-white/[0.03] border border-gray-200 dark:border-white/10 rounded-2xl p-3 flex flex-col gap-3 min-h-[500px]">
-                  {/* Заголовок колонки */}
+                <div
+                  key={col.key}
+                  className="bg-gray-100/80 dark:bg-white/[0.03] border border-gray-200 dark:border-white/10 rounded-2xl p-3 flex flex-col gap-3 min-h-[550px]"
+                >
                   <div className="flex items-center justify-between px-1">
-                    <span className="text-xs font-bold text-app uppercase tracking-wide">{col.title}</span>
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${col.badge}`}>
-                      {items.length}
+                    <div className="flex items-center gap-2">
+                      <div className={`p-1.5 rounded-lg ${col.color}`}>
+                        <Icon size={16} />
+                      </div>
+                      <span className="text-xs font-bold text-app uppercase tracking-wide">
+                        {col.title}
+                      </span>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-gray-200 dark:bg-white/10 text-app">
+                      {colOrders.length}
                     </span>
                   </div>
 
-                  {/* Список карточек */}
-                  <div className="space-y-3 flex-1 overflow-y-auto max-h-[calc(100vh-280px)] pr-1 scrollbar-thin">
-                    {items.length === 0 ? (
-                      <div className="text-xs text-muted text-center py-10 opacity-70">
-                        {t('kanban.empty', 'Нет объявлений')}
+                  <div className="flex flex-col gap-2.5">
+                    {colOrders.map((order: AdminOrder) => (
+                      <div
+                        key={order.id}
+                        className="bg-white dark:bg-surface border border-gray-200 dark:border-white/10 rounded-xl p-3.5 shadow-xs flex flex-col gap-2 transition hover:shadow-md"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-mono text-xs font-bold text-primary-500">
+                            #{order.orderNumber}
+                          </span>
+                          <span className="text-xs font-bold text-app">
+                            {order.totalPrice.toLocaleString()} UZS
+                          </span>
+                        </div>
+
+                        <div>
+                          <p className="text-xs font-medium text-app line-clamp-1">
+                            {order.customerName}
+                          </p>
+                          <p className="text-[11px] text-muted">{order.customerPhone}</p>
+                          <p className="text-[11px] text-muted line-clamp-1">{order.city}, {order.address}</p>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-white/5">
+                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${
+                            order.riskScore >= 75
+                              ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400'
+                              : order.riskScore >= 25
+                              ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'
+                              : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
+                          }`}>
+                            Риск: {order.riskScore}/100
+                          </span>
+
+                          <select
+                            value={order.status}
+                            onChange={(e) =>
+                              updateStatusMutation.mutate({
+                                id: order.id,
+                                status: e.target.value as OrderStatus,
+                              })
+                            }
+                            className="text-[11px] bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg px-2 py-1 text-app font-medium outline-hidden"
+                          >
+                            <option value="PENDING">PENDING</option>
+                            <option value="CONFIRMED">CONFIRMED</option>
+                            <option value="SHIPPED_FROM_UK">SHIPPED_FROM_UK</option>
+                            <option value="IN_TRANSIT">IN_TRANSIT</option>
+                            <option value="DELIVERED">DELIVERED</option>
+                            <option value="CANCELLED">CANCELLED</option>
+                          </select>
+                        </div>
                       </div>
-                    ) : (
-                      <AnimatePresence mode="popLayout">
-                        {items.map((item: any, idx: number) => {
-                          const isSelectedPending = col.key === 'PENDING' && idx === selectedListingIndex;
-                          return (
-                            <motion.div
-                              layout
-                              key={item.id}
-                              initial={{ opacity: 0, scale: 0.95 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              exit={{ opacity: 0, scale: 0.95 }}
-                              transition={{ duration: 0.2 }}
-                              className={`p-3 rounded-xl bg-surface shadow-xs hover:shadow-md transition-all flex flex-col gap-2 cursor-pointer border ${
-                                isSelectedPending
-                                  ? 'border-primary-500 ring-2 ring-primary-500/20'
-                                  : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20'
-                              }`}
-                              onClick={() => navigate(`/listings?highlight=${item.id}`)}
-                            >
-                              <div className="flex gap-2">
-                                {item.images?.[0] ? (
-                                  <img
-                                    src={item.images[0].url || item.images[0].secure_url}
-                                    alt={item.title}
-                                    className="w-16 h-16 rounded-xl object-cover flex-shrink-0"
-                                  />
-                                ) : (
-                                  <div className="w-16 h-16 rounded-xl bg-gray-100 dark:bg-white/5 flex items-center justify-center text-xs text-muted">
-                                    Нет фото
-                                  </div>
-                                )}
-                                <div className="flex-1 min-w-0">
-                                  <h4 className="text-xs font-bold text-app truncate">{item.title}</h4>
-                                  <div className="text-xs font-semibold text-primary-600 dark:text-primary-400 mt-0.5">
-                                    {Number(item.price).toLocaleString()} сум
-                                  </div>
-                                  <div className="text-[11px] text-muted flex items-center gap-1 mt-1 truncate">
-                                    <MapPin size={10} /> {item.city}, {item.district || ''}
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Автор */}
-                              <div className="pt-2 border-t border-app flex items-center justify-between text-[11px] text-muted">
-                                <span className="truncate flex items-center gap-1">
-                                  <User size={10} /> {item.owner?.name || 'Пользователь'}
-                                </span>
-                                {item.owner?.verified && (
-                                  <span className="text-emerald-500 font-medium text-[10px]">Verified</span>
-                                )}
-                              </div>
-
-                              {/* Кнопки быстрых действий */}
-                              <div className="flex gap-1 pt-1 justify-end" onClick={(e) => e.stopPropagation()}>
-                                {col.key !== 'APPROVED_VERIFIED' && (
-                                  <button
-                                    type="button"
-                                    title={t('kanban.approve', 'Одобрить')}
-                                    onClick={() => moderateMutation.mutate({ id: item.id, status: 'APPROVED' })}
-                                    className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/50 cursor-pointer"
-                                  >
-                                    <Check size={14} />
-                                  </button>
-                                )}
-                                {col.key !== 'CHANGES_REQUESTED' && (
-                                  <button
-                                    type="button"
-                                    title={t('kanban.requestChanges', 'Запросить правки')}
-                                    onClick={() => moderateMutation.mutate({ id: item.id, status: 'CHANGES_REQUESTED', note: 'Требуется исправить описание или фото' })}
-                                    className="p-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/50 cursor-pointer"
-                                  >
-                                    <Edit3 size={14} />
-                                  </button>
-                                )}
-                                {col.key !== 'REJECTED' && (
-                                  <button
-                                    type="button"
-                                    title={t('kanban.reject', 'Отклонить')}
-                                    onClick={() => moderateMutation.mutate({ id: item.id, status: 'REJECTED', note: 'Нарушение правил платформы' })}
-                                    className="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 cursor-pointer"
-                                  >
-                                    <X size={14} />
-                                  </button>
-                                )}
-                              </div>
-                            </motion.div>
-                          );
-                        })}
-                      </AnimatePresence>
-                    )}
+                    ))}
                   </div>
                 </div>
               );

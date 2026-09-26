@@ -68,7 +68,7 @@ const ViewingRequestsPage: React.FC = () => {
     },
   });
 
-  const statusBadge = (status: ViewingStatus) => {
+  const statusBadge = (status: any) => {
     switch (status) {
       case 'CONFIRMED':
         return <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 dark:text-emerald-400 px-2.5 py-1 rounded-full"><CheckCircle2 size={13} /> {t('viewingRequests.confirmed', 'Подтверждена')}</span>;
@@ -114,7 +114,7 @@ const ViewingRequestsPage: React.FC = () => {
                   <div>
                     <span className="text-xs font-bold text-primary-600 dark:text-primary-400 flex items-center gap-1">
                       <Calendar size={13} />
-                      {item.listing.title}
+                      {item.listing?.title || item.order?.orderNumber || 'Заявка на возврат'}
                     </span>
                     <div className="text-[11px] text-muted mt-0.5">
                       {t('common.date', 'Дата')}: {new Date(item.createdAt).toLocaleString('ru-RU')}
@@ -126,7 +126,7 @@ const ViewingRequestsPage: React.FC = () => {
                 <div className="space-y-1.5 text-xs">
                   <div className="flex items-center gap-1.5 text-app font-medium">
                     <User size={13} className="text-muted" />
-                    <span>{t('viewingRequests.client', 'Заявитель')}: <strong>{item.requester.name}</strong> ({item.requester.phone || item.requester.email})</span>
+                    <span>{t('viewingRequests.client', 'Заявитель')}: <strong>{item.requester?.name || item.order?.customerName || 'Клиент'}</strong> ({item.requester?.phone || item.order?.customerPhone || ''})</span>
                   </div>
                   {item.preferredDate && (
                     <div className="text-app">

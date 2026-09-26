@@ -116,3 +116,15 @@ export const getUserActivityApi = async (
   return data;
 };
 
+// Удалить пользователя
+export const deleteUserApi = async (id: string): Promise<{ success: boolean; message: string }> => {
+  const { data } = await api.delete(`/admin/users/${id}`);
+  return data;
+};
+
+// Удалить всех пользователей кроме супер-администратора
+export const purgeUsersExceptSuperAdminApi = async (): Promise<{ success: boolean; message: string; count: number }> => {
+  const { data } = await api.post('/admin/users/purge-except-superadmin');
+  return data;
+};
+

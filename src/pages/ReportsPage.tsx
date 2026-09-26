@@ -247,7 +247,7 @@ export const ReportsPage: React.FC = () => {
           <div className="space-y-3">
             <AnimatePresence mode="popLayout">
               {reports.map((report) => {
-                const firstImage = report.listing?.images?.[0]?.url;
+                const firstImage = report.listing?.images?.[0]?.url || (report.product as any)?.image;
 
                 return (
                   <motion.div
@@ -274,7 +274,7 @@ export const ReportsPage: React.FC = () => {
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="text-sm font-bold text-app truncate">
-                                {report.listing?.title || 'Объявление'}
+                                {report.listing?.title || report.product?.title || 'Товар/Объявление'}
                               </span>
                               {getStatusBadge(report.status)}
                               <span className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded-md">
@@ -297,7 +297,7 @@ export const ReportsPage: React.FC = () => {
                                 <span>• Заявитель: {report.reporter.name} ({report.reporter.email})</span>
                               )}
                               {report.listing?.owner && (
-                                <span>• Автор объекта: {report.listing.owner.name} ({report.listing.owner.email})</span>
+                                <span>• Автор: {report.listing.owner.name} ({report.listing.owner.email})</span>
                               )}
                             </div>
                           </div>
@@ -347,7 +347,7 @@ export const ReportsPage: React.FC = () => {
                           )}
 
                           <a
-                            href={`https://ijara.uz/catalog/${report.listingId}`}
+                            href={`/catalog/${report.listingId || report.productId || report.id}`}
                             target="_blank"
                             rel="noreferrer"
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-xl border border-app bg-surface hover:bg-gray-50 dark:hover:bg-white/5 text-muted hover:text-app transition-colors"

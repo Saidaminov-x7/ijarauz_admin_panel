@@ -1,0 +1,67 @@
+{
+  "common": {
+    "brandName": "AUBRIN",
+    "tagline": "Админ-панель UK Import",
+    "themeLight": "Светлая тема",
+    "themeDark": "Тёмная тема",
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "loading": "Загрузка...",
+    "search": "Поиск по артикулу или названию...",
+    "ukImportBadge": "🇬🇧 Прямой импорт из Великобритании",
+    "originalBadge": "100% Оригинал"
+  },
+  "nav": {
+    "dashboard": "Дашборд",
+    "products": "Каталог товаров (UK)",
+    "orders": "Заказы клиентов",
+    "categories": "Категории",
+    "brands": "Бренды Великобритании",
+    "users": "Покупатели",
+    "settings": "Настройки магазина"
+  },
+  "dashboard": {
+    "title": "Обзор магазина AUBRIN",
+    "subtitle": "Статистика продаж и доставки одежды из Великобритании в Узбекистан",
+    "revenueMonth": "Выручка за месяц",
+    "totalOrders": "Всего заказов",
+    "ukStock": "Товаров из UK",
+    "inTransitUK": "Посылок в пути из Лондона",
+    "recentOrders": "Последние оформленные заказы"
+  },
+  "orders": {
+    "orderNumber": "№ Заказа",
+    "customer": "Клиент",
+    "phone": "Телефон",
+    "total": "Сумма",
+    "status": "Статус заказа",
+    "payment": "Оплата",
+    "date": "Дата",
+    "actions": "Действия",
+    "statusPending": "Ожидает обработки",
+    "statusConfirmed": "Подтвержден",
+    "statusShippedUK": "🇬🇧 В пути из Великобритании",
+    "statusInTransit": "🚚 В пути по Узбекистану",
+    "statusDelivered": "✅ Доставлен клиенту",
+    "statusCancelled": "❌ Отменен"
+  },
+  "products": {
+    "title": "Каталог одежды из UK",
+    "subtitle": "Управление товарами с мультиязычными карточками (RU / EN / UZ)",
+    "addNew": "Добавить товар из UK",
+    "sku": "Артикул / SKU",
+    "brand": "Бренд (UK)",
+    "price": "Цена (UZS)",
+    "stock": "Остаток",
+    "originality": "Гарантия подлинности",
+    "formTitle": "Добавление / Редактирование товара",
+    "tabRu": "Русский (RU)",
+    "tabEn": "English (EN)",
+    "tabUz": "O‘zbekcha (UZ)",
+    "productName": "Название товара",
+    "productDesc": "Описание товара и британские детали",
+    "sourceUrl": "Ссылка на товар в магазине UK (ASOS/Zara UK)",
+    "images": "Фотографии товара",
+    "sizes": "Размеры (UK / EU)"
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "common": {
+    "brandName": "AUBRIN",
+    "tagline": "UK Import Boshqaruv Paneli",
+    "themeLight": "Yorug‘ mavzu",
+    "themeDark": "Qorong‘i mavzu",
+    "save": "Saqlash",
+    "cancel": "Bekor qilish",
+    "loading": "Yuklanmoqda...",
+    "search": "Artikul yoki nom bo‘yicha qidiruv...",
+    "ukImportBadge": "🇬🇧 Buyuk Britaniyadan to‘g‘ridan-to‘g‘ri import",
+    "originalBadge": "100% Original"
+  },
+  "nav": {
+    "dashboard": "Bosh sahifa",
+    "products": "Mahsulotlar (UK)",
+    "orders": "Buyurtmalar",
+    "categories": "Kategoriyalar",
+    "brands": "Britaniya brendlari",
+    "users": "Mijozlar",
+    "settings": "Sozlamalar"
+  },
+  "dashboard": {
+    "title": "AUBRIN do‘koni statistikasi",
+    "subtitle": "Buyuk Britaniyadan O‘zbekistonga kiyimlar importi va sotuvi tahlili",
+    "revenueMonth": "Oylik tushum",
+    "totalOrders": "Jami buyurtmalar",
+    "ukStock": "Angliya tovarlari",
+    "inTransitUK": "Londondan yo‘ldagi posilkalar",
+    "recentOrders": "So‘nggi rasmiylashtirilgan buyurtmalar"
+  },
+  "orders": {
+    "orderNumber": "Buyurtma №",
+    "customer": "Mijoz",
+    "phone": "Telefon",
+    "total": "Summa",
+    "status": "Holati",
+    "payment": "To‘lov",
+    "date": "Sana",
+    "actions": "Amallar",
+    "statusPending": "Kutilmoqda",
+    "statusConfirmed": "Tasdiqlandi",
+    "statusShippedUK": "🇬🇧 Buyuk Britaniyadan yo‘lda",
+    "statusInTransit": "🚚 O‘zbekiston bo‘ylab yetkazilmoqda",
+    "statusDelivered": "✅ Yetkazib berildi",
+    "statusCancelled": "❌ Bekor qilindi"
+  },
+  "products": {
+    "title": "UK Kiyimlar katalogi",
+    "subtitle": "Ko‘p tilli mahsulotlar boshqaruvi (RU / EN / UZ)",
+    "addNew": "Yangi tovar qo‘shish",
+    "sku": "Artikul / SKU",
+    "brand": "Brend (UK)",
+    "price": "Narxi (UZS)",
+    "stock": "Qoldiq",
+    "originality": "Haqiqiylik kafolati",
+    "formTitle": "Mahsulot tahrirlash",
+    "tabRu": "Ruscha (RU)",
+    "tabEn": "Inglizcha (EN)",
+    "tabUz": "O‘zbekcha (UZ)",
+    "productName": "Tovar nomi",
+    "productDesc": "Tavsifi va britancha detallari",
+    "sourceUrl": "UK do‘konidagi havolasi (ASOS/Zara UK)",
+    "images": "Tovar rasmlari",
+    "sizes": "O‘lchamlari (UK / EU)"
+  }
+}

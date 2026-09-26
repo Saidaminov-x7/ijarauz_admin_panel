@@ -20,6 +20,7 @@ import {
   Phone,
   Lock,
   Unlock,
+  Trash2,
 } from 'lucide-react';
 import Layout from '../components/Layout';
 import {
@@ -27,6 +28,8 @@ import {
   blockUserApi,
   unblockUserApi,
   exportUsersApi,
+  deleteUserApi,
+  purgeUsersExceptSuperAdminApi,
   type UserRole,
   type AdminUser,
 } from '../lib/usersApi';
@@ -241,6 +244,36 @@ export const UsersPage: React.FC = () => {
     setBlockReason('');
   };
 
+  const handleDeleteUser = async (id: string, email: string) => {
+    if (email === 'vosilhojasaidaminov@gmail.com') {
+      toast.error('Нельзя удалить главного супер-администратора');
+      return;
+    }
+    if (!window.confirm(`Вы уверены, что хотите удалить пользователя ${email}?`)) {
+      return;
+    }
+    try {
+      await deleteUserApi(id);
+      invalidateUsers();
+      toast.success('Пользователь удален');
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || 'Не удалось удалить пользователя');
+    }
+  };
+
+  const handlePurgeExceptSuperAdmin = async () => {
+    if (!window.confirm('⚠️ ВНИМАНИЕ: Вы действительно хотите удалить ВСЕХ пользователей, кроме супер-администратора vosilhojasaidaminov@gmail.com?')) {
+      return;
+    }
+    try {
+      const res = await purgeUsersExceptSuperAdminApi();
+      invalidateUsers();
+      toast.success(res.message || 'Очистка пользователей завершена');
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || 'Ошибка очистки базы пользователей');
+    }
+  };
+
   const handleExportCSV = async () => {
     try {
       setIsExporting(true);
@@ -295,6 +328,14 @@ export const UsersPage: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2.5">
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={handlePurgeExceptSuperAdmin}
+              icon={<Trash2 size={14} />}
+            >
+              Удалить всех (кроме супер-админа)
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -532,6 +573,18 @@ export const UsersPage: React.FC = () => {
                                   title={t('users.block', 'Заблокировать')}
                                 >
                                   <Lock size={15} />
+                                </Button>
+                              )}
+
+                              {user.email !== 'vosilhojasaidaminov@gmail.com' && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleDeleteUser(user.id, user.email)}
+                                  className="text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                                  title="Удалить пользователя навсегда"
+                                >
+                                  <Trash2 size={15} />
                                 </Button>
                               )}
                             </div>
